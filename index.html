@@ -1162,7 +1162,7 @@
                     <div class="ball-card"><img id="asset-preview-special-time-sub" alt=""><strong>−10 сек</strong><div class="ball-function">Отнимает 10 секунд и добавляет штраф 50 очков.</div><div class="ball-actions"><button onclick="pickAssetFile('special-time-sub')">Файл</button><button onclick="openAssetUrlDialog('special-time-sub')">URL</button></div><div class="asset-warning" id="asset-warning-special-time-sub"></div><input type="hidden" id="cfg-special-time-sub" value="https://img.genially.com/67961b32a116fb001568a75e/0f361898-6196-4f36-a249-7a4d108c65e1.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-compress" alt=""><strong>Стрелки внутрь</strong><div class="ball-function">Сжимает цепочку: следующие шары появляются ближе друг к другу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-compress')">Файл</button><button onclick="openAssetUrlDialog('special-compress')">URL</button></div><div class="asset-warning" id="asset-warning-special-compress"></div><input type="hidden" id="cfg-special-compress" value="https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-stretch" alt=""><strong>Стрелки наружу</strong><div class="ball-function">Растягивает цепочку: расстояние между следующими шарами увеличивается.</div><div class="ball-actions"><button onclick="pickAssetFile('special-stretch')">Файл</button><button onclick="openAssetUrlDialog('special-stretch')">URL</button></div><div class="asset-warning" id="asset-warning-special-stretch"></div><input type="hidden" id="cfg-special-stretch" value="https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png"></div>
-                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>Доп. шар</strong><div class="ball-function">Штраф: добавляет в конец цепочки ещё один нейтральный серый шар.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
+                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два нейтральных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-neutral" alt=""><strong>Нейтральный</strong><div class="ball-function">Серый шар без цвета: уничтожается попаданием шара любого цвета.</div><div class="ball-actions"><button onclick="pickAssetFile('special-neutral')">Файл</button><button onclick="openAssetUrlDialog('special-neutral')">URL</button></div><div class="asset-warning" id="asset-warning-special-neutral"></div><input type="hidden" id="cfg-special-neutral" value="https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png"></div>
                 </div>
             </section>
@@ -1896,7 +1896,7 @@ const SPECIAL_COUNT_LABELS = {
     compress: "⇥⇤ Сжать",
     time_sub: "⏱ −10 сек",
     stretch: "⇤⇥ Растянуть",
-    add_ball: "➕ Доп. шар",
+    add_ball: "➕ +2 шара",
     neutral: "⚪ Нейтральный"
 };
 
@@ -2082,14 +2082,14 @@ const I18N = {
  };
 
 const I18N_SCREEN_EXTRAS = {
-    ru: { bonusQuestion:'Вопрос (+100)', bonusLightning:'Молния (-5)', bonusLife:'Дополнительная жизнь', bonusCompress:'Сжатие цепочки', bonusPenalty:'Штраф -10 сек.', bonusExtraBall:'Дополнительный шар', bonusStretch:'Растянуть цепочку', bonusTime:'Время +20 сек.', congrats:'ПОЗДРАВЛЯЕМ!', levelPassed:'УРОВЕНЬ {level} ПРОЙДЕН!', stLevelTotal:'ИТОГОВЫЙ СЧЕТ УРОВНЯ:', stGameTotal:'ИТОГОВЫЙ СЧЕТ ИГРЫ:' },
-    en: { bonusQuestion:'Question (+100)', bonusLightning:'Lightning (-5)', bonusLife:'Extra Life', bonusCompress:'Compress Chain', bonusPenalty:'Penalty -10s', bonusExtraBall:'Extra Ball', bonusStretch:'Stretch Chain', bonusTime:'Time +20s', congrats:'CONGRATULATIONS!', levelPassed:'LEVEL {level} CLEARED!', stLevelTotal:'LEVEL SCORE:', stGameTotal:'GAME TOTAL SCORE:' },
-    de: { bonusQuestion:'Frage (+100)', bonusLightning:'Blitz (-5)', bonusLife:'Extra-Leben', bonusCompress:'Kette verkürzen', bonusPenalty:'Strafe -10 Sek.', bonusExtraBall:'Extra-Ball', bonusStretch:'Kette dehnen', bonusTime:'Zeit +20 Sek.', congrats:'GLÜCKWUNSCH!', levelPassed:'LEVEL {level} GESCHAFFT!', stLevelTotal:'LEVELPUNKTE:', stGameTotal:'GESAMTPUNKTZAHL DES SPIELS:' },
-    fr: { bonusQuestion:'Question (+100)', bonusLightning:'Éclair (-5)', bonusLife:'Vie supplémentaire', bonusCompress:'Resserrer la chaîne', bonusPenalty:'Pénalité -10 s', bonusExtraBall:'Bille supplémentaire', bonusStretch:'Étirer la chaîne', bonusTime:'Temps +20 s', congrats:'FÉLICITATIONS !', levelPassed:'NIVEAU {level} TERMINÉ !', stLevelTotal:'SCORE DU NIVEAU :', stGameTotal:'SCORE TOTAL DU JEU :' },
-    kk: { bonusQuestion:'Сұрақ (+100)', bonusLightning:'Найзағай (-5)', bonusLife:'Қосымша өмір', bonusCompress:'Тізбекті қысу', bonusPenalty:'Айып -10 сек.', bonusExtraBall:'Қосымша шар', bonusStretch:'Тізбекті созу', bonusTime:'Уақыт +20 сек.', congrats:'ҚҰТТЫҚТАЙМЫЗ!', levelPassed:'{level}-ДЕҢГЕЙ АЯҚТАЛДЫ!', stLevelTotal:'ДЕҢГЕЙ ҰПАЙЫ:', stGameTotal:'ОЙЫННЫҢ ЖАЛПЫ ҰПАЙЫ:' },
-    es: { bonusQuestion:'Pregunta (+100)', bonusLightning:'Rayo (-5)', bonusLife:'Vida extra', bonusCompress:'Comprimir cadena', bonusPenalty:'Penalización -10 s', bonusExtraBall:'Bola extra', bonusStretch:'Estirar cadena', bonusTime:'Tiempo +20 s', congrats:'¡FELICIDADES!', levelPassed:'¡NIVEL {level} SUPERADO!', stLevelTotal:'PUNTUACIÓN DEL NIVEL:', stGameTotal:'PUNTUACIÓN TOTAL DEL JUEGO:' },
-    zh: { bonusQuestion:'问题 (+100)', bonusLightning:'闪电 (-5)', bonusLife:'额外生命', bonusCompress:'压缩球链', bonusPenalty:'惩罚 -10秒', bonusExtraBall:'额外球', bonusStretch:'拉伸球链', bonusTime:'时间 +20秒', congrats:'恭喜！', levelPassed:'第 {level} 关完成！', stLevelTotal:'本关得分：', stGameTotal:'游戏总分：' },
-    ko: { bonusQuestion:'질문 (+100)', bonusLightning:'번개 (-5)', bonusLife:'추가 생명', bonusCompress:'공 줄 압축', bonusPenalty:'페널티 -10초', bonusExtraBall:'추가 공', bonusStretch:'공 줄 늘리기', bonusTime:'시간 +20초', congrats:'축하합니다!', levelPassed:'{level}레벨 완료!', stLevelTotal:'레벨 점수:', stGameTotal:'게임 총점:' }
+    ru: { bonusQuestion:'Вопрос (+100)', bonusLightning:'Молния (-5)', bonusLife:'Дополнительная жизнь', bonusCompress:'Сжатие цепочки', bonusPenalty:'Штраф -10 сек.', bonusExtraBall:'Дополнительные шары (+2)', bonusStretch:'Растянуть цепочку', bonusTime:'Время +20 сек.', congrats:'ПОЗДРАВЛЯЕМ!', levelPassed:'УРОВЕНЬ {level} ПРОЙДЕН!', stLevelTotal:'ИТОГОВЫЙ СЧЕТ УРОВНЯ:', stGameTotal:'ИТОГОВЫЙ СЧЕТ ИГРЫ:' },
+    en: { bonusQuestion:'Question (+100)', bonusLightning:'Lightning (-5)', bonusLife:'Extra Life', bonusCompress:'Compress Chain', bonusPenalty:'Penalty -10s', bonusExtraBall:'Extra Balls (+2)', bonusStretch:'Stretch Chain', bonusTime:'Time +20s', congrats:'CONGRATULATIONS!', levelPassed:'LEVEL {level} CLEARED!', stLevelTotal:'LEVEL SCORE:', stGameTotal:'GAME TOTAL SCORE:' },
+    de: { bonusQuestion:'Frage (+100)', bonusLightning:'Blitz (-5)', bonusLife:'Extra-Leben', bonusCompress:'Kette verkürzen', bonusPenalty:'Strafe -10 Sek.', bonusExtraBall:'Extra-Bälle (+2)', bonusStretch:'Kette dehnen', bonusTime:'Zeit +20 Sek.', congrats:'GLÜCKWUNSCH!', levelPassed:'LEVEL {level} GESCHAFFT!', stLevelTotal:'LEVELPUNKTE:', stGameTotal:'GESAMTPUNKTZAHL DES SPIELS:' },
+    fr: { bonusQuestion:'Question (+100)', bonusLightning:'Éclair (-5)', bonusLife:'Vie supplémentaire', bonusCompress:'Resserrer la chaîne', bonusPenalty:'Pénalité -10 s', bonusExtraBall:'Billes supplémentaires (+2)', bonusStretch:'Étirer la chaîne', bonusTime:'Temps +20 s', congrats:'FÉLICITATIONS !', levelPassed:'NIVEAU {level} TERMINÉ !', stLevelTotal:'SCORE DU NIVEAU :', stGameTotal:'SCORE TOTAL DU JEU :' },
+    kk: { bonusQuestion:'Сұрақ (+100)', bonusLightning:'Найзағай (-5)', bonusLife:'Қосымша өмір', bonusCompress:'Тізбекті қысу', bonusPenalty:'Айып -10 сек.', bonusExtraBall:'Қосымша шарлар (+2)', bonusStretch:'Тізбекті созу', bonusTime:'Уақыт +20 сек.', congrats:'ҚҰТТЫҚТАЙМЫЗ!', levelPassed:'{level}-ДЕҢГЕЙ АЯҚТАЛДЫ!', stLevelTotal:'ДЕҢГЕЙ ҰПАЙЫ:', stGameTotal:'ОЙЫННЫҢ ЖАЛПЫ ҰПАЙЫ:' },
+    es: { bonusQuestion:'Pregunta (+100)', bonusLightning:'Rayo (-5)', bonusLife:'Vida extra', bonusCompress:'Comprimir cadena', bonusPenalty:'Penalización -10 s', bonusExtraBall:'Bolas extra (+2)', bonusStretch:'Estirar cadena', bonusTime:'Tiempo +20 s', congrats:'¡FELICIDADES!', levelPassed:'¡NIVEL {level} SUPERADO!', stLevelTotal:'PUNTUACIÓN DEL NIVEL:', stGameTotal:'PUNTUACIÓN TOTAL DEL JUEGO:' },
+    zh: { bonusQuestion:'问题 (+100)', bonusLightning:'闪电 (-5)', bonusLife:'额外生命', bonusCompress:'压缩球链', bonusPenalty:'惩罚 -10秒', bonusExtraBall:'额外球 (+2)', bonusStretch:'拉伸球链', bonusTime:'时间 +20秒', congrats:'恭喜！', levelPassed:'第 {level} 关完成！', stLevelTotal:'本关得分：', stGameTotal:'游戏总分：' },
+    ko: { bonusQuestion:'질문 (+100)', bonusLightning:'번개 (-5)', bonusLife:'추가 생명', bonusCompress:'공 줄 압축', bonusPenalty:'페널티 -10초', bonusExtraBall:'추가 공 (+2)', bonusStretch:'공 줄 늘리기', bonusTime:'시간 +20초', congrats:'축하합니다!', levelPassed:'{level}레벨 완료!', stLevelTotal:'레벨 점수:', stGameTotal:'게임 총점:' }
 };
 Object.entries(I18N_SCREEN_EXTRAS).forEach(([lang,extra]) => Object.assign(I18N[lang] || I18N.ru, extra));
 
@@ -2607,7 +2607,65 @@ class GameCore {
     rndCol(){ return this.colors[Math.floor(Math.random()*this.colors.length)]; }
     spawn() { if(this.queue.length===0) return; let typeKey = this.queue.shift(); if (!this.bTypes[typeKey]) typeKey = 'normal'; this.balls.push({ d:0, type: typeKey, c: this.rndCol() }); }
     sortBallsFrontToBack(){ this.balls.sort((a,b)=>b.d-a.d); }
-    getReconnectSpacing(){ return Math.max(this.spacing, this.curSpacing); }
+    getReconnectSpacing(){ return this.curSpacing; }
+    getConnectedSegments(threshold = this.curSpacing){
+        this.sortBallsFrontToBack();
+        if(!this.balls.length) return [];
+        const segments=[];
+        let start=0;
+        for(let i=0;i<this.balls.length-1;i++){
+            const gap=this.balls[i].d-this.balls[i+1].d;
+            if(gap > threshold + 3){
+                segments.push({start,end:i});
+                start=i+1;
+            }
+        }
+        segments.push({start,end:this.balls.length-1});
+        return segments;
+    }
+    reflowChainSpacing(nextSpacing){
+        nextSpacing=Math.max(48,Math.min(85,Number(nextSpacing)||this.spacing));
+        this.sortBallsFrontToBack();
+        if(this.balls.length<2){ this.curSpacing=nextSpacing; return; }
+
+        const oldSpacing=this.curSpacing;
+        const segments=this.getConnectedSegments(oldSpacing);
+        this.curSpacing=nextSpacing;
+
+        // Перестраиваем каждый связный сегмент немедленно. Хвост сегмента остаётся
+        // на месте: сжатие подтягивает голову назад, растяжение выталкивает её вперёд.
+        segments.forEach(seg=>{
+            for(let i=seg.end-1;i>=seg.start;i--){
+                this.balls[i].d=this.balls[i+1].d+nextSpacing;
+            }
+        });
+
+        // Не позволяем Stretch случайно закрыть настоящий разрыв между сегментами.
+        // Если нужно, сдвигаем весь задний остаток назад, сохраняя хвост не ниже 0.
+        const minBreak=nextSpacing+10;
+        for(let s=0;s<segments.length-1;s++){
+            const boundary=segments[s].end;
+            const rearStart=segments[s+1].start;
+            const gap=this.balls[boundary].d-this.balls[rearStart].d;
+            if(gap < minBreak){
+                const need=minBreak-gap;
+                const tailD=this.balls[this.balls.length-1].d;
+                const shift=Math.max(0,Math.min(need,tailD));
+                if(shift>0){
+                    for(let i=rearStart;i<this.balls.length;i++) this.balls[i].d-=shift;
+                }
+            }
+        }
+    }
+    addPenaltyBalls(count=2){
+        count=Math.max(1,Math.min(4,parseInt(count)||2));
+        this.sortBallsFrontToBack();
+        const headD=this.balls.length ? this.balls[0].d : 0;
+        for(let n=1;n<=count;n++){
+            this.balls.push({ d:headD + this.curSpacing*n, type:'neutral', c:'gray' });
+        }
+        this.sortBallsFrontToBack();
+    }
     getRearMovingSegmentStart(){
         // Шары хранятся от головы (ближе к финишу) к хвосту.
         // Если внутри цепочки есть разрыв, всё перед ним ждёт,
@@ -2687,13 +2745,15 @@ class GameCore {
             case 'question': this.state='paused_for_q'; this.activeQuestionBall=b; AudioSys.bonus(); this.ask(); break;
             case 'time_add': this.time+=20; AudioSys.bonus(); this.showFlash("+20s"); this.balls.splice(idx,1); this.scoreBonus+=20; this.score+=20; break;
             case 'life_add': if(this.lives<5)this.lives++; this.showFlash("+LIFE"); AudioSys.bonus(); this.balls.splice(idx,1); break;
-            case 'compress': this.curSpacing=Math.max(50,this.curSpacing-10); this.showFlash("COMPRESS!"); AudioSys.bonus(); this.balls.splice(idx,1); break;
+            case 'compress': { const next=Math.max(48,this.curSpacing-12); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash("COMPRESS!"); AudioSys.bonus(); break; }
             case 'time_sub': this.time=Math.max(0,this.time-10); this.showFlash("-10s!"); AudioSys.bad(); this.sPen+=50; this.balls.splice(idx,1); break;
-            case 'stretch': this.curSpacing=Math.min(85,this.curSpacing+10); this.showFlash("STRETCH!"); AudioSys.bad(); this.balls.splice(idx,1); break;
-            case 'add_ball': 
-                this.balls.splice(idx, 1);
-                if(this.balls.length > 0) { let maxD = this.balls.reduce((m, bl) => Math.max(m, bl.d), 0); this.balls.push({ d: maxD + this.curSpacing, type: 'neutral', c: 'gray' }); this.sortBallsFrontToBack(); }
-                this.showFlash("PENALTY!"); AudioSys.bad(); break;
+            case 'stretch': { const next=Math.min(85,this.curSpacing+16); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash("STRETCH!"); AudioSys.bad(); break; }
+            case 'add_ball':
+                this.balls.splice(idx,1);
+                this.addPenaltyBalls(2);
+                this.showFlash("+2 BALLS!");
+                AudioSys.bad();
+                break;
             default: this.balls.splice(idx,1);
         }
         this.ui();
