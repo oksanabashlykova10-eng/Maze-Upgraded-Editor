@@ -937,6 +937,45 @@
         .g-neon-card::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
         #g-start-screen .g-neon-card { width: 95%; max-width: 750px; padding: 20px; }
         #g-quiz-screen .g-neon-card, #g-end-screen .g-neon-card { width: 90%; max-width: 450px; min-height: 75vh; }
+
+        /* STAGE 22 — safe final screens inside Genially/iframe */
+        #g-end-screen {
+            padding: clamp(12px, 2.2vh, 24px);
+            box-sizing: border-box;
+            align-items: center;
+        }
+        #g-end-screen #g-end-card {
+            width: min(92vw, 520px);
+            max-width: 520px;
+            min-height: 0;
+            height: auto;
+            max-height: calc(100vh - 28px);
+            padding: clamp(14px, 2vh, 21px) 24px 18px;
+            justify-content: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ui-color) rgba(0,0,0,.25);
+        }
+        #g-end-card::-webkit-scrollbar { width: 6px; display:block; }
+        #g-end-card::-webkit-scrollbar-thumb { background: var(--ui-color); border-radius: 10px; }
+        #g-end-card .g-deco-mask { width: clamp(54px, 8.5vh, 74px); margin-bottom: 4px; }
+        #g-end-card .g-h1 { font-size: clamp(1.65rem, 4vh, 2.15rem); margin: 0 0 4px; }
+        #g-end-reason { font-size: clamp(1rem, 2.25vh, 1.22rem) !important; margin: 3px 0 8px !important; }
+        #g-end-card .stats-table { margin: 4px auto; font-size: clamp(13px, 2.05vh, 17px); }
+        #g-end-card .stats-table td { padding: 4px 7px; }
+        #g-end-card .g-game-total-row { padding: 5px 8px; margin: 1px 0 2px; }
+        #g-end-card .g-result-extra { margin: 6px 0 1px; gap: 7px; }
+        #g-end-card .g-result-chip { padding: 6px 8px; }
+        #g-end-card .g-result-chip strong { font-size: 16px; }
+        #g-end-card .g-btn-neon { margin-top: 7px; padding: 9px 24px; font-size: clamp(16px, 2.45vh, 19px); }
+        @media (max-height: 720px) {
+            #g-end-screen { padding: 8px; }
+            #g-end-screen #g-end-card { max-height: calc(100vh - 16px); padding: 11px 20px 13px; }
+            #g-end-card .g-deco-mask { width: 50px; }
+            #g-end-card .stats-table td { padding: 3px 6px; }
+            #g-end-card .g-result-extra { margin-top: 4px; }
+        }
         .g-deco-mask { width: 80px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--ui-color)); }
         .g-h1 { margin: 0 0 5px; color: #fff; text-shadow: 0 0 10px var(--ui-color), 0 0 20px var(--ui-color); font-size: 2em; letter-spacing: 2px; }
         .g-p { font-size: 1.1em; color: #ccc; margin-bottom: 10px; line-height: 1.4; }
@@ -2379,7 +2418,7 @@ class GameCore {
         this.balls = []; this.bullets = []; this.parts = []; this.queue = []; this.path = []; this.fworks = []; this.lightnings = [];
         
         // Настройки физики
-        this.radius = 22; this.spacing = 44; 
+        this.radius = 22; this.spacing = 60; // базовый шаг: диаметр шара ~50px + заметный воздушный зазор 
         this.speed = this.cfg.speed || 1.2; 
         this.bulletSpeed = 24;
         this.colors = ["red", "blue", "green", "yellow", "purple", "orange"];
@@ -2567,6 +2606,29 @@ class GameCore {
 
     rndCol(){ return this.colors[Math.floor(Math.random()*this.colors.length)]; }
     spawn() { if(this.queue.length===0) return; let typeKey = this.queue.shift(); if (!this.bTypes[typeKey]) typeKey = 'normal'; this.balls.push({ d:0, type: typeKey, c: this.rndCol() }); }
+    sortBallsFrontToBack(){ this.balls.sort((a,b)=>b.d-a.d); }
+    getReconnectSpacing(){ return Math.max(this.spacing, this.curSpacing); }
+    getRearMovingSegmentStart(){
+        // Шары хранятся от головы (ближе к финишу) к хвосту.
+        // Если внутри цепочки есть разрыв, всё перед ним ждёт,
+        // а самый задний связный сегмент продолжает движение и догоняет его.
+        this.sortBallsFrontToBack();
+        const reconnect = this.getReconnectSpacing();
+        let lastGapIndex = -1;
+        for(let i=0;i<this.balls.length-1;i++){
+            const gap = this.balls[i].d - this.balls[i+1].d;
+            if(gap > reconnect + 2) lastGapIndex = i;
+        }
+        return lastGapIndex < 0 ? 0 : lastGapIndex + 1;
+    }
+    shiftChainBack(amount){
+        if(!this.balls.length) return;
+        this.sortBallsFrontToBack();
+        const tailD = this.balls[this.balls.length-1].d;
+        const safeShift = Math.max(0, Math.min(Number(amount)||0, tailD));
+        if(safeShift<=0) return;
+        this.balls.forEach(bl=>{ bl.d -= safeShift; });
+    }
     shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; this.bullets.push({x:this.player.x, y:this.player.y-20, c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
     
     update(frameScale = 1) {
@@ -2577,22 +2639,27 @@ class GameCore {
         }
         if(this.state!=='playing') return; 
         
-        let need=this.balls.length===0; if(!need && this.balls[this.balls.length-1].d > this.curSpacing) need=true; if(need) this.spawn(); 
+        this.sortBallsFrontToBack();
+        let need=this.balls.length===0; if(!need && this.balls[this.balls.length-1].d > this.curSpacing) need=true; if(need) { this.spawn(); this.sortBallsFrontToBack(); }
         if(!this.questionInProgress && this.balls.length === 0 && this.queue.length === 0) { this.over(this.t.cleared, true); return; }
-        
-        this.balls?.forEach((b, i) => { 
-            b.d += this.speed * frameScale; 
-            if(b.d>=this.path.length-1) { this.over(this.t.errBalls, false); return; } 
-            
-            let idx = Math.floor(b.d); 
-            if(idx < 0) idx = 0; 
+
+        // Zuma-like gap behaviour: при разрыве передняя часть цепочки ждёт,
+        // пока хвост не догонит её. Двигается только самый задний связный сегмент.
+        const movingStart = this.getRearMovingSegmentStart();
+        for(let i=0;i<this.balls.length;i++){
+            const b=this.balls[i];
+            if(i>=movingStart) b.d += this.speed * frameScale;
+            if(b.d>=this.path.length-1) { this.over(this.t.errBalls, false); return; }
+
+            let idx = Math.floor(b.d);
+            if(idx < 0) idx = 0;
             if(idx >= this.path.length) idx = this.path.length - 1;
-            let p1 = this.path[idx]; 
-            let p2 = this.path[idx+1] || p1; 
+            let p1 = this.path[idx];
+            let p2 = this.path[idx+1] || p1;
             let f = Math.max(0, b.d) - idx;
-            
-            b.x=p1.x+(p2.x-p1.x)*f; b.y=p1.y+(p2.y-p1.y)*f; 
-        });
+
+            b.x=p1.x+(p2.x-p1.x)*f; b.y=p1.y+(p2.y-p1.y)*f;
+        }
         
         for(let i=this.bullets.length-1; i>=0; i--){ 
             let bu=this.bullets[i]; bu.y -= this.bulletSpeed * frameScale; if(bu.y<-50) { this.bullets.splice(i,1); continue; } 
@@ -2620,12 +2687,12 @@ class GameCore {
             case 'question': this.state='paused_for_q'; this.activeQuestionBall=b; AudioSys.bonus(); this.ask(); break;
             case 'time_add': this.time+=20; AudioSys.bonus(); this.showFlash("+20s"); this.balls.splice(idx,1); this.scoreBonus+=20; this.score+=20; break;
             case 'life_add': if(this.lives<5)this.lives++; this.showFlash("+LIFE"); AudioSys.bonus(); this.balls.splice(idx,1); break;
-            case 'compress': this.curSpacing=Math.max(35,this.curSpacing-10); this.showFlash("COMPRESS!"); AudioSys.bonus(); this.balls.splice(idx,1); break;
+            case 'compress': this.curSpacing=Math.max(50,this.curSpacing-10); this.showFlash("COMPRESS!"); AudioSys.bonus(); this.balls.splice(idx,1); break;
             case 'time_sub': this.time=Math.max(0,this.time-10); this.showFlash("-10s!"); AudioSys.bad(); this.sPen+=50; this.balls.splice(idx,1); break;
-            case 'stretch': this.curSpacing=Math.min(80,this.curSpacing+10); this.showFlash("STRETCH!"); AudioSys.bad(); this.balls.splice(idx,1); break;
+            case 'stretch': this.curSpacing=Math.min(85,this.curSpacing+10); this.showFlash("STRETCH!"); AudioSys.bad(); this.balls.splice(idx,1); break;
             case 'add_ball': 
                 this.balls.splice(idx, 1);
-                if(this.balls.length > 0) { let maxD = this.balls.reduce((m, bl) => Math.max(m, bl.d), 0); this.balls.push({ d: maxD + this.spacing, type: 'neutral', c: 'gray' }); this.balls.sort((a,b) => a.d - b.d); }
+                if(this.balls.length > 0) { let maxD = this.balls.reduce((m, bl) => Math.max(m, bl.d), 0); this.balls.push({ d: maxD + this.curSpacing, type: 'neutral', c: 'gray' }); this.sortBallsFrontToBack(); }
                 this.showFlash("PENALTY!"); AudioSys.bad(); break;
             default: this.balls.splice(idx,1);
         }
@@ -2885,12 +2952,12 @@ class GameCore {
         } else if(isOk) {
             this.statChecked++; this.statCorrect++;
             this.combo++; if(this.combo>this.maxCombo)this.maxCombo=this.combo; const pts=100*this.combo; this.score+=pts; this.scoreQ+=pts;
-            this.showFlash('COMBO x'+this.combo); AudioSys.correct(); this.balls?.forEach(bl=>bl.d-=100);
+            this.showFlash('COMBO x'+this.combo); AudioSys.correct(); this.shiftChainBack(100);
         } else {
             this.statChecked++; this.combo=0; this.statWrong++; this.levelWrong++; this.lives--; AudioSys.wrong(); this.shakeScreen();
             this.recordMistake(q,userAnswer);
             let maxD=0; if(this.balls.length>0) maxD=this.balls.reduce((m,b)=>Math.max(m,b.d),0);
-            for(let k=1;k<=3;k++) this.balls.push({d:maxD+(this.spacing*k),type:'neutral',c:'gray'}); this.balls.sort((a,b)=>a.d-b.d);
+            for(let k=1;k<=3;k++) this.balls.push({d:maxD+(this.curSpacing*k),type:'neutral',c:'gray'}); this.sortBallsFrontToBack();
         }
         this.activeQuestion=null; this.activeQuestionAttemptKey=''; this.ui();
         if(this.lives<=0){this.over(this.t.errLife,false);return;}
