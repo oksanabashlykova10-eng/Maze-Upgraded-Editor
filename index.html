@@ -1492,11 +1492,11 @@
 
             <section class="panel-section">
                 <h3 class="section-title">↗ Экспорт игры</h3>
-                <p class="section-note">Два основных действия: скачать готовую игру или скопировать ссылку для Genially.</p>
+                <p class="section-note">Скачайте автономный HTML или скопируйте готовый код для вставки в Genially → Вставка → Другое / внешний контент.</p>
                 <input type="hidden" id="export-game-link" value="">
                 <div class="export-action-stack" style="display:grid;gap:8px;">
                     <button class="btn-main" style="width:100%;" type="button" onclick="downloadStandaloneHtml()">⬇ Скачать игру HTML</button>
-                    <button class="btn-main" style="width:100%;" type="button" onclick="generateAndCopyHostedGameLink()">🔗 Скопировать ссылку для Genially</button>
+                    <button class="btn-main" style="width:100%;" type="button" onclick="copyForGenially()">📋 Скопировать для Genially</button>
                 </div>
                 <div id="export-link-info" class="section-note" style="margin:9px 0 0;">Готово к экспорту.</div>
             </section>
@@ -2963,7 +2963,7 @@ function openMazeEditorMode() {
     updateScreensPreview();
 }
 
-window.onload = () => {
+window.onload = async () => {
     // Автономный режим для srcdoc / скачанного HTML.
     // GAME_CFG внедряется генератором напрямую и не зависит от адреса редактора.
     if (window.__MAZE_STANDALONE__ === true && window.GAME_CFG) {
@@ -2982,19 +2982,11 @@ window.onload = () => {
         installBasicGameProtection();
         document.getElementById('game-wrapper').style.display = 'block';
         
-        let b64 = href.substring(playIdx + 6);
+        let payload = href.substring(playIdx + 6);
         
         try {
-            try { b64 = decodeURIComponent(b64); } catch(e) {}
-            b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
-            while(b64.length % 4) b64 += '=';
-            
-            let utf8Bytes = atob(b64);
-            let jsonStr = decodeURIComponent(utf8Bytes.split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            
-            window.GAME_CFG = JSON.parse(jsonStr);
+            try { payload = decodeURIComponent(payload); } catch(e) {}
+            window.GAME_CFG = await decodeConfigFromPlay(payload);
             if (window.GAME_CFG?.mathEnabled) ensureMathJaxLoaded().catch(()=>{});
             new GameCore();
             
@@ -4239,11 +4231,51 @@ function buildCurrentGameConfig(validate=true) {
         questions: questionsDB
     };
 }
-function encodeConfigForPlay(config){
-    // Оставлено только для обратной совместимости со старыми #play-ссылками.
+function bytesToBase64Url(bytes){
+    let binary='';
+    const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk){
+        binary += String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+    }
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function base64UrlToBytes(value){
+    let b64=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length%4) b64+='=';
+    const binary=atob(b64);
+    const out=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) out[i]=binary.charCodeAt(i);
+    return out;
+}
+function encodeLegacyConfig(config){
     const configStr=JSON.stringify(config);
     const utf8Bytes=encodeURIComponent(configStr).replace(/%([0-9A-F]{2})/g,(match,p1)=>String.fromCharCode('0x'+p1));
     return btoa(utf8Bytes).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function encodeConfigForPlay(config){
+    const json=JSON.stringify(config);
+    if('CompressionStream' in window){
+        const stream=new Blob([json],{type:'application/json'}).stream().pipeThrough(new CompressionStream('gzip'));
+        const buffer=await new Response(stream).arrayBuffer();
+        return 'gz.'+bytesToBase64Url(new Uint8Array(buffer));
+    }
+    return 'b64.'+encodeLegacyConfig(config);
+}
+async function decodeConfigFromPlay(payload){
+    const raw=String(payload||'');
+    if(raw.startsWith('gz.')){
+        if(!('DecompressionStream' in window)) throw new Error('Этот браузер не поддерживает распаковку игровой ссылки.');
+        const bytes=base64UrlToBytes(raw.slice(3));
+        const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        return JSON.parse(await new Response(stream).text());
+    }
+    const encoded=raw.startsWith('b64.')?raw.slice(4):raw;
+    let b64=encoded.replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length%4) b64+='=';
+    const binary=atob(b64);
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
 }
 
 function getCurrentPublishedBaseUrl() {
@@ -4257,37 +4289,59 @@ function getCurrentPublishedBaseUrl() {
         return '';
     }
 }
-
-function generateHostedGameLink() {
+function makeHostedRuntimeConfig(config){
+    const copy=safeClone(config);
+    copy.questions=(copy.questions||[]).map(q=>{
+        const item={...q};
+        delete item.sourceLine;
+        delete item.level;
+        return item;
+    });
+    return copy;
+}
+async function generateHostedGameLink() {
     const config=buildCurrentGameConfig(true); if(!config) return '';
     const base=getCurrentPublishedBaseUrl();
     if(!base){
-        showEditorToast('Ссылка для Genially формируется после публикации редактора на HTTPS-сайте.','error');
+        showEditorToast('Экспорт для Genially доступен после публикации редактора на HTTPS-сайте.','error');
         const info=document.getElementById('export-link-info');
-        if(info){ info.textContent='Для формирования ссылки откройте опубликованную HTTPS-версию редактора.'; info.style.color='#ff6b6b'; }
+        if(info){ info.textContent='Откройте опубликованную HTTPS-версию редактора и повторите экспорт.'; info.style.color='#ff6b6b'; }
         return '';
     }
-    const link=`${base}#play=${encodeConfigForPlay(config)}`;
+    const runtimeConfig=makeHostedRuntimeConfig(config);
+    const payload=await encodeConfigForPlay(runtimeConfig);
+    const link=`${base}#play=${payload}`;
     const field=document.getElementById('export-game-link'); if(field) field.value=link;
     const info=document.getElementById('export-link-info');
-    if(info){
-        const chars=link.length;
-        const hasEmbeddedImages=/data:image\//i.test(JSON.stringify(config));
-        info.textContent=hasEmbeddedImages
-            ? `Ссылка готова · ${chars.toLocaleString('ru-RU')} символов. В проекте есть загруженные изображения, поэтому ссылка может быть очень длинной.`
-            : `Ссылка готова · ${chars.toLocaleString('ru-RU')} символов.`;
-        info.style.color=(chars>150000||hasEmbeddedImages)?'#ffb347':'#65ff9a';
+    const hasEmbeddedImages=/data:image\//i.test(JSON.stringify(runtimeConfig));
+    if(link.length>60000){
+        if(info){
+            info.textContent=hasEmbeddedImages
+                ? 'Проект слишком большой для надёжной вставки в Genially. Замените изображения, загруженные с компьютера, на URL или используйте «Скачать игру HTML».'
+                : 'Проект получился слишком большим для надёжной ссылки Genially. Используйте «Скачать игру HTML».';
+            info.style.color='#ff6b6b';
+        }
+        showEditorToast('Игра слишком большая для ссылки Genially.','error');
+        return '';
     }
-    showEditorToast('Ссылка для Genially сформирована.');
+    if(info){
+        info.textContent=`Код для Genially готов · компактная игровая ссылка ${link.length.toLocaleString('ru-RU')} символов.`;
+        info.style.color=hasEmbeddedImages?'#ffb347':'#65ff9a';
+    }
     return link;
 }
-
-async function generateAndCopyHostedGameLink() {
-    const link = generateHostedGameLink();
-    if (!link) return;
-    await copyTextToClipboard(link, 'Ссылка для Genially скопирована.');
-    const info = document.getElementById('export-link-info');
-    if (info) info.textContent = `Ссылка готова · ${link.length.toLocaleString('ru-RU')} символов.`;
+function escapeHtmlAttr(value){return String(value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function copyForGenially(){
+    const link=await generateHostedGameLink();
+    if(!link) return;
+    const iframe=`<iframe src="${escapeHtmlAttr(link)}" width="100%" height="100%" frameborder="0" allowfullscreen style="width:100%;height:100%;border:0;"></iframe>`;
+    await copyTextToClipboard(iframe,'Код для Genially скопирован.');
+    const info=document.getElementById('export-link-info');
+    if(info) info.textContent='Код скопирован. В Genially откройте «Вставка → Другое / внешний контент» и вставьте его туда.';
+}
+async function generateAndCopyHostedGameLink(){
+    // Совместимость со старыми кнопками/проектами.
+    return copyForGenially();
 }
 
 function safeSerializeConfig(config) {
