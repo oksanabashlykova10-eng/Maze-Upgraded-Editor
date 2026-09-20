@@ -2406,6 +2406,8 @@ class GameCore {
         this.cfg = window.GAME_CFG;
         this.screens = mergeScreensConfig(this.cfg.screens || {}, this.cfg);
         this.recordedMistakeAttempts = new Set(); this.activeQuestionAttemptKey = ''; this.finalMode = 'start'; this.levelRunCounts = {}; this.levelQuestionTarget = 0;
+        // Zuma-like defeat sequence: short cause reaction -> chain escapes into goal -> 1.5s empty field -> final screen.
+        this.defeatReasonText = ''; this.defeatCause = ''; this.defeatIntroUntil = 0; this.escapeStartedAt = 0; this.escapeEmptyAt = 0;
         this.initDOM(); this.cvs = document.getElementById('gameCanvas'); this.ctx = this.cvs.getContext('2d');
         this.w=800; this.h=600; this.state='idle'; this.currentLevelIndex = 0; this.player={x:400, y:550};
         
@@ -2572,7 +2574,9 @@ class GameCore {
             this.levelQuestions = Array.from({length:targetCount}, (_,idx) => ({ id:`fallback-${idx}`, type:'open', prompt:'', question:'No questions configured.', img:'', data:{}, levelIds:['all'] }));
         }
         
-        this.time = this.cfg.timerStart; this.qDone=0; this.combo=0; this.maxCombo=0; this.isWin=false; this.nextQIndex=0; this.levelWrong=0; this.questionInProgress=false; this.activeQuestion=null; this.activeQuestionBall=null; 
+        this.time = this.cfg.timerStart; this.qDone=0; this.combo=0; this.maxCombo=0; this.isWin=false; this.nextQIndex=0; this.levelWrong=0; this.questionInProgress=false; this.activeQuestion=null; this.activeQuestionBall=null;
+        this.blockShootUntil=0;
+        this.defeatReasonText=''; this.defeatCause=''; this.defeatIntroUntil=0; this.escapeStartedAt=0; this.escapeEmptyAt=0;
         this.balls=[]; this.bullets=[]; this.parts=[]; this.fworks=[]; this.lightnings=[];
         this.queue=[]; this.curSpacing=this.spacing; this.nextCol=this.rndCol();
         
@@ -2588,7 +2592,7 @@ class GameCore {
                 if (this.time <= 5 && this.time > 0) { AudioSys.tick(); timeDisp.classList.add('pulse-urgent'); } 
                 else { timeDisp.classList.remove('pulse-urgent'); } 
                 this.ui(); 
-                if(this.time<=0) this.over(this.t.errTime, false); 
+                if(this.time<=0) this.triggerDefeat(this.t.errTime, 'timeout', 600); 
             } 
         },1000);
     }
@@ -2688,12 +2692,112 @@ class GameCore {
         this.balls.forEach(bl=>{ bl.d -= safeShift; });
     }
     shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; this.bullets.push({x:this.player.x, y:this.player.y-20, c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
+
+    triggerDefeat(reasonText, cause='balls', introDelayMs=0) {
+        if(this.state==='gameover' || this.state==='defeat_intro' || this.state==='chain_escape') return;
+        this.defeatReasonText = reasonText || this.t.errBalls;
+        this.defeatCause = cause;
+        this.isWin = false;
+        if(this.tmr) { clearInterval(this.tmr); this.tmr = null; }
+
+        // The result is already decided. Freeze all interaction immediately.
+        this.questionInProgress = false;
+        this.activeQuestion = null;
+        this.activeQuestionBall = null;
+        this.blockShootUntil = Number.POSITIVE_INFINITY;
+        this.bullets = [];
+        this.queue = []; // only the visible snake escapes; no new balls spawn during defeat animation.
+        const quiz = document.getElementById('g-quiz-screen');
+        if(quiz) quiz.classList.add('g-hidden');
+
+        this.sortBallsFrontToBack();
+        this.balls.forEach(b=>{ b.escapeScale=1; b.escapeAlpha=1; });
+        this.escapeStartedAt = 0;
+        this.escapeEmptyAt = 0;
+
+        if(introDelayMs > 0) {
+            this.state = 'defeat_intro';
+            this.defeatIntroUntil = performance.now() + introDelayMs;
+        } else {
+            this.state = 'chain_escape';
+            this.defeatIntroUntil = 0;
+            this.escapeStartedAt = performance.now();
+        }
+    }
+
+    startChainEscape(now = performance.now()) {
+        if(this.state==='gameover') return;
+        this.state = 'chain_escape';
+        this.escapeStartedAt = now;
+        this.escapeEmptyAt = 0;
+        this.sortBallsFrontToBack();
+    }
+
+    updateChainEscape(frameScale = 1, now = performance.now()) {
+        if(this.state !== 'chain_escape') return;
+        const pathEnd = Math.max(0, this.path.length - 1);
+
+        // Smooth acceleration: about x2 at first, growing to x7 within 0.4 s.
+        const accelT = Math.max(0, Math.min(1, (now - (this.escapeStartedAt || now)) / 400));
+        const eased = 1 - Math.pow(1 - accelT, 3);
+        const escapeSpeed = Math.max(5, this.speed * (2 + 5 * eased));
+        const portalZone = 78;
+
+        for(let i=this.balls.length-1;i>=0;i--) {
+            const b=this.balls[i];
+            b.d += escapeSpeed * frameScale;
+            const remain = pathEnd - b.d;
+
+            // Near the destination each ball shrinks/fades, creating a "falling into the hole" effect.
+            if(remain < portalZone) {
+                const t = Math.max(0, Math.min(1, remain / portalZone));
+                b.escapeScale = Math.max(0.08, t);
+                b.escapeAlpha = Math.max(0.06, t);
+            } else {
+                b.escapeScale = 1;
+                b.escapeAlpha = 1;
+            }
+
+            let clampedD = Math.max(0, Math.min(pathEnd, b.d));
+            let idx = Math.floor(clampedD);
+            if(idx >= this.path.length) idx = this.path.length - 1;
+            if(idx < 0) idx = 0;
+            const p1=this.path[idx] || {x:this.w/2,y:this.h/2};
+            const p2=this.path[idx+1] || p1;
+            const f=clampedD-idx;
+            b.x=p1.x+(p2.x-p1.x)*f;
+            b.y=p1.y+(p2.y-p1.y)*f;
+
+            // A tiny overrun lets the scale reach almost zero before removal.
+            if(b.d >= pathEnd + 8) this.balls.splice(i,1);
+        }
+
+        if(this.balls.length===0) {
+            if(!this.escapeEmptyAt) this.escapeEmptyAt = now;
+            if(now - this.escapeEmptyAt >= 1500) {
+                const reason=this.defeatReasonText || this.t.errBalls;
+                this.over(reason, false);
+            }
+        } else {
+            this.escapeEmptyAt = 0;
+        }
+    }
     
     update(frameScale = 1) {
         frameScale = Math.max(0.15, Math.min(3, Number(frameScale) || 1));
         if(this.state === 'gameover') {
             if(this.isWin && Math.random()<0.08) { let cKey = this.colors[Math.floor(Math.random()*this.colors.length)]; this.fworks.push(new Firework(this.w, this.h, cKey, HEX_MAP, this.colors)); }
             for(let i=this.fworks.length-1; i>=0; i--) { this.fworks[i].up(); if(this.fworks[i].dead) this.fworks.splice(i,1); } return;
+        }
+        if(this.state === 'defeat_intro') {
+            if(performance.now() >= this.defeatIntroUntil) this.startChainEscape(performance.now());
+            return;
+        }
+        if(this.state === 'chain_escape') {
+            this.updateChainEscape(frameScale, performance.now());
+            for(let i=this.parts.length-1; i>=0; i--){ this.parts[i].up(); if(this.parts[i].life<=0) this.parts.splice(i,1); }
+            for(let i=this.lightnings.length-1; i>=0; i--){ this.lightnings[i].up(); if(this.lightnings[i].life<=0) this.lightnings.splice(i,1); }
+            return;
         }
         if(this.state!=='playing') return; 
         
@@ -2707,7 +2811,7 @@ class GameCore {
         for(let i=0;i<this.balls.length;i++){
             const b=this.balls[i];
             if(i>=movingStart) b.d += this.speed * frameScale;
-            if(b.d>=this.path.length-1) { this.over(this.t.errBalls, false); return; }
+            if(b.d>=this.path.length-1) { this.triggerDefeat(this.t.errBalls, 'balls', 0); return; }
 
             let idx = Math.floor(b.d);
             if(idx < 0) idx = 0;
@@ -3020,7 +3124,7 @@ class GameCore {
             for(let k=1;k<=3;k++) this.balls.push({d:maxD+(this.curSpacing*k),type:'neutral',c:'gray'}); this.sortBallsFrontToBack();
         }
         this.activeQuestion=null; this.activeQuestionAttemptKey=''; this.ui();
-        if(this.lives<=0){this.over(this.t.errLife,false);return;}
+        if(this.lives<=0){this.triggerDefeat(this.t.errLife,'life',600);return;}
         if(this.qDone>=this.levelQuestions.length && this.levelWrong===0){this.over(this.t.cleared,true);return;}
         this.state='playing';
     }
@@ -3143,11 +3247,18 @@ class GameCore {
         }
         
         this.parts?.forEach(p=>p.draw(this.ctx)); 
-        this.balls?.forEach(b=>{ let tData = this.bTypes[b.type]; let imgKey = tData.imgKey; if(b.type === 'normal') imgKey += b.c; this.drawImg(imgKey, b.x, b.y, this.radius * 2 + 6); }); 
+        this.balls?.forEach(b=>{
+            let tData = this.bTypes[b.type]; let imgKey = tData.imgKey; if(b.type === 'normal') imgKey += b.c;
+            this.ctx.save();
+            this.ctx.globalAlpha = b.escapeAlpha == null ? 1 : b.escapeAlpha;
+            const scale = b.escapeScale == null ? 1 : b.escapeScale;
+            this.drawImg(imgKey, b.x, b.y, (this.radius * 2 + 6) * scale);
+            this.ctx.restore();
+        }); 
         this.bullets?.forEach(b=>{ this.drawImg("c_" + b.c, b.x, b.y, this.radius * 2); });
         this.lightnings?.forEach(l => l.draw(this.ctx)); 
         
-        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, 90); if(this.bullets.length===0){ this.drawImg("c_" + this.nextCol, 0, -15, 30); } this.ctx.restore();
+        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, 90); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15, 30); } this.ctx.restore();
         
         if(this.state==='gameover') this.fworks?.forEach(f=>f.draw(this.ctx));
     }
