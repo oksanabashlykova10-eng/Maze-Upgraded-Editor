@@ -900,6 +900,13 @@
         }
         .g-pair-item.right { background:rgba(255,255,255,.055); }
         .g-action-row { margin-top:14px; }
+        #g-question-card button,
+        #g-question-card .g-gap-slot,
+        #g-question-card .g-category {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #g-question-card button { cursor:pointer; }
         @media (max-width:700px) {
             .g-question-card,
             .g-question-card[data-type] { width:94vw !important; max-width:94vw !important; padding:15px 13px 17px !important; }
@@ -2460,12 +2467,6 @@ class GameCore {
         const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; this.player.x=Math.max(35, Math.min(this.w-35, cx-r.left)); };
         this.cvs.addEventListener('mousemove',move); this.cvs.addEventListener('touchmove',e=>{e.preventDefault();move(e)},{passive:false}); 
         this.cvs.addEventListener('click',()=>this.shoot());
-        const quizScreen=document.getElementById('g-quiz-screen');
-        if(quizScreen){
-            ['pointerdown','pointerup','mousedown','mouseup','touchstart','touchend','click'].forEach(type=>{
-                quizScreen.addEventListener(type,()=>{ this.blockShootUntil=performance.now()+450; }, {passive:true});
-            });
-        }
         
         document.getElementById('g-btn-start').onclick = () => { AudioSys.init(); this.start(0); };
         document.getElementById('g-btn-restart').onclick = () => { 
@@ -2683,9 +2684,32 @@ class GameCore {
         }
     }
 
+    bindQuestionTap(el, handler) {
+        let lastPointerAt = -Infinity;
+        const runPointer = (e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            lastPointerAt = performance.now();
+            this.blockShootUntil = lastPointerAt + 450;
+            e.preventDefault();
+            e.stopPropagation();
+            handler(e);
+        };
+        const runClick = (e) => {
+            e.stopPropagation();
+            // Pointer-capable browsers already handled the action on pointerup.
+            if (performance.now() - lastPointerAt < 700) { e.preventDefault(); return; }
+            this.blockShootUntil = performance.now() + 450;
+            handler(e);
+        };
+        if (window.PointerEvent) el.addEventListener('pointerup', runPointer);
+        el.addEventListener('click', runClick);
+        el.style.touchAction = 'manipulation';
+        return el;
+    }
     makeActionButton(text, handler, secondary=false) {
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'g-mini-action' + (secondary ? ' secondary' : ''); b.textContent = text; b.onclick = handler; return b;
+        b.type = 'button'; b.className = 'g-mini-action' + (secondary ? ' secondary' : ''); b.textContent = text;
+        return this.bindQuestionTap(b, handler);
     }
     makeActionRow(...buttons) { const row=document.createElement('div'); row.className='g-action-row'; buttons.forEach(b=>row.appendChild(b)); return row; }
     makeTile(text, index=0) { const b=document.createElement('button'); b.type='button'; b.className='g-option-tile'; b.textContent=text; b.style.setProperty('--tile-color', QUESTION_COLORS[index % QUESTION_COLORS.length]); return b; }
@@ -2693,7 +2717,7 @@ class GameCore {
     renderChoice(q, content) {
         const grid=document.createElement('div'); grid.className='g-choice-grid';
         const opts=shuffleArray(q.data?.options || []);
-        opts.forEach((opt,i)=>{ const b=this.makeTile(opt,i); b.onclick=()=>this.finishQuestion(opt===q.data.correct,opt); grid.appendChild(b); });
+        opts.forEach((opt,i)=>{ const b=this.makeTile(opt,i); this.bindQuestionTap(b,()=>this.finishQuestion(opt===q.data.correct,opt)); grid.appendChild(b); });
         content.appendChild(grid);
     }
 
@@ -2712,8 +2736,8 @@ class GameCore {
         let selected=[];
         const redraw=()=>{
             answer.replaceChildren(); pool.replaceChildren();
-            selected.forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); b.onclick=()=>{ selected=selected.filter(x=>x.id!==tok.id); redraw(); }; answer.appendChild(b); });
-            shuffled.filter(tok=>!selected.some(x=>x.id===tok.id)).forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); b.onclick=()=>{ selected.push(tok); redraw(); }; pool.appendChild(b); });
+            selected.forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); this.bindQuestionTap(b,()=>{ selected=selected.filter(x=>x.id!==tok.id); redraw(); }); answer.appendChild(b); });
+            shuffled.filter(tok=>!selected.some(x=>x.id===tok.id)).forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); this.bindQuestionTap(b,()=>{ selected.push(tok); redraw(); }); pool.appendChild(b); });
         };
         redraw();
         const reset=this.makeActionButton(this.t.reset,()=>{selected=[]; redraw();},true);
@@ -2725,7 +2749,7 @@ class GameCore {
         const grid=document.createElement('div'); grid.className='g-multi-grid';
         const options=shuffleArray([...(q.data?.correct||[]), ...(q.data?.wrong||[])]);
         const selected=new Set();
-        options.forEach((opt,i)=>{ const b=this.makeTile(opt,i); b.onclick=()=>{ if(selected.has(opt)){selected.delete(opt);b.classList.remove('selected');}else{selected.add(opt);b.classList.add('selected');} }; grid.appendChild(b); });
+        options.forEach((opt,i)=>{ const b=this.makeTile(opt,i); this.bindQuestionTap(b,()=>{ if(selected.has(opt)){selected.delete(opt);b.classList.remove('selected');}else{selected.add(opt);b.classList.add('selected');} }); grid.appendChild(b); });
         const check=this.makeActionButton(this.t.check,()=>{ const correct=new Set(q.data?.correct||[]); const ok=selected.size===correct.size && [...selected].every(v=>correct.has(v)); this.finishQuestion(ok,[...selected].join(', ')); });
         content.append(grid,this.makeActionRow(check));
     }
@@ -2742,8 +2766,8 @@ class GameCore {
             leftButtons.forEach((b,i)=>b.classList.toggle('active',activeLeft===i));
             rightButtons.forEach((b,ri)=>{ const found=[...assignments.entries()].find(([,v])=>v===ri); b.classList.toggle('assigned',!!found); if(found){const li=found[0];b.style.setProperty('--pair-color',QUESTION_COLORS[li%QUESTION_COLORS.length]);} else b.style.removeProperty('--pair-color'); });
         };
-        pairs.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-pair-item left'; b.textContent=p.left; b.style.setProperty('--pair-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); b.onclick=()=>{activeLeft=activeLeft===i?null:i;refresh();}; leftButtons.push(b); leftCol.appendChild(b); });
-        rightItems.forEach((it,ri)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-pair-item right'; b.textContent=it.text; b.onclick=()=>{ const existing=[...assignments.entries()].find(([,v])=>v===ri); if(existing){assignments.delete(existing[0]); if(activeLeft===null) activeLeft=existing[0]; refresh(); return;} if(activeLeft===null) return; assignments.set(activeLeft,ri); activeLeft=null; refresh(); }; rightButtons.push(b); rightCol.appendChild(b); });
+        pairs.forEach((p,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-pair-item left'; b.textContent=p.left; b.style.setProperty('--pair-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); this.bindQuestionTap(b,()=>{activeLeft=activeLeft===i?null:i;refresh();}); leftButtons.push(b); leftCol.appendChild(b); });
+        rightItems.forEach((it,ri)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-pair-item right'; b.textContent=it.text; this.bindQuestionTap(b,()=>{ const existing=[...assignments.entries()].find(([,v])=>v===ri); if(existing){assignments.delete(existing[0]); if(activeLeft===null) activeLeft=existing[0]; refresh(); return;} if(activeLeft===null) return; assignments.set(activeLeft,ri); activeLeft=null; refresh(); }); rightButtons.push(b); rightCol.appendChild(b); });
         wrap.append(leftCol,rightCol); refresh();
         const reset=this.makeActionButton(this.t.reset,()=>{assignments.clear();activeLeft=null;refresh();},true);
         const check=this.makeActionButton(this.t.check,()=>{ const ok=pairs.length===assignments.size && pairs.every((p,li)=>{const ri=assignments.get(li); return ri!==undefined && rightItems[ri].text===p.right;}); const ua=pairs.map((p,li)=>{const ri=assignments.get(li); return `${p.left}=${ri===undefined?'?':rightItems[ri].text}`;}).join('; '); this.finishQuestion(ok,ua); });
@@ -2759,8 +2783,8 @@ class GameCore {
         const shuffled=shuffleArray(items); let selectedId=null; const placed=new Map();
         const redraw=()=>{
             bank.replaceChildren(); grid.replaceChildren();
-            shuffled.filter(it=>!placed.has(it.id)).forEach((it,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=it.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); if(selectedId===it.id)b.style.boxShadow=`0 0 14px ${QUESTION_COLORS[i%QUESTION_COLORS.length]}`; b.onclick=()=>{selectedId=selectedId===it.id?null:it.id;redraw();}; bank.appendChild(b); });
-            cats.forEach((cat,ci)=>{ const box=document.createElement('div'); box.className='g-category'; box.style.setProperty('--cat-color',QUESTION_COLORS[ci%QUESTION_COLORS.length]); const title=document.createElement('div'); title.className='g-category-title'; title.textContent=cat.name; const body=document.createElement('div'); body.className='g-category-items'; shuffled.filter(it=>placed.get(it.id)===ci).forEach(it=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=it.text; b.style.setProperty('--tile-color',QUESTION_COLORS[ci%QUESTION_COLORS.length]); b.onclick=e=>{e.stopPropagation();placed.delete(it.id);redraw();}; body.appendChild(b); }); box.onclick=()=>{if(selectedId){placed.set(selectedId,ci);selectedId=null;redraw();}}; box.append(title,body); grid.appendChild(box); });
+            shuffled.filter(it=>!placed.has(it.id)).forEach((it,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=it.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); if(selectedId===it.id)b.style.boxShadow=`0 0 14px ${QUESTION_COLORS[i%QUESTION_COLORS.length]}`; this.bindQuestionTap(b,()=>{selectedId=selectedId===it.id?null:it.id;redraw();}); bank.appendChild(b); });
+            cats.forEach((cat,ci)=>{ const box=document.createElement('div'); box.className='g-category'; box.style.setProperty('--cat-color',QUESTION_COLORS[ci%QUESTION_COLORS.length]); const title=document.createElement('div'); title.className='g-category-title'; title.textContent=cat.name; const body=document.createElement('div'); body.className='g-category-items'; shuffled.filter(it=>placed.get(it.id)===ci).forEach(it=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=it.text; b.style.setProperty('--tile-color',QUESTION_COLORS[ci%QUESTION_COLORS.length]); this.bindQuestionTap(b,()=>{placed.delete(it.id);redraw();}); body.appendChild(b); }); this.bindQuestionTap(box,()=>{if(selectedId){placed.set(selectedId,ci);selectedId=null;redraw();}}); box.append(title,body); grid.appendChild(box); });
         };
         redraw();
         const reset=this.makeActionButton(this.t.reset,()=>{placed.clear();selectedId=null;redraw();},true);
@@ -2772,7 +2796,7 @@ class GameCore {
         const words=q.data?.tokens || String(q.question||'').trim().split(/\s+/).filter(Boolean);
         const box=document.createElement('div'); box.className='g-error-sentence'; let selected=-1;
         const buttons=[];
-        words.forEach((word,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-error-word'; b.textContent=word; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); b.onclick=()=>{selected=i;buttons.forEach((x,j)=>x.classList.toggle('selected',j===i));}; buttons.push(b); box.appendChild(b); });
+        words.forEach((word,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-error-word'; b.textContent=word; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); this.bindQuestionTap(b,()=>{selected=i;buttons.forEach((x,j)=>x.classList.toggle('selected',j===i));}); buttons.push(b); box.appendChild(b); });
         const check=this.makeActionButton(this.t.check,()=>this.finishQuestion(selected===q.data.errorIndex,selected>=0?words[selected]:''));
         content.append(box,this.makeActionRow(check));
     }
@@ -2784,9 +2808,9 @@ class GameCore {
         const textBox=document.createElement('div'); textBox.className='g-gaps-text';
         const redraw=()=>{
             bank.replaceChildren(); textBox.replaceChildren();
-            shuffled.filter(tok=>!slots.some(s=>s?.id===tok.id)).forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); if(selectedId===tok.id)b.style.boxShadow=`0 0 14px ${QUESTION_COLORS[i%QUESTION_COLORS.length]}`; b.onclick=()=>{selectedId=selectedId===tok.id?null:tok.id;redraw();}; bank.appendChild(b); });
+            shuffled.filter(tok=>!slots.some(s=>s?.id===tok.id)).forEach((tok,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='g-token'; b.textContent=tok.text; b.style.setProperty('--tile-color',QUESTION_COLORS[i%QUESTION_COLORS.length]); if(selectedId===tok.id)b.style.boxShadow=`0 0 14px ${QUESTION_COLORS[i%QUESTION_COLORS.length]}`; this.bindQuestionTap(b,()=>{selectedId=selectedId===tok.id?null:tok.id;redraw();}); bank.appendChild(b); });
             const parts=String(q.question||'').split('___');
-            parts.forEach((part,i)=>{ if(part) textBox.appendChild(document.createTextNode(part)); if(i<answers.length){ const slot=document.createElement('span'); slot.className='g-gap-slot'; slot.textContent=slots[i]?.text || '___'; slot.onclick=()=>{ if(slots[i]){slots[i]=null; redraw(); return;} if(selectedId){const tok=shuffled.find(t=>t.id===selectedId); if(tok){slots[i]=tok;selectedId=null;redraw();}} }; textBox.appendChild(slot); } });
+            parts.forEach((part,i)=>{ if(part) textBox.appendChild(document.createTextNode(part)); if(i<answers.length){ const slot=document.createElement('span'); slot.className='g-gap-slot'; slot.textContent=slots[i]?.text || '___'; this.bindQuestionTap(slot,()=>{ if(slots[i]){slots[i]=null; redraw(); return;} if(selectedId){const tok=shuffled.find(t=>t.id===selectedId); if(tok){slots[i]=tok;selectedId=null;redraw();}} }); textBox.appendChild(slot); } });
         };
         redraw();
         const reset=this.makeActionButton(this.t.reset,()=>{for(let i=0;i<slots.length;i++)slots[i]=null;selectedId=null;redraw();},true);
