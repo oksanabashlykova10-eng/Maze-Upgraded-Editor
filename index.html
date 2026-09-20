@@ -2947,24 +2947,6 @@ function installBasicGameProtection() {
 // ==========================================
 // ИНИЦИАЛИЗАЦИЯ И РЕЖИМ 2-В-1
 // ==========================================
-function showPublicPlayerLanding() {
-    installBasicGameProtection();
-    document.getElementById('editor-ui')?.classList.remove('active');
-    const game=document.getElementById('game-wrapper');
-    if(game) game.style.display='none';
-    let landing=document.getElementById('maze-public-landing');
-    if(!landing){
-        landing=document.createElement('div');
-        landing.id='maze-public-landing';
-        landing.style.cssText='position:fixed;inset:0;z-index:999999;background:#050607;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Montserrat,Arial,sans-serif;padding:24px;box-sizing:border-box;';
-        const box=document.createElement('div');
-        box.style.cssText='max-width:560px;padding:28px 34px;border:1px solid #39ff14;border-radius:18px;background:rgba(10,12,15,.96);box-shadow:0 0 28px rgba(57,255,20,.16);';
-        const title=document.createElement('div'); title.textContent='MAZE TRAP'; title.style.cssText="font-family:'Metamorphous',serif;font-size:34px;text-shadow:0 0 12px #39ff14;margin-bottom:12px;";
-        const note=document.createElement('div'); note.textContent='Откройте готовую ссылку на игру.'; note.style.cssText='font-size:16px;color:#b7bcc5;';
-        box.append(title,note); landing.appendChild(box); document.body.appendChild(landing);
-    }
-}
-
 function openMazeEditorMode() {
     document.getElementById('maze-public-landing')?.remove();
     document.getElementById('editor-ui').classList.add('active');
@@ -3027,10 +3009,9 @@ window.onload = () => {
             `;
         }
     } else {
-        const isLocalEditor = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        const editorRequested = location.hash === '#editor' || new URL(location.href).searchParams.get('editor') === '1';
-        if (isLocalEditor || editorRequested) openMazeEditorMode();
-        else showPublicPlayerLanding();
+        // Обычный адрес опубликованной страницы всегда открывает редактор.
+        // Только ссылка с #play=... переключает страницу в режим готовой игры.
+        openMazeEditorMode();
     }
 };
 
