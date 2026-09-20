@@ -934,7 +934,7 @@
                         <input type="number" id="cfg-lives" min="1" max="5" value="3">
                     </div>
                     <div class="mini-stat field">
-                        <label>Время, сек</label>
+                        <label>Таймер, сек</label>
                         <input type="number" id="cfg-time" value="120">
                     </div>
                     <div class="mini-stat field">
@@ -942,6 +942,11 @@
                         <input type="number" id="cfg-speed" step="0.1" value="1.2">
                     </div>
                 </div>
+                <label class="check-row" style="margin:10px 0 0;">
+                    <input type="checkbox" id="cfg-pause-timer-questions" checked>
+                    Останавливать таймер во время обдумывания вопроса
+                </label>
+                <p class="section-note" style="margin:6px 0 0;">Если включено, время не уменьшается, пока открыт экран вопроса.</p>
             </section>
 
             <input type="hidden" id="cfg-ui-color" value="#39ff14">
@@ -1486,31 +1491,14 @@
             </section>
 
             <section class="panel-section">
-                <h3 class="section-title">🔗 Genially / ссылка на игру</h3>
-                <p class="section-note">Для Genially используйте HTTPS-ссылку на опубликованный <b>index.html</b>. После загрузки этой версии редактора на GitHub Pages сформируйте ссылку ниже. Конфигурация игры хранится после <b>#play=</b> и не требует отдельного файла для каждой игры.</p>
-                <div class="field">
-                    <label>Адрес опубликованного редактора</label>
-                    <input type="text" id="hosting-base-url" value="https://oksanabashlykova10-eng.github.io/maze/" placeholder="https://.../maze/">
+                <h3 class="section-title">↗ Экспорт игры</h3>
+                <p class="section-note">Два основных действия: скачать готовую игру или скопировать ссылку для Genially.</p>
+                <input type="hidden" id="export-game-link" value="">
+                <div class="export-action-stack" style="display:grid;gap:8px;">
+                    <button class="btn-main" style="width:100%;" type="button" onclick="downloadStandaloneHtml()">⬇ Скачать игру HTML</button>
+                    <button class="btn-main" style="width:100%;" type="button" onclick="generateAndCopyHostedGameLink()">🔗 Скопировать ссылку для Genially</button>
                 </div>
-                <button class="btn-main" style="width:100%; margin-bottom:8px;" type="button" onclick="generateHostedGameLink()">↻ Сформировать ссылку для Genially</button>
-                <textarea id="export-game-link" style="min-height:72px" placeholder="Здесь появится HTTPS-ссылка на игру..." readonly></textarea>
-                <div id="export-link-info" class="section-note" style="margin:0 0 8px;">Ссылка ещё не сформирована.</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-                    <button class="btn-main" style="width:100%;" type="button" onclick="copyHostedGameLink()">📋 Скопировать ссылку</button>
-                    <button class="btn-main" style="width:100%;" type="button" onclick="copyHostedIframe()">📋 IFRAME для Genially</button>
-                </div>
-            </section>
-
-            <section class="panel-section">
-                <h3 class="section-title">↗ Автономный экспорт</h3>
-                <p class="section-note"><b>srcdoc</b> оставлен как дополнительный вариант для платформ, которые его поддерживают. Для Genially рекомендуем использовать HTTPS-ссылку из блока выше. Можно также скачать отдельный HTML-файл.</p>
-                <button class="btn-main" style="width:100%; margin-bottom:8px;" onclick="generateEmbedCode()">↻ Обновить srcdoc-код</button>
-                <textarea id="export-code" placeholder="Здесь появится автономный iframe-код..." readonly></textarea>
-                <div id="export-size-info" class="section-note" style="margin:0 0 8px;">Код ещё не сформирован.</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-                    <button class="btn-main" style="width:100%;" onclick="copyToClipboard()">📋 Скопировать srcdoc</button>
-                    <button class="btn-main" style="width:100%;" onclick="downloadStandaloneHtml()">⬇ Скачать HTML-файл</button>
-                </div>
+                <div id="export-link-info" class="section-note" style="margin:9px 0 0;">Готово к экспорту.</div>
             </section>
         </div>
         </main>
@@ -2463,7 +2451,8 @@ class GameCore {
         
         if(this.tmr) clearInterval(this.tmr); 
         this.tmr=setInterval(()=>{ 
-            if(this.state==='playing' || this.state==='paused_for_q'){ 
+            const questionTimerRuns = this.state === 'paused_for_q' && this.cfg.pauseTimerOnQuestions === false;
+            if(this.state==='playing' || questionTimerRuns){ 
                 this.time--; 
                 let timeDisp = document.getElementById('g-time-disp'); 
                 if (this.time <= 5 && this.time > 0) { AudioSys.tick(); timeDisp.classList.add('pulse-urgent'); } 
@@ -2579,8 +2568,9 @@ class GameCore {
         counter.textContent = `${this.t.question} ${Math.min(this.nextQIndex, this.levelQuestionTarget)}/${this.levelQuestionTarget}`;
         promptEl.textContent = q.prompt || '';
         promptEl.style.display = q.prompt ? 'block' : 'none';
-        qTextEl.textContent = q.question || '';
-        qTextEl.style.display = q.question ? 'block' : 'none';
+        const questionIsRenderedInsideInteraction = q.type === 'error' || q.type === 'gaps';
+        qTextEl.textContent = questionIsRenderedInsideInteraction ? '' : (q.question || '');
+        qTextEl.style.display = (!questionIsRenderedInsideInteraction && q.question) ? 'block' : 'none';
         content.replaceChildren();
         if (q.img) { imageEl.src = q.img; imageEl.classList.remove('g-hidden'); } else { imageEl.removeAttribute('src'); imageEl.classList.add('g-hidden'); }
 
@@ -2957,6 +2947,40 @@ function installBasicGameProtection() {
 // ==========================================
 // ИНИЦИАЛИЗАЦИЯ И РЕЖИМ 2-В-1
 // ==========================================
+function showPublicPlayerLanding() {
+    installBasicGameProtection();
+    document.getElementById('editor-ui')?.classList.remove('active');
+    const game=document.getElementById('game-wrapper');
+    if(game) game.style.display='none';
+    let landing=document.getElementById('maze-public-landing');
+    if(!landing){
+        landing=document.createElement('div');
+        landing.id='maze-public-landing';
+        landing.style.cssText='position:fixed;inset:0;z-index:999999;background:#050607;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Montserrat,Arial,sans-serif;padding:24px;box-sizing:border-box;';
+        const box=document.createElement('div');
+        box.style.cssText='max-width:560px;padding:28px 34px;border:1px solid #39ff14;border-radius:18px;background:rgba(10,12,15,.96);box-shadow:0 0 28px rgba(57,255,20,.16);';
+        const title=document.createElement('div'); title.textContent='MAZE TRAP'; title.style.cssText="font-family:'Metamorphous',serif;font-size:34px;text-shadow:0 0 12px #39ff14;margin-bottom:12px;";
+        const note=document.createElement('div'); note.textContent='Откройте готовую ссылку на игру.'; note.style.cssText='font-size:16px;color:#b7bcc5;';
+        box.append(title,note); landing.appendChild(box); document.body.appendChild(landing);
+    }
+}
+
+function openMazeEditorMode() {
+    document.getElementById('maze-public-landing')?.remove();
+    document.getElementById('editor-ui').classList.add('active');
+    activateTabById('tab-design');
+    normalizeQuestionDB();
+    updateQLevelSelect();
+    renderLevels();
+    renderQuestions();
+    updatePreviewBgSelect();
+    initAssetPreviews();
+    initPathEditor();
+    updatePreview(); initAutosave();
+    initScreenEditor();
+    updateScreensPreview();
+}
+
 window.onload = () => {
     // Автономный режим для srcdoc / скачанного HTML.
     // GAME_CFG внедряется генератором напрямую и не зависит от адреса редактора.
@@ -3003,19 +3027,10 @@ window.onload = () => {
             `;
         }
     } else {
-        // Режим редактора: Добавляем класс, чтобы показать интерфейс
-        document.getElementById('editor-ui').classList.add('active');
-        activateTabById('tab-design');
-        normalizeQuestionDB();
-        updateQLevelSelect();
-        renderLevels();
-        renderQuestions();
-        updatePreviewBgSelect();
-        initAssetPreviews();
-        initPathEditor();
-        updatePreview(); initAutosave();
-        initScreenEditor();
-        updateScreensPreview();
+        const isLocalEditor = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const editorRequested = location.hash === '#editor' || new URL(location.href).searchParams.get('editor') === '1';
+        if (isLocalEditor || editorRequested) openMazeEditorMode();
+        else showPublicPlayerLanding();
     }
 };
 
@@ -4143,7 +4158,7 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
     isApplyingProject=true;
     try{
         setFieldValue('project-name',snapshot.projectName || 'Maze Trap Project');
-        setFieldValue('cfg-lang',cfg.lang || 'ru'); setFieldValue('cfg-lives',cfg.lives ?? 3); setFieldValue('cfg-time',cfg.timerStart ?? 120); setFieldValue('cfg-speed',cfg.speed ?? 1.2); setFieldValue('cfg-neon',cfg.neonEnabled !== false); setFieldValue('cfg-random-questions',cfg.randomQuestions !== false); setFieldValue('cfg-math-enabled',!!cfg.mathEnabled); setFieldValue('cfg-prog-color',cfg.progColor || '#00ff66');
+        setFieldValue('cfg-lang',cfg.lang || 'ru'); setFieldValue('cfg-lives',cfg.lives ?? 3); setFieldValue('cfg-time',cfg.timerStart ?? 120); setFieldValue('cfg-pause-timer-questions',cfg.pauseTimerOnQuestions !== false); setFieldValue('cfg-speed',cfg.speed ?? 1.2); setFieldValue('cfg-neon',cfg.neonEnabled !== false); setFieldValue('cfg-random-questions',cfg.randomQuestions !== false); setFieldValue('cfg-math-enabled',!!cfg.mathEnabled); setFieldValue('cfg-prog-color',cfg.progColor || '#00ff66');
         setFieldValue('cfg-prompt-font',cfg.promptFont); setFieldValue('cfg-prompt-color',cfg.promptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
         const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball,'special-neutral':cfg.specialBallImages?.neutral};
         Object.entries(assetValues).forEach(([key,value])=>{ if(value) setAssetValue(key,value); });
@@ -4202,6 +4217,7 @@ function buildCurrentGameConfig(validate=true) {
         lang: document.getElementById('cfg-lang').value,
         lives: parseInt(document.getElementById('cfg-lives').value) || 3,
         timerStart: parseInt(document.getElementById('cfg-time').value) || 120,
+        pauseTimerOnQuestions: document.getElementById('cfg-pause-timer-questions')?.checked !== false,
         speed: parseFloat(document.getElementById('cfg-speed').value) || 1.2,
         neonEnabled: document.getElementById('cfg-neon').checked,
         fontFamily: document.getElementById('cfg-q-font').value,
@@ -4249,45 +4265,48 @@ function encodeConfigForPlay(config){
     return btoa(utf8Bytes).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
-function normalizeHostedBaseUrl(raw) {
-    let base=String(raw||'').trim();
-    if(!base) return '';
-    base=base.split('#')[0];
-    if(!/^https:\/\//i.test(base)) return '';
-    return base;
+function getCurrentPublishedBaseUrl() {
+    try {
+        const url=new URL(window.location.href);
+        if(url.protocol !== 'https:') return '';
+        url.hash='';
+        url.search='';
+        return url.toString();
+    } catch(e) {
+        return '';
+    }
 }
 
 function generateHostedGameLink() {
     const config=buildCurrentGameConfig(true); if(!config) return '';
-    const base=normalizeHostedBaseUrl(document.getElementById('hosting-base-url')?.value);
-    if(!base){ showEditorToast('Для Genially нужен адрес, начинающийся с https://','error'); return ''; }
+    const base=getCurrentPublishedBaseUrl();
+    if(!base){
+        showEditorToast('Ссылка для Genially формируется после публикации редактора на HTTPS-сайте.','error');
+        const info=document.getElementById('export-link-info');
+        if(info){ info.textContent='Для формирования ссылки откройте опубликованную HTTPS-версию редактора.'; info.style.color='#ff6b6b'; }
+        return '';
+    }
     const link=`${base}#play=${encodeConfigForPlay(config)}`;
     const field=document.getElementById('export-game-link'); if(field) field.value=link;
     const info=document.getElementById('export-link-info');
     if(info){
         const chars=link.length;
         const hasEmbeddedImages=/data:image\//i.test(JSON.stringify(config));
-        info.textContent=`Длина ссылки: ${chars.toLocaleString('ru-RU')} символов.` + (hasEmbeddedImages?' В проекте есть локально загруженные изображения: ссылка может стать слишком длинной — для них лучше использовать URL изображений.':' Готово для вставки в Genially после публикации index.html.');
-        info.style.color=(chars>150000||hasEmbeddedImages)?'#ffb347':'#8c92a0';
+        info.textContent=hasEmbeddedImages
+            ? `Ссылка готова · ${chars.toLocaleString('ru-RU')} символов. В проекте есть загруженные изображения, поэтому ссылка может быть очень длинной.`
+            : `Ссылка готова · ${chars.toLocaleString('ru-RU')} символов.`;
+        info.style.color=(chars>150000||hasEmbeddedImages)?'#ffb347':'#65ff9a';
     }
-    showEditorToast('HTTPS-ссылка для Genially сформирована.');
+    showEditorToast('Ссылка для Genially сформирована.');
     return link;
 }
 
-async function copyHostedGameLink() {
-    const field=document.getElementById('export-game-link');
-    const link=field?.value || generateHostedGameLink();
-    if(!link) return;
-    await copyTextToClipboard(link,'Ссылка на игру скопирована.');
-}
-
-async function copyHostedIframe() {
-    const field=document.getElementById('export-game-link');
-    const link=field?.value || generateHostedGameLink();
-    if(!link) return;
-    const safe=String(link).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    const iframe=`<iframe src="${safe}" width="100%" height="100%" frameborder="0" allowfullscreen style="border:0;width:100%;height:100%;overflow:hidden;"></iframe>`;
-    await copyTextToClipboard(iframe,'IFRAME для Genially скопирован.');
+async function generateAndCopyHostedGameLink() {
+    const link = generateHostedGameLink();
+    if (!link) return;
+    await copyTextToClipboard(link, 'Ссылка для Genially скопирована.');
+    const info = document.getElementById('export-link-info');
+    if (info) info.textContent = `Ссылка готова · ${link.length.toLocaleString('ru-RU')} символов.`;
 }
 
 function safeSerializeConfig(config) {
