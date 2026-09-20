@@ -780,7 +780,7 @@
         .g-game-total-row strong { color:#ff3b30; font-size:1.35em; }
 
         /* QUESTION GAME RENDERERS */
-        :root { --prompt-color:#b8bbc5; --prompt-size:24px; --prompt-font:'Montserrat', sans-serif; --q-font:'Metamorphous', serif; --a-font:'Metamorphous', serif; }
+        :root { --prompt-color:#39ff14; --prompt-size:24px; --prompt-font:'Montserrat', sans-serif; --q-font:'Metamorphous', serif; --a-font:'Metamorphous', serif; }
         #p-prompt { color:var(--prompt-color); font-size:var(--prompt-size); font-family:var(--prompt-font); margin-bottom:8px; }
         #p-q { font-family:var(--q-font) !important; }
         .ans-btn-preview { font-family:var(--a-font) !important; }
@@ -842,6 +842,69 @@
         .g-gap-slot { display:inline-flex; min-width:88px; min-height:35px; align-items:center; justify-content:center; margin:0 4px; padding:2px 8px; border-bottom:2px solid var(--ui-color); color:var(--ui-color); cursor:pointer; vertical-align:middle; }
         .g-open-next { margin-top:20px; }
         @media (max-width:700px) { .g-choice-grid,.g-multi-grid { grid-template-columns:1fr; } .g-pairs { gap:8px; } .g-categories.cols-3 { grid-template-columns:1fr; } .g-question-card { width:94vw !important; max-width:94vw !important; padding:16px 14px !important; max-height:86vh !important; } }
+
+        /* STAGE 20 — compact, higher-contrast question cards */
+        .g-question-card {
+            width:min(88vw,720px) !important;
+            max-width:720px !important;
+            min-height:0 !important;
+            height:auto !important;
+            max-height:82vh !important;
+            padding:18px 22px 20px !important;
+            justify-content:flex-start !important;
+        }
+        .g-question-card[data-type="input"],
+        .g-question-card[data-type="choice"],
+        .g-question-card[data-type="error"],
+        .g-question-card[data-type="open"] { width:min(88vw,720px) !important; max-width:720px !important; }
+        .g-question-card[data-type="gaps"] { width:min(90vw,790px) !important; max-width:790px !important; }
+        .g-question-card[data-type="order"],
+        .g-question-card[data-type="multi"] { width:min(90vw,800px) !important; max-width:800px !important; }
+        .g-question-card[data-type="pairs"] { width:min(91vw,850px) !important; max-width:850px !important; }
+        .g-question-card[data-type="categories"] { width:min(92vw,900px) !important; max-width:900px !important; }
+        .g-q-counter { margin-bottom:4px; font-size:13px; color:#aeb3bf; }
+        .g-q-prompt {
+            color:var(--prompt-color,#39ff14) !important;
+            font-weight:800;
+            letter-spacing:.1px;
+            text-shadow:0 0 9px color-mix(in srgb, var(--prompt-color,#39ff14) 55%, transparent);
+            margin:0 0 12px !important;
+        }
+        #g-q-text { margin:0 0 14px !important; }
+        #g-q-content { width:100%; }
+        .g-input-field {
+            width:min(92%,560px) !important;
+            margin:2px auto 2px !important;
+            padding:13px 16px !important;
+            background:rgba(0,0,0,.48) !important;
+            border-color:var(--ui-color) !important;
+            box-shadow:inset 0 0 12px rgba(0,0,0,.35), 0 0 12px color-mix(in srgb,var(--ui-color) 24%, transparent);
+        }
+        .g-gap-bank {
+            min-height:52px;
+            padding:8px;
+            background:rgba(255,255,255,.025);
+        }
+        .g-gaps-text {
+            margin-top:6px;
+            text-align:center;
+            line-height:1.65;
+        }
+        .g-pairs { gap:9px 18px; }
+        .g-pair-item {
+            min-height:48px;
+            background:rgba(255,255,255,.075);
+            border-color:#6b7180;
+            color:#fff;
+            font-weight:700;
+        }
+        .g-pair-item.right { background:rgba(255,255,255,.055); }
+        .g-action-row { margin-top:14px; }
+        @media (max-width:700px) {
+            .g-question-card,
+            .g-question-card[data-type] { width:94vw !important; max-width:94vw !important; padding:15px 13px 17px !important; }
+            .g-q-prompt { margin-bottom:9px !important; }
+        }
 
         /* GAME UI CSS (MAZE 14 STYLE) */
         #game-wrapper { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; overflow: hidden; user-select: none; font-family: var(--game-font); font-weight: bold; }
@@ -1144,7 +1207,7 @@
                     <div class="field"><label>Шрифт задания</label><select id="cfg-prompt-font" class="screen-font-select screen-control" data-default="'Montserrat', sans-serif"></select></div>
                     <div class="compact-grid-2">
                         <div class="field"><label>Размер</label><input type="number" id="cfg-prompt-size" class="screen-control" min="12" max="60" value="24"></div>
-                        <div class="color-picker-group"><span>Цвет</span><input type="color" id="cfg-prompt-color" class="screen-control" value="#b8bbc5"></div>
+                        <div class="color-picker-group"><span>Цвет</span><input type="color" id="cfg-prompt-color" class="screen-control" value="#39ff14"></div>
                     </div>
                 </div>
                 <div class="text-style-block">
@@ -2026,7 +2089,7 @@ function makeDefaultScreens(cfg={}) {
         },
         question: {
             frameColor:ui, windowBg:'#0f0519', windowOpacity:.95,
-            promptFont:cfg.promptFont || "'Montserrat', sans-serif", promptSize:parseFloat(cfg.promptSize)||24, promptColor:cfg.promptColor || '#b8bbc5',
+            promptFont:cfg.promptFont || "'Montserrat', sans-serif", promptSize:parseFloat(cfg.promptSize)||24, promptColor:cfg.promptColor || '#39ff14',
             questionFont:cfg.qFont || cfg.fontFamily || "'Metamorphous', serif", questionSize:parseFloat(cfg.qSize)||32, questionColor:cfg.qColor || '#ffe600',
             answerFont:cfg.aFont || "'Metamorphous', serif", answerSize:parseFloat(cfg.aSize)||26, answerColor:cfg.aColor || '#ffffff', answerBg:cfg.aBg || '#333333', answerNeon:ui
         },
@@ -2073,7 +2136,7 @@ function getScreensConfigFromEditor() {
         },
         question:{
             frameColor:textVal('screen-game-frame','#39ff14'), windowBg:textVal('screen-question-bg','#0f0519'), windowOpacity:numVal('screen-question-opacity',95)/100,
-            promptFont:textVal('cfg-prompt-font',"'Montserrat', sans-serif"), promptSize:numVal('cfg-prompt-size',24), promptColor:textVal('cfg-prompt-color','#b8bbc5'),
+            promptFont:textVal('cfg-prompt-font',"'Montserrat', sans-serif"), promptSize:numVal('cfg-prompt-size',24), promptColor:textVal('cfg-prompt-color','#39ff14'),
             questionFont:textVal('cfg-q-font',"'Metamorphous', serif"), questionSize:numVal('cfg-q-size',32), questionColor:textVal('cfg-q-color','#ffe600'),
             answerFont:textVal('cfg-a-font',"'Metamorphous', serif"), answerSize:numVal('cfg-a-size',26), answerColor:textVal('cfg-a-color','#fff'), answerBg:textVal('cfg-a-bg','#333333'), answerNeon:textVal('screen-answer-neon','#39ff14')
         },
@@ -2303,7 +2366,7 @@ class GameCore {
         // Глобальная статистика
         this.score=0; this.lives=this.cfg.lives || 3; this.maxLives = this.cfg.lives || 3;
         this.scoreBalls = 0; this.scoreQ = 0; this.scoreBonus = 0; this.sPen = 0; this.statWrong = 0;
-        this.levelWrong = 0; this.questionInProgress = false; this.activeQuestion = null; this.activeQuestionBall = null; this.wrongQuestions = []; this.statChecked = 0; this.statCorrect = 0; this.statOpen = 0; this.levelStartStats = {score:0, scoreBalls:0, scoreQ:0, scoreBonus:0, sPen:0, statChecked:0, statCorrect:0, statWrong:0};
+        this.levelWrong = 0; this.questionInProgress = false; this.activeQuestion = null; this.activeQuestionBall = null; this.blockShootUntil = 0; this.wrongQuestions = []; this.statChecked = 0; this.statCorrect = 0; this.statOpen = 0; this.levelStartStats = {score:0, scoreBalls:0, scoreQ:0, scoreBonus:0, sPen:0, statChecked:0, statCorrect:0, statWrong:0};
         
         // Жесткая защита стартовых массивов
         this.balls = []; this.bullets = []; this.parts = []; this.queue = []; this.path = []; this.fworks = []; this.lightnings = [];
@@ -2397,6 +2460,12 @@ class GameCore {
         const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; this.player.x=Math.max(35, Math.min(this.w-35, cx-r.left)); };
         this.cvs.addEventListener('mousemove',move); this.cvs.addEventListener('touchmove',e=>{e.preventDefault();move(e)},{passive:false}); 
         this.cvs.addEventListener('click',()=>this.shoot());
+        const quizScreen=document.getElementById('g-quiz-screen');
+        if(quizScreen){
+            ['pointerdown','pointerup','mousedown','mouseup','touchstart','touchend','click'].forEach(type=>{
+                quizScreen.addEventListener(type,()=>{ this.blockShootUntil=performance.now()+450; }, {passive:true});
+            });
+        }
         
         document.getElementById('g-btn-start').onclick = () => { AudioSys.init(); this.start(0); };
         document.getElementById('g-btn-restart').onclick = () => { 
@@ -2497,7 +2566,7 @@ class GameCore {
 
     rndCol(){ return this.colors[Math.floor(Math.random()*this.colors.length)]; }
     spawn() { if(this.queue.length===0) return; let typeKey = this.queue.shift(); if (!this.bTypes[typeKey]) typeKey = 'normal'; this.balls.push({ d:0, type: typeKey, c: this.rndCol() }); }
-    shoot() { if(this.state!=='playing' || this.bullets.length>0) return; this.bullets.push({x:this.player.x, y:this.player.y-20, c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
+    shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; this.bullets.push({x:this.player.x, y:this.player.y-20, c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
     
     update(frameScale = 1) {
         frameScale = Math.max(0.15, Math.min(3, Number(frameScale) || 1));
@@ -2570,7 +2639,7 @@ class GameCore {
         if (this.nextQIndex >= this.levelQuestionTarget || this.nextQIndex >= this.levelQuestions.length) {
             const qi=this.activeQuestionBall ? this.balls.indexOf(this.activeQuestionBall) : this.balls.findIndex(b=>b.type==='question');
             if(qi!==-1) this.balls.splice(qi,1);
-            this.activeQuestionBall=null; this.activeQuestion=null; this.questionInProgress=false; this.state='playing'; this.ui();
+            this.activeQuestionBall=null; this.activeQuestion=null; this.questionInProgress=false; this.blockShootUntil=performance.now()+450; this.state='playing'; this.ui();
             return;
         }
         const q = this.levelQuestions[this.nextQIndex];
@@ -2578,6 +2647,7 @@ class GameCore {
         this.activeQuestion = q;
         this.activeQuestionAttemptKey = `${this.currentLevelIndex}:${this.nextQIndex}:${q?.id || 'question'}`;
         this.questionInProgress = true;
+        this.blockShootUntil = Number.POSITIVE_INFINITY;
         const screen = document.getElementById('g-quiz-screen');
         const card = document.getElementById('g-question-card');
         const promptEl = document.getElementById('g-q-prompt');
@@ -2784,7 +2854,7 @@ class GameCore {
         document.getElementById('g-quiz-screen').classList.add('g-hidden');
         const qi=this.activeQuestionBall ? this.balls.indexOf(this.activeQuestionBall) : this.balls.findIndex(b=>b.type==='question');
         if(qi!==-1) this.balls.splice(qi,1);
-        this.activeQuestionBall=null; this.questionInProgress=false; this.qDone++;
+        this.activeQuestionBall=null; this.questionInProgress=false; this.blockShootUntil=performance.now()+450; this.qDone++;
 
         if(opts.open) {
             this.statOpen++; this.score += 100; this.scoreQ += 100; AudioSys.correct(); this.showFlash('+100');
@@ -4162,7 +4232,7 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
     try{
         setFieldValue('project-name',snapshot.projectName || 'Maze Trap Project');
         setFieldValue('cfg-lang',cfg.lang || 'ru'); setFieldValue('cfg-lives',cfg.lives ?? 3); setFieldValue('cfg-time',cfg.timerStart ?? 120); setFieldValue('cfg-pause-timer-questions',cfg.pauseTimerOnQuestions !== false); setFieldValue('cfg-speed',cfg.speed ?? 1.2); setFieldValue('cfg-neon',cfg.neonEnabled !== false); setFieldValue('cfg-random-questions',cfg.randomQuestions !== false); setFieldValue('cfg-math-enabled',!!cfg.mathEnabled); setFieldValue('cfg-prog-color',cfg.progColor || '#00ff66');
-        setFieldValue('cfg-prompt-font',cfg.promptFont); setFieldValue('cfg-prompt-color',cfg.promptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
+        setFieldValue('cfg-prompt-font',cfg.promptFont); const migratedPromptColor=(!cfg.promptColor || String(cfg.promptColor).toLowerCase()==='#b8bbc5') ? '#39ff14' : cfg.promptColor; setFieldValue('cfg-prompt-color',migratedPromptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
         const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball,'special-neutral':cfg.specialBallImages?.neutral};
         Object.entries(assetValues).forEach(([key,value])=>{ if(value) setAssetValue(key,value); });
         levels=(cfg.levels||[]).map((l,i)=>({id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup)}));
