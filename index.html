@@ -3745,7 +3745,14 @@ function renderLevels() {
             const stats=document.createElement('div');stats.className='route-inline-stats';stats.innerHTML='<span>Точек: <strong id="path-point-count">0</strong></span><span>Выбрана: <strong id="path-selected-point">—</strong></span>';
             const actionsInline=document.createElement('div');actionsInline.className='route-inline-actions';
             const mk=(txt,fn,wide=false)=>{const b=document.createElement('button');b.type='button';b.className='btn-main'+(wide?' wide':'');b.textContent=txt;b.onclick=fn;return b;};
-            actionsInline.append(mk('↶ Отменить шаг',undoPathEdit),mk('⌫ Удалить точку',deleteSelectedPathPoint),mk('✕ Очистить',clearPathEditor),mk('Отмена',cancelPathEditor),mk('✓ Сохранить и закрыть',savePathEditor,true));
+            actionsInline.append(
+                mk('↶ Отменить шаг',undoPathEdit),
+                mk('⌫ Удалить точку',deleteSelectedPathPoint),
+                mk('✕ Очистить',clearPathEditor),
+                mk('📋 Скопировать траекторию',copyPathEditor),
+                mk('Отмена',cancelPathEditor),
+                mk('✓ Сохранить и закрыть',savePathEditor,true)
+            );
             const stat=document.createElement('div');stat.className='route-inline-status';stat.id='path-editor-status';stat.textContent='Кликайте по большому экрану справа. Первая точка — старт, последняя — финиш.';
             editor.append(stats,actionsInline,stat);route.appendChild(editor);
         }
@@ -4086,6 +4093,44 @@ function clearPathEditor() {
     pushPathHistory(); pathEditorPoints = []; selectedPathPoint = -1;
     updatePathEditorUI(); drawPathEditor();
     setPathEditorStatus('Траектория очищена. Чтобы сохранить очистку, нажмите «Сохранить траекторию».');
+}
+
+async function copyPathEditor() {
+    if (!pathEditorPoints.length) {
+        setPathEditorStatus('Траектория пока пустая — нечего копировать.');
+        return;
+    }
+    const compactPath = pathEditorPoints.map(p => ({
+        x: +Number(p.x).toFixed(4),
+        y: +Number(p.y).toFixed(4)
+    }));
+    const text = JSON.stringify(compactPath);
+    let copied = false;
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            copied = true;
+        }
+    } catch (_) {}
+    if (!copied) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly','');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            copied = document.execCommand('copy');
+            ta.remove();
+        } catch (_) {}
+    }
+    if (copied) {
+        setPathEditorStatus(`Траектория скопирована · ${compactPath.length} точек.`);
+        showEditorToast(`Траектория уровня ${activePathLevelIndex + 1} скопирована.`);
+    } else {
+        setPathEditorStatus('Не удалось скопировать автоматически. Откройте редактор по HTTPS и попробуйте ещё раз.');
+    }
 }
 
 function savePathEditor() {
