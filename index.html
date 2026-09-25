@@ -653,6 +653,37 @@
         .p-game-progress { position:absolute; top:18px; left:50%; transform:translateX(-50%); width:34%; height:12px; border:1px solid var(--prog-color); border-radius:999px; background:rgba(0,0,0,.55); overflow:hidden; }
         .p-game-progress::after { content:''; display:block; width:55%; height:100%; background:var(--prog-color); box-shadow:0 0 10px var(--prog-color); }
 
+        .p-object-layer { position:absolute; inset:0; z-index:5; pointer-events:none; overflow:hidden; }
+        .p-object-layer.editing { pointer-events:auto; }
+        .p-object-item {
+            position:absolute; transform:translate(-50%,-50%); width:90px; height:90px; box-sizing:border-box;
+            border:1px dashed transparent; border-radius:8px; cursor:move; touch-action:none; user-select:none;
+        }
+        .p-object-layer.editing .p-object-item { border-color:rgba(255,255,255,.34); background:rgba(0,0,0,.035); }
+        .p-object-item.selected { border-color:var(--tab-accent) !important; box-shadow:0 0 0 1px rgba(255,255,255,.28),0 0 16px var(--tab-accent); }
+        .p-object-item img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none; -webkit-user-drag:none; filter:drop-shadow(0 0 8px rgba(0,0,0,.38)); }
+        .p-object-tag { position:absolute; left:50%; bottom:calc(100% + 5px); transform:translateX(-50%); padding:3px 6px; border-radius:999px; background:rgba(5,6,9,.88); border:1px solid currentColor; color:#fff; font-size:8px; font-weight:900; white-space:nowrap; opacity:0; pointer-events:none; }
+        .p-object-item.selected .p-object-tag { opacity:1; color:var(--tab-accent); }
+        .p-object-handle { position:absolute; width:11px; height:11px; border-radius:50%; background:#fff; border:2px solid var(--tab-accent); box-shadow:0 0 9px var(--tab-accent); display:none; touch-action:none; }
+        .p-object-item.selected .p-object-handle { display:block; }
+        .p-object-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }
+        .p-object-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }
+        .p-object-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }
+        .p-object-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }
+        .p-finish-anchor { position:absolute; transform:translate(-50%,-50%); width:16px; height:16px; border:2px solid #ffe600; border-radius:50%; box-shadow:0 0 0 3px rgba(0,0,0,.52),0 0 14px #ffe600; display:none; pointer-events:none; }
+        .p-finish-anchor::after { content:'КОНЕЦ ПУТИ'; position:absolute; left:20px; top:50%; transform:translateY(-50%); color:#ffe600; font-size:7px; font-weight:900; white-space:nowrap; text-shadow:0 1px 3px #000; }
+        .p-object-layer.editing .p-finish-anchor { display:block; }
+        .p-object-toolbar {
+            position:absolute; z-index:11; left:50%; bottom:10px; transform:translateX(-50%); display:none; align-items:center; gap:5px;
+            max-width:calc(100% - 20px); padding:6px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(5,6,9,.88); box-shadow:0 5px 24px rgba(0,0,0,.42); backdrop-filter:blur(8px); pointer-events:auto;
+        }
+        .p-object-toolbar.visible { display:flex; }
+        .p-object-toolbar button { border:1px solid #353944; background:#11131a; color:#d9dce5; padding:6px 8px; border-radius:6px; font-size:8px; font-weight:900; cursor:pointer; white-space:nowrap; }
+        .p-object-toolbar button.active { border-color:var(--tab-accent); color:#fff; box-shadow:0 0 10px var(--tab-accent); }
+        .p-object-toolbar .object-reset-group { display:none; gap:5px; }
+        .p-object-toolbar.editing .object-reset-group { display:flex; }
+        .p-object-status { color:#9da3af; font-size:7.5px; white-space:nowrap; }
+        .p-object-toolbar.editing .p-object-status { color:#fff; }
         .preview-test-btn { border-color:#39ff14 !important; color:#fff !important; box-shadow:0 0 10px rgba(57,255,20,.22); }
         .p-main-deco { width:86px; max-height:96px; object-fit:contain; margin-bottom:8px; filter:drop-shadow(0 0 10px var(--tab-accent)); }
         .p-start-card { width:min(82%,760px); padding:18px 22px; }
@@ -1650,6 +1681,26 @@
                 <div class="path-edit-banner">РЕЖИМ РИСОВАНИЯ ТРАЕКТОРИИ</div>
                 <canvas id="preview-canvas" width="1280" height="720" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;"></canvas>
 
+                <div class="p-object-layer" id="p-object-layer" aria-label="Редактор положения пушки и финиша">
+                    <div class="p-finish-anchor" id="p-finish-anchor" title="Реальный конец траектории"></div>
+                    <div class="p-object-item" id="p-object-shooter" data-object-type="shooter" title="Пушка: перетащите для положения, потяните за угол для размера">
+                        <span class="p-object-tag">ПУШКА</span><img id="p-object-shooter-img" alt="">
+                        <span class="p-object-handle nw" data-resize-handle></span><span class="p-object-handle ne" data-resize-handle></span><span class="p-object-handle sw" data-resize-handle></span><span class="p-object-handle se" data-resize-handle></span>
+                    </div>
+                    <div class="p-object-item" id="p-object-finish" data-object-type="finish" title="Финиш: перетащите относительно конца траектории, потяните за угол для размера">
+                        <span class="p-object-tag">ФИНИШ</span><img id="p-object-finish-img" alt="">
+                        <span class="p-object-handle nw" data-resize-handle></span><span class="p-object-handle ne" data-resize-handle></span><span class="p-object-handle sw" data-resize-handle></span><span class="p-object-handle se" data-resize-handle></span>
+                    </div>
+                </div>
+                <div class="p-object-toolbar" id="p-object-toolbar">
+                    <button type="button" id="p-object-edit-toggle" onclick="togglePreviewObjectEdit()">✥ Редактировать объекты</button>
+                    <span class="p-object-status" id="p-object-status">Пушка и финиш · мышкой</span>
+                    <span class="object-reset-group">
+                        <button type="button" onclick="resetPreviewObject('shooter')">↺ Пушка</button>
+                        <button type="button" onclick="resetPreviewObject('finish')">↺ Финиш</button>
+                    </span>
+                </div>
+
                 <div class="p-game-hud" id="p-screen-game">
                     <div class="p-game-stat left">
                         <span class="p-hud-item"><img id="p-hud-heart" class="p-hud-icon" src=""><b>3</b></span>
@@ -1889,16 +1940,22 @@ const PRESETS = [
     "https://img.genially.com/67961b32a116fb001568a75e/b40dc413-b697-41ba-87f5-b6766c421faa.png",
     "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/halloween/background_halloween.png",
     "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/newyear/background_newyear.png",
-    "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/background_valentine.png"
+    "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/background_valentine.png",
+    "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/space/background_space.png",
+    "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/candy/background_candy.png",
+    "https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/background_sea.png"
 ];
 const P_PATHS = [
     '[{"x":0.0254,"y":0.444},{"x":0.0729,"y":0.4356},{"x":0.1178,"y":0.4225},{"x":0.1579,"y":0.395},{"x":0.2021,"y":0.3532},{"x":0.2396,"y":0.3043},{"x":0.2791,"y":0.2553},{"x":0.324,"y":0.2052},{"x":0.3709,"y":0.1801},{"x":0.4184,"y":0.155},{"x":0.4619,"y":0.149},{"x":0.5068,"y":0.1502},{"x":0.5503,"y":0.1586},{"x":0.5891,"y":0.1801},{"x":0.6253,"y":0.2016},{"x":0.6621,"y":0.2458},{"x":0.6909,"y":0.2959},{"x":0.7157,"y":0.3687},{"x":0.7244,"y":0.4476},{"x":0.707,"y":0.5347},{"x":0.6742,"y":0.6064},{"x":0.6374,"y":0.6517},{"x":0.5878,"y":0.684},{"x":0.5282,"y":0.6935},{"x":0.4673,"y":0.6828},{"x":0.4211,"y":0.6506},{"x":0.3829,"y":0.5992},{"x":0.3555,"y":0.5311},{"x":0.3508,"y":0.4392},{"x":0.3742,"y":0.3652},{"x":0.4124,"y":0.3246},{"x":0.4592,"y":0.2947},{"x":0.5054,"y":0.2923},{"x":0.5476,"y":0.3126},{"x":0.5818,"y":0.3437},{"x":0.6032,"y":0.4022},{"x":0.5999,"y":0.4607},{"x":0.5878,"y":0.5108},{"x":0.5624,"y":0.5347},{"x":0.5269,"y":0.5323},{"x":0.5101,"y":0.4726}]',
     '[{"x":0.002,"y":0.4843},{"x":0.2428,"y":0.4798},{"x":0.2526,"y":0.4798},{"x":0.2604,"y":0.4798},{"x":0.2611,"y":0.4557},{"x":0.2617,"y":0.2869},{"x":0.2611,"y":0.2583},{"x":0.2786,"y":0.2583},{"x":0.5781,"y":0.2553},{"x":0.5957,"y":0.2583},{"x":0.5762,"y":0.2929},{"x":0.3288,"y":0.6486},{"x":0.3164,"y":0.6682},{"x":0.349,"y":0.6712},{"x":0.4805,"y":0.6742},{"x":0.4987,"y":0.6727},{"x":0.5143,"y":0.6486},{"x":0.6367,"y":0.4602},{"x":0.651,"y":0.4286},{"x":0.6875,"y":0.4316},{"x":0.804,"y":0.4331},{"x":0.8171,"y":0.4331},{"x":0.8177,"y":0.5054}]',
     '[{"x":0.623,"y":0.5853},{"x":0.6211,"y":0.5476},{"x":0.6211,"y":0.4964},{"x":0.6159,"y":0.4497},{"x":0.6016,"y":0.4316},{"x":0.5859,"y":0.4241},{"x":0.5703,"y":0.4271},{"x":0.556,"y":0.4482},{"x":0.5397,"y":0.4994},{"x":0.5228,"y":0.5823},{"x":0.4987,"y":0.641},{"x":0.4674,"y":0.6908},{"x":0.4421,"y":0.7104},{"x":0.4115,"y":0.7239},{"x":0.375,"y":0.7345},{"x":0.3385,"y":0.733},{"x":0.3099,"y":0.7194},{"x":0.2813,"y":0.6968},{"x":0.2565,"y":0.6802},{"x":0.2305,"y":0.641},{"x":0.2122,"y":0.6019},{"x":0.1973,"y":0.5597},{"x":0.1855,"y":0.5054},{"x":0.1803,"y":0.4557},{"x":0.1829,"y":0.403},{"x":0.1927,"y":0.3547},{"x":0.2064,"y":0.3186},{"x":0.2233,"y":0.2884},{"x":0.2441,"y":0.2583},{"x":0.2663,"y":0.2402},{"x":0.2936,"y":0.2312},{"x":0.3229,"y":0.2251},{"x":0.3529,"y":0.2327},{"x":0.3796,"y":0.2523},{"x":0.3984,"y":0.2824},{"x":0.4128,"y":0.311},{"x":0.4219,"y":0.3623},{"x":0.4154,"y":0.415},{"x":0.3939,"y":0.4331},{"x":0.3737,"y":0.4286},{"x":0.3581,"y":0.4105},{"x":0.3464,"y":0.3864},{"x":0.3294,"y":0.3698},{"x":0.3092,"y":0.3623},{"x":0.2891,"y":0.3728},{"x":0.2708,"y":0.3984},{"x":0.2546,"y":0.4482},{"x":0.2585,"y":0.5115},{"x":0.2734,"y":0.5446},{"x":0.2962,"y":0.5778},{"x":0.3249,"y":0.6019},{"x":0.3581,"y":0.6109},{"x":0.39,"y":0.6019},{"x":0.4193,"y":0.5838},{"x":0.4427,"y":0.5536},{"x":0.4616,"y":0.5054},{"x":0.4746,"y":0.4572},{"x":0.4857,"y":0.3969},{"x":0.5,"y":0.3562},{"x":0.5332,"y":0.3065},{"x":0.5625,"y":0.2884},{"x":0.5911,"y":0.2779},{"x":0.6224,"y":0.2884},{"x":0.6484,"y":0.3171},{"x":0.6719,"y":0.3608},{"x":0.6849,"y":0.4075},{"x":0.6947,"y":0.4632},{"x":0.709,"y":0.5039},{"x":0.7337,"y":0.516},{"x":0.7585,"y":0.5175},{"x":0.7793,"y":0.516},{"x":0.7995,"y":0.522},{"x":0.8164,"y":0.5145}]',
     '[{"x":0.1322,"y":0.6863},{"x":0.1484,"y":0.6983},{"x":0.2038,"y":0.7375},{"x":0.2682,"y":0.7646},{"x":0.3405,"y":0.7917},{"x":0.4238,"y":0.7887},{"x":0.4785,"y":0.7661},{"x":0.5156,"y":0.7074},{"x":0.526,"y":0.635},{"x":0.5098,"y":0.5612},{"x":0.485,"y":0.5235},{"x":0.4401,"y":0.4919},{"x":0.3047,"y":0.4858},{"x":0.2454,"y":0.4843},{"x":0.194,"y":0.4451},{"x":0.1641,"y":0.3517},{"x":0.1732,"y":0.2432},{"x":0.2142,"y":0.1784},{"x":0.2604,"y":0.1423},{"x":0.3145,"y":0.1362},{"x":0.3548,"y":0.1362},{"x":0.3887,"y":0.1634},{"x":0.4115,"y":0.2025},{"x":0.4264,"y":0.2447},{"x":0.4408,"y":0.2854},{"x":0.4661,"y":0.3231},{"x":0.4928,"y":0.3412},{"x":0.5267,"y":0.3472},{"x":0.5566,"y":0.3366},{"x":0.5911,"y":0.311},{"x":0.6185,"y":0.2688},{"x":0.6536,"y":0.2327},{"x":0.6888,"y":0.204},{"x":0.7318,"y":0.2055},{"x":0.7708,"y":0.2281},{"x":0.7988,"y":0.2869},{"x":0.8151,"y":0.3427},{"x":0.8177,"y":0.3909},{"x":0.8138,"y":0.4647},{"x":0.7982,"y":0.513},{"x":0.7819,"y":0.5521},{"x":0.7656,"y":0.5778},{"x":0.7637,"y":0.6516},{"x":0.7624,"y":0.7089},{"x":0.7487,"y":0.7435},{"x":0.7227,"y":0.7767}]',
-    '[{"x":0.0836,"y":0.2017},{"x":0.0991,"y":0.2426},{"x":0.1187,"y":0.304},{"x":0.1323,"y":0.3569},{"x":0.1465,"y":0.423},{"x":0.1586,"y":0.4916},{"x":0.1756,"y":0.5457},{"x":0.1972,"y":0.589},{"x":0.2216,"y":0.6299},{"x":0.2527,"y":0.6684},{"x":0.2953,"y":0.7153},{"x":0.4049,"y":0.7778},{"x":0.4854,"y":0.8007},{"x":0.549,"y":0.8091},{"x":0.6572,"y":0.8115},{"x":0.7682,"y":0.7862},{"x":0.8142,"y":0.7574},{"x":0.852,"y":0.6948},{"x":0.8683,"y":0.6419},{"x":0.869,"y":0.5505},{"x":0.8595,"y":0.4952},{"x":0.825,"y":0.399},{"x":0.7878,"y":0.3425},{"x":0.7181,"y":0.2787},{"x":0.6572,"y":0.2294},{"x":0.5842,"y":0.1957},{"x":0.4901,"y":0.1837},{"x":0.4286,"y":0.1909},{"x":0.3616,"y":0.2222},{"x":0.3278,"y":0.2535},{"x":0.3048,"y":0.2919},{"x":0.2885,"y":0.3461},{"x":0.2899,"y":0.4411},{"x":0.3136,"y":0.5108},{"x":0.3602,"y":0.5806},{"x":0.3974,"y":0.613},{"x":0.4353,"y":0.6371},{"x":0.4732,"y":0.6491},{"x":0.5206,"y":0.6612},{"x":0.5713,"y":0.66},{"x":0.6173,"y":0.6515},{"x":0.6599,"y":0.6395},{"x":0.6978,"y":0.6143},{"x":0.7235,"y":0.5698},{"x":0.7343,"y":0.5084},{"x":0.7195,"y":0.4314},{"x":0.6883,"y":0.3749},{"x":0.6552,"y":0.34},{"x":0.6031,"y":0.304},{"x":0.5314,"y":0.2883},{"x":0.4617,"y":0.2992},{"x":0.4286,"y":0.3196},{"x":0.3974,"y":0.3665},{"x":0.3961,"y":0.4459},{"x":0.4218,"y":0.4904},{"x":0.4604,"y":0.5144},{"x":0.4793,"y":0.5144},{"x":0.507,"y":0.4988},{"x":0.5402,"y":0.4832},{"x":0.5591,"y":0.4567}]',
+    '[{"x":0.091,"y":0.1945},{"x":0.1099,"y":0.233},{"x":0.1255,"y":0.3004},{"x":0.137,"y":0.3581},{"x":0.1492,"y":0.4266},{"x":0.1627,"y":0.4916},{"x":0.181,"y":0.5397},{"x":0.1999,"y":0.583},{"x":0.227,"y":0.6299},{"x":0.254,"y":0.6612},{"x":0.3034,"y":0.7165},{"x":0.4062,"y":0.7754},{"x":0.4867,"y":0.7946},{"x":0.5497,"y":0.8043},{"x":0.6633,"y":0.8091},{"x":0.7688,"y":0.7802},{"x":0.8169,"y":0.7489},{"x":0.852,"y":0.6948},{"x":0.8764,"y":0.6383},{"x":0.8784,"y":0.5553},{"x":0.8656,"y":0.4892},{"x":0.8257,"y":0.3942},{"x":0.7864,"y":0.3352},{"x":0.7215,"y":0.2739},{"x":0.6559,"y":0.221},{"x":0.5842,"y":0.1909},{"x":0.501,"y":0.1789},{"x":0.4299,"y":0.1861},{"x":0.3636,"y":0.2126},{"x":0.3251,"y":0.2462},{"x":0.3027,"y":0.2895},{"x":0.2885,"y":0.3461},{"x":0.2926,"y":0.4423},{"x":0.3136,"y":0.5108},{"x":0.3623,"y":0.577},{"x":0.4002,"y":0.6082},{"x":0.438,"y":0.6323},{"x":0.4712,"y":0.6443},{"x":0.5267,"y":0.6551},{"x":0.5706,"y":0.6575},{"x":0.62,"y":0.6503},{"x":0.6599,"y":0.6395},{"x":0.7005,"y":0.6143},{"x":0.7296,"y":0.5722},{"x":0.737,"y":0.506},{"x":0.7235,"y":0.4327},{"x":0.6883,"y":0.3749},{"x":0.6552,"y":0.34},{"x":0.6031,"y":0.304},{"x":0.5314,"y":0.2883},{"x":0.4617,"y":0.2992},{"x":0.4286,"y":0.3196},{"x":0.3974,"y":0.3665},{"x":0.3988,"y":0.4387},{"x":0.4238,"y":0.4892},{"x":0.4604,"y":0.5144},{"x":0.4793,"y":0.5144},{"x":0.507,"y":0.4988},{"x":0.5402,"y":0.4832},{"x":0.5571,"y":0.4699}]',
     '[{"x":0.8926,"y":0.2246},{"x":0.8737,"y":0.2523},{"x":0.8852,"y":0.2919},{"x":0.8811,"y":0.3292},{"x":0.8554,"y":0.3581},{"x":0.825,"y":0.3725},{"x":0.7756,"y":0.3797},{"x":0.7168,"y":0.3737},{"x":0.6599,"y":0.3413},{"x":0.5713,"y":0.2811},{"x":0.4867,"y":0.2535},{"x":0.3981,"y":0.2583},{"x":0.3386,"y":0.2703},{"x":0.2635,"y":0.3064},{"x":0.2249,"y":0.3509},{"x":0.2087,"y":0.3966},{"x":0.2256,"y":0.4351},{"x":0.2534,"y":0.4459},{"x":0.2885,"y":0.4459},{"x":0.3312,"y":0.423},{"x":0.3778,"y":0.3978},{"x":0.4407,"y":0.3713},{"x":0.4901,"y":0.3689},{"x":0.5442,"y":0.3713},{"x":0.5957,"y":0.3942},{"x":0.6376,"y":0.4242},{"x":0.6863,"y":0.4784},{"x":0.735,"y":0.5144},{"x":0.7885,"y":0.5349},{"x":0.8345,"y":0.5637},{"x":0.8696,"y":0.6227},{"x":0.8622,"y":0.7008},{"x":0.8108,"y":0.761},{"x":0.6653,"y":0.8391},{"x":0.5219,"y":0.8548},{"x":0.4313,"y":0.8151},{"x":0.3528,"y":0.7417},{"x":0.2906,"y":0.696},{"x":0.2378,"y":0.6756},{"x":0.185,"y":0.6648},{"x":0.1289,"y":0.6527},{"x":0.1045,"y":0.6082},{"x":0.1072,"y":0.5589},{"x":0.1363,"y":0.5277},{"x":0.1837,"y":0.5168},{"x":0.2331,"y":0.5409},{"x":0.2797,"y":0.5794},{"x":0.3447,"y":0.6323},{"x":0.4089,"y":0.6708},{"x":0.461,"y":0.6984},{"x":0.5172,"y":0.702},{"x":0.5612,"y":0.696},{"x":0.5875,"y":0.6648},{"x":0.5869,"y":0.6311},{"x":0.5754,"y":0.6118},{"x":0.5571,"y":0.589},{"x":0.5321,"y":0.5601},{"x":0.505,"y":0.5144}]',
-    '[{"x":0.0342,"y":0.2751},{"x":0.0748,"y":0.3004},{"x":0.1126,"y":0.3136},{"x":0.1492,"y":0.322},{"x":0.181,"y":0.3521},{"x":0.2006,"y":0.399},{"x":0.1945,"y":0.482},{"x":0.2033,"y":0.5445},{"x":0.2175,"y":0.5926},{"x":0.2446,"y":0.6082},{"x":0.2743,"y":0.6143},{"x":0.3,"y":0.5758},{"x":0.2994,"y":0.5024},{"x":0.2899,"y":0.4266},{"x":0.2919,"y":0.3605},{"x":0.3136,"y":0.2956},{"x":0.3467,"y":0.2835},{"x":0.3819,"y":0.2811},{"x":0.415,"y":0.298},{"x":0.4495,"y":0.3413},{"x":0.4813,"y":0.3954},{"x":0.507,"y":0.4627},{"x":0.5226,"y":0.5445},{"x":0.5233,"y":0.6359},{"x":0.5348,"y":0.6948},{"x":0.5767,"y":0.7538},{"x":0.6362,"y":0.7646},{"x":0.689,"y":0.7297},{"x":0.7127,"y":0.6575},{"x":0.6897,"y":0.5806},{"x":0.6505,"y":0.5397},{"x":0.6153,"y":0.4844},{"x":0.6085,"y":0.4302},{"x":0.6173,"y":0.3737},{"x":0.6586,"y":0.334},{"x":0.7086,"y":0.334},{"x":0.7506,"y":0.3665},{"x":0.7864,"y":0.4194},{"x":0.8121,"y":0.4808},{"x":0.8385,"y":0.5132},{"x":0.8784,"y":0.5253},{"x":0.9298,"y":0.5337}]'
+    '[{"x":0.0342,"y":0.2751},{"x":0.0748,"y":0.3004},{"x":0.1126,"y":0.3136},{"x":0.1492,"y":0.322},{"x":0.181,"y":0.3521},{"x":0.2006,"y":0.399},{"x":0.1945,"y":0.482},{"x":0.2033,"y":0.5445},{"x":0.2175,"y":0.5926},{"x":0.2446,"y":0.6082},{"x":0.2743,"y":0.6143},{"x":0.3,"y":0.5758},{"x":0.2994,"y":0.5024},{"x":0.2899,"y":0.4266},{"x":0.2919,"y":0.3605},{"x":0.3136,"y":0.2956},{"x":0.3467,"y":0.2835},{"x":0.3819,"y":0.2811},{"x":0.415,"y":0.298},{"x":0.4495,"y":0.3413},{"x":0.4813,"y":0.3954},{"x":0.507,"y":0.4627},{"x":0.5226,"y":0.5445},{"x":0.5233,"y":0.6359},{"x":0.5348,"y":0.6948},{"x":0.5767,"y":0.7538},{"x":0.6362,"y":0.7646},{"x":0.689,"y":0.7297},{"x":0.7127,"y":0.6575},{"x":0.6897,"y":0.5806},{"x":0.6505,"y":0.5397},{"x":0.6153,"y":0.4844},{"x":0.6085,"y":0.4302},{"x":0.6173,"y":0.3737},{"x":0.6586,"y":0.334},{"x":0.7086,"y":0.334},{"x":0.7506,"y":0.3665},{"x":0.7864,"y":0.4194},{"x":0.8121,"y":0.4808},{"x":0.8385,"y":0.5132},{"x":0.8784,"y":0.5253},{"x":0.9298,"y":0.5337}]',
+    '[{"x":0.0714,"y":0.1861},{"x":0.1099,"y":0.2041},{"x":0.1478,"y":0.2174},{"x":0.1898,"y":0.2366},{"x":0.2283,"y":0.2462},{"x":0.2818,"y":0.2486},{"x":0.3345,"y":0.2354},{"x":0.3853,"y":0.2306},{"x":0.4347,"y":0.2402},{"x":0.4658,"y":0.2907},{"x":0.3954,"y":0.3509},{"x":0.3778,"y":0.3918},{"x":0.4259,"y":0.423},{"x":0.4766,"y":0.4266},{"x":0.5294,"y":0.4254},{"x":0.5666,"y":0.417},{"x":0.6139,"y":0.4062},{"x":0.6606,"y":0.393},{"x":0.7235,"y":0.387},{"x":0.7844,"y":0.3942},{"x":0.8331,"y":0.4351},{"x":0.8487,"y":0.4928},{"x":0.8128,"y":0.5421},{"x":0.7641,"y":0.5746},{"x":0.7107,"y":0.5998},{"x":0.6579,"y":0.6046},{"x":0.5855,"y":0.5926},{"x":0.5104,"y":0.5686},{"x":0.4455,"y":0.5517},{"x":0.3717,"y":0.5433},{"x":0.3115,"y":0.5493},{"x":0.2662,"y":0.5698},{"x":0.2337,"y":0.5962},{"x":0.2148,"y":0.6443},{"x":0.2148,"y":0.702},{"x":0.2419,"y":0.7526},{"x":0.2797,"y":0.7838},{"x":0.3312,"y":0.8127},{"x":0.3853,"y":0.8319},{"x":0.4536,"y":0.85},{"x":0.5483,"y":0.8692},{"x":0.6166,"y":0.8764},{"x":0.6917,"y":0.8764},{"x":0.7546,"y":0.8728},{"x":0.8074,"y":0.8608},{"x":0.8493,"y":0.8391},{"x":0.8886,"y":0.8103},{"x":0.9014,"y":0.7598}]',
+    '[{"x":0.0822,"y":0.1825},{"x":0.1133,"y":0.2547},{"x":0.1634,"y":0.2895},{"x":0.2121,"y":0.2895},{"x":0.254,"y":0.2571},{"x":0.2709,"y":0.1945},{"x":0.298,"y":0.156},{"x":0.3386,"y":0.1356},{"x":0.392,"y":0.138},{"x":0.434,"y":0.1609},{"x":0.461,"y":0.209},{"x":0.4671,"y":0.2871},{"x":0.4982,"y":0.3785},{"x":0.5476,"y":0.423},{"x":0.6017,"y":0.4327},{"x":0.6457,"y":0.4206},{"x":0.6768,"y":0.3773},{"x":0.6998,"y":0.3088},{"x":0.7242,"y":0.2535},{"x":0.7682,"y":0.2162},{"x":0.8128,"y":0.2306},{"x":0.8548,"y":0.2763},{"x":0.8683,"y":0.3449},{"x":0.8683,"y":0.4122},{"x":0.9001,"y":0.4615},{"x":0.9326,"y":0.5192},{"x":0.9292,"y":0.5878},{"x":0.9028,"y":0.6251},{"x":0.8669,"y":0.6539},{"x":0.8175,"y":0.6708},{"x":0.7763,"y":0.6924},{"x":0.733,"y":0.7153},{"x":0.6897,"y":0.7333},{"x":0.6376,"y":0.7309},{"x":0.5936,"y":0.6936},{"x":0.5747,"y":0.6575},{"x":0.5503,"y":0.5974},{"x":0.5131,"y":0.5529},{"x":0.4739,"y":0.5349},{"x":0.4448,"y":0.5397},{"x":0.4292,"y":0.5072},{"x":0.4029,"y":0.4916},{"x":0.369,"y":0.4771},{"x":0.3325,"y":0.5012},{"x":0.3068,"y":0.5433},{"x":0.2852,"y":0.5902},{"x":0.2554,"y":0.6251},{"x":0.208,"y":0.6371},{"x":0.1681,"y":0.6335},{"x":0.1309,"y":0.6094},{"x":0.0876,"y":0.5914},{"x":0.0484,"y":0.6275},{"x":0.0423,"y":0.69},{"x":0.0714,"y":0.7369},{"x":0.1147,"y":0.7538},{"x":0.1485,"y":0.7682},{"x":0.1769,"y":0.7934},{"x":0.1992,"y":0.856}]',
+    '[{"x":0.0971,"y":0.2414},{"x":0.1248,"y":0.3184},{"x":0.1485,"y":0.3966},{"x":0.1742,"y":0.4699},{"x":0.2209,"y":0.5457},{"x":0.2784,"y":0.5986},{"x":0.3393,"y":0.6106},{"x":0.4002,"y":0.5854},{"x":0.4333,"y":0.5445},{"x":0.4272,"y":0.4808},{"x":0.3914,"y":0.4363},{"x":0.3602,"y":0.3954},{"x":0.3298,"y":0.3413},{"x":0.3575,"y":0.2859},{"x":0.4049,"y":0.2486},{"x":0.4597,"y":0.2414},{"x":0.5158,"y":0.2571},{"x":0.5686,"y":0.2835},{"x":0.622,"y":0.3124},{"x":0.6802,"y":0.3376},{"x":0.7377,"y":0.3653},{"x":0.7925,"y":0.3894},{"x":0.8554,"y":0.4218},{"x":0.9116,"y":0.4796},{"x":0.9461,"y":0.5601},{"x":0.9508,"y":0.6335},{"x":0.9353,"y":0.7105},{"x":0.9123,"y":0.7538},{"x":0.8798,"y":0.8007},{"x":0.8419,"y":0.8319},{"x":0.7918,"y":0.8464},{"x":0.737,"y":0.8379},{"x":0.6856,"y":0.8091},{"x":0.6444,"y":0.767},{"x":0.6146,"y":0.7117},{"x":0.5997,"y":0.6539},{"x":0.595,"y":0.5746},{"x":0.6362,"y":0.5241},{"x":0.685,"y":0.5012},{"x":0.735,"y":0.4868},{"x":0.7905,"y":0.4928},{"x":0.8358,"y":0.5156},{"x":0.8805,"y":0.577},{"x":0.8818,"y":0.6443},{"x":0.8561,"y":0.6996},{"x":0.8189,"y":0.7249},{"x":0.7756,"y":0.7249},{"x":0.7404,"y":0.6888},{"x":0.7208,"y":0.6335},{"x":0.7418,"y":0.5998},{"x":0.7891,"y":0.6323}]'
 ];
 const BUILTIN_PATH_PRESETS = P_PATHS.map(path => { try { return JSON.parse(path); } catch(e) { return []; } });
 
@@ -1909,8 +1966,603 @@ const LEVEL_PRESET_META = [
     { id:'classic-4', label:'Классика 4', shooter:'https://img.genially.com/67961b32a116fb001568a75e/ff229730-a24f-4a1b-8050-c77cb309e646.png', finish:'https://img.genially.com/67961b32a116fb001568a75e/4db0de92-1c31-4b38-8c29-df8dc6712266.png' },
     { id:'halloween', label:'🎃 Halloween', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/halloween/shooter_halloween.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/halloween/finish_halloween.png' },
     { id:'newyear', label:'🎄 New Year', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/newyear/shooter_newyear.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/newyear/finish_newyear.png' },
-    { id:'valentine', label:'💗 Valentine', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/shooter_valentine.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/finish_valentine.png' }
+    { id:'valentine', label:'💗 Valentine', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/shooter_valentine.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/valentine/finish_valentine.png' },
+    { id:'space', label:'🌌 Space', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/space/shooter_space.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/space/finish_space.png' },
+    { id:'candy', label:'🍭 Candy', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/candy/shooter_candy.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/candy/finish_candy.png' },
+    { id:'sea', label:'🧜 Sea', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/shooter_sea.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/finish_sea.png' }
 ];
+
+
+const AUTO_THEME_BASE_FIELDS = {
+    'cfg-neon': true,
+    'cfg-error-review': true,
+    'cfg-prompt-size': 24,
+    'cfg-q-size': 32,
+    'cfg-a-size': 26,
+    'screen-overlay-opacity': 82,
+    'screen-start-title-size': 2.3,
+    'screen-start-desc-size': 1.0,
+    'screen-start-companion-size': 1.0,
+    'screen-start-panel-opacity': 92,
+    'screen-question-opacity': 95,
+    'screen-win-title-size': 2.3,
+    'screen-win-subtitle-size': 1.15,
+    'screen-win-panel-opacity': 94,
+    'screen-lose-title-size': 2.3,
+    'screen-lose-subtitle-size': 1.15,
+    'screen-lose-panel-opacity': 94,
+    'screen-timeout-title-size': 2.3,
+    'screen-timeout-subtitle-size': 1.15,
+    'screen-timeout-panel-opacity': 94,
+    'review-title-size': 2.0,
+    'review-body-size': 1.30,
+    'review-label-size': 1.15,
+    'review-answer-size': 1.35,
+    'review-screen-opacity': 82,
+    'review-card-opacity': 86
+};
+
+const AUTO_THEME_PACKS = {
+    classic: {
+        label: '↺ Classic',
+        fields: {
+            'screen-game-frame': '#39ff14',
+            'cfg-prog-color': '#00ff66',
+            'cfg-prompt-font': "'Montserrat', sans-serif",
+            'cfg-prompt-color': '#39ff14',
+            'cfg-q-font': "'Metamorphous', serif",
+            'cfg-q-color': '#ffe600',
+            'cfg-a-font': "'Metamorphous', serif",
+            'cfg-a-color': '#ffffff',
+            'cfg-a-bg': '#333333',
+            'screen-answer-neon': '#39ff14',
+            'screen-overlay-bg': '#000000',
+            'screen-start-title-font': "'Metamorphous', serif",
+            'screen-start-title-color': '#ffffff',
+            'screen-start-title-neon': '#39ff14',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#39ff14',
+            'screen-start-companion-font': "'Montserrat', sans-serif",
+            'screen-start-companion-color': '#ffe600',
+            'screen-start-companion-neon': '#ffe600',
+            'screen-start-panel-bg': '#0f0519',
+            'screen-start-button-bg': '#050509',
+            'screen-start-button-color': '#39ff14',
+            'screen-start-button-neon': '#39ff14',
+            'screen-question-bg': '#0f0519',
+            'screen-win-title-font': "'Metamorphous', serif",
+            'screen-win-title-color': '#ffffff',
+            'screen-win-title-neon': '#39ff14',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#39ff14',
+            'screen-win-subtitle-neon': '#39ff14',
+            'screen-win-panel-bg': '#0f0519',
+            'screen-win-button-bg': '#050509',
+            'screen-win-button-color': '#39ff14',
+            'screen-win-button-neon': '#39ff14',
+            'screen-lose-title-font': "'Metamorphous', serif",
+            'screen-lose-title-color': '#ffffff',
+            'screen-lose-title-neon': '#ff1744',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#ffe600',
+            'screen-lose-subtitle-neon': '#ffe600',
+            'screen-lose-panel-bg': '#0f0519',
+            'screen-lose-button-bg': '#050509',
+            'screen-lose-button-color': '#ff1744',
+            'screen-lose-button-neon': '#ff1744',
+            'screen-timeout-title-font': "'Metamorphous', serif",
+            'screen-timeout-title-color': '#ffffff',
+            'screen-timeout-title-neon': '#00eaff',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#ffe600',
+            'screen-timeout-subtitle-neon': '#ffe600',
+            'screen-timeout-panel-bg': '#0f0519',
+            'screen-timeout-button-bg': '#050509',
+            'screen-timeout-button-color': '#00eaff',
+            'screen-timeout-button-neon': '#00eaff',
+            'review-title-font': "'Metamorphous', serif",
+            'review-title-color': '#ffffff',
+            'review-title-neon': '#39ff14',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#8a00ff',
+            'review-label-neon': '#8a00ff',
+            'review-answer-font': "'Metamorphous', serif",
+            'review-answer-color': '#39ff14',
+            'review-answer-neon': '#39ff14',
+            'review-screen-bg': '#000000',
+            'review-card-bg': '#15151f',
+            'review-card-neon': '#39ff14',
+            'review-open-button-bg': '#050509',
+            'review-open-button-color': '#39ff14',
+            'review-open-button-neon': '#39ff14',
+            'review-back-button-bg': '#050509',
+            'review-back-button-color': '#ffffff',
+            'review-back-button-neon': '#ffffff'
+        }
+    },
+    halloween: {
+        label: '🎃 Halloween',
+        fields: {
+            'screen-game-frame': '#ff9d00',
+            'cfg-prog-color': '#ffd166',
+            'cfg-prompt-font': "'Cinzel', serif",
+            'cfg-prompt-color': '#ffb347',
+            'cfg-q-font': "'Metamorphous', serif",
+            'cfg-q-color': '#fff2c7',
+            'cfg-a-font': "'Metamorphous', serif",
+            'cfg-a-color': '#fffaf2',
+            'cfg-a-bg': '#4d2758',
+            'screen-answer-neon': '#ff9d00',
+            'screen-overlay-bg': '#100611',
+            'screen-start-title-font': "'Macondo', cursive",
+            'screen-start-title-color': '#fff3d6',
+            'screen-start-title-neon': '#ff9d00',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#ffcf70',
+            'screen-start-companion-font': "'Caveat', cursive",
+            'screen-start-companion-size': 1.1,
+            'screen-start-companion-color': '#d8ff84',
+            'screen-start-companion-neon': '#d8ff84',
+            'screen-start-panel-bg': '#2a1235',
+            'screen-start-button-bg': '#1c0c1f',
+            'screen-start-button-color': '#ffb347',
+            'screen-start-button-neon': '#ff9d00',
+            'screen-question-bg': '#201026',
+            'screen-win-title-font': "'Macondo', cursive",
+            'screen-win-title-color': '#fff3d6',
+            'screen-win-title-neon': '#ff9d00',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#ffd166',
+            'screen-win-subtitle-neon': '#ffd166',
+            'screen-win-panel-bg': '#2a1235',
+            'screen-win-button-bg': '#1c0c1f',
+            'screen-win-button-color': '#d8ff84',
+            'screen-win-button-neon': '#d8ff84',
+            'screen-lose-title-font': "'Macondo', cursive",
+            'screen-lose-title-color': '#fff3d6',
+            'screen-lose-title-neon': '#ff6b35',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#ffd166',
+            'screen-lose-subtitle-neon': '#ffd166',
+            'screen-lose-panel-bg': '#2a1235',
+            'screen-lose-button-bg': '#1c0c1f',
+            'screen-lose-button-color': '#ff6b35',
+            'screen-lose-button-neon': '#ff6b35',
+            'screen-timeout-title-font': "'Macondo', cursive",
+            'screen-timeout-title-color': '#fff3d6',
+            'screen-timeout-title-neon': '#c779ff',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#ffd166',
+            'screen-timeout-subtitle-neon': '#ffd166',
+            'screen-timeout-panel-bg': '#2a1235',
+            'screen-timeout-button-bg': '#1c0c1f',
+            'screen-timeout-button-color': '#c779ff',
+            'screen-timeout-button-neon': '#c779ff',
+            'review-title-font': "'Macondo', cursive",
+            'review-title-color': '#fff3d6',
+            'review-title-neon': '#ff9d00',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#ffb347',
+            'review-label-neon': '#ffb347',
+            'review-answer-font': "'Metamorphous', serif",
+            'review-answer-color': '#d8ff84',
+            'review-answer-neon': '#d8ff84',
+            'review-screen-bg': '#070309',
+            'review-card-bg': '#1a1222',
+            'review-card-neon': '#ff9d00',
+            'review-open-button-bg': '#1c0c1f',
+            'review-open-button-color': '#ffb347',
+            'review-open-button-neon': '#ff9d00',
+            'review-back-button-bg': '#1c0c1f',
+            'review-back-button-color': '#fff3d6',
+            'review-back-button-neon': '#fff3d6'
+        }
+    },
+    newyear: {
+        label: '🎄 New Year',
+        fields: {
+            'screen-game-frame': '#79e7ff',
+            'cfg-prog-color': '#9fffe6',
+            'cfg-prompt-font': "'Cinzel', serif",
+            'cfg-prompt-color': '#8fe9ff',
+            'cfg-q-font': "'Metamorphous', serif",
+            'cfg-q-color': '#fff4c2',
+            'cfg-a-font': "'Montserrat', sans-serif",
+            'cfg-a-color': '#f7fcff',
+            'cfg-a-bg': '#244766',
+            'screen-answer-neon': '#79e7ff',
+            'screen-overlay-bg': '#07111f',
+            'screen-start-title-font': "'Cinzel', serif",
+            'screen-start-title-color': '#ffffff',
+            'screen-start-title-neon': '#79e7ff',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#b7fff2',
+            'screen-start-companion-font': "'Montserrat', sans-serif",
+            'screen-start-companion-color': '#ffd76a',
+            'screen-start-companion-neon': '#ffd76a',
+            'screen-start-panel-bg': '#10243d',
+            'screen-start-button-bg': '#0a182a',
+            'screen-start-button-color': '#79e7ff',
+            'screen-start-button-neon': '#79e7ff',
+            'screen-question-bg': '#10243d',
+            'screen-win-title-font': "'Cinzel', serif",
+            'screen-win-title-color': '#ffffff',
+            'screen-win-title-neon': '#79e7ff',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#b7fff2',
+            'screen-win-subtitle-neon': '#b7fff2',
+            'screen-win-panel-bg': '#10243d',
+            'screen-win-button-bg': '#0a182a',
+            'screen-win-button-color': '#ffd76a',
+            'screen-win-button-neon': '#ffd76a',
+            'screen-lose-title-font': "'Cinzel', serif",
+            'screen-lose-title-color': '#ffffff',
+            'screen-lose-title-neon': '#ff7f96',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#ffd76a',
+            'screen-lose-subtitle-neon': '#ffd76a',
+            'screen-lose-panel-bg': '#10243d',
+            'screen-lose-button-bg': '#0a182a',
+            'screen-lose-button-color': '#ff7f96',
+            'screen-lose-button-neon': '#ff7f96',
+            'screen-timeout-title-font': "'Cinzel', serif",
+            'screen-timeout-title-color': '#ffffff',
+            'screen-timeout-title-neon': '#79e7ff',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#ffd76a',
+            'screen-timeout-subtitle-neon': '#ffd76a',
+            'screen-timeout-panel-bg': '#10243d',
+            'screen-timeout-button-bg': '#0a182a',
+            'screen-timeout-button-color': '#79e7ff',
+            'screen-timeout-button-neon': '#79e7ff',
+            'review-title-font': "'Cinzel', serif",
+            'review-title-color': '#ffffff',
+            'review-title-neon': '#79e7ff',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#ffd76a',
+            'review-label-neon': '#ffd76a',
+            'review-answer-font': "'Metamorphous', serif",
+            'review-answer-color': '#b7fff2',
+            'review-answer-neon': '#b7fff2',
+            'review-screen-bg': '#050b14',
+            'review-card-bg': '#0f1d2f',
+            'review-card-neon': '#79e7ff',
+            'review-open-button-bg': '#0a182a',
+            'review-open-button-color': '#79e7ff',
+            'review-open-button-neon': '#79e7ff',
+            'review-back-button-bg': '#0a182a',
+            'review-back-button-color': '#ffffff',
+            'review-back-button-neon': '#ffffff'
+        }
+    },
+    valentine: {
+        label: '💗 Valentine',
+        fields: {
+            'screen-game-frame': '#ff5ca8',
+            'cfg-prog-color': '#ff9ed3',
+            'cfg-prompt-font': "'Poppins', sans-serif",
+            'cfg-prompt-color': '#ff7fbe',
+            'cfg-q-font': "'Poppins', sans-serif",
+            'cfg-q-color': '#fff0f8',
+            'cfg-a-font': "'Poppins', sans-serif",
+            'cfg-a-color': '#fffafc',
+            'cfg-a-bg': '#74345d',
+            'screen-answer-neon': '#ff5ca8',
+            'screen-overlay-bg': '#140913',
+            'screen-start-title-font': "'Pacifico', cursive",
+            'screen-start-title-color': '#fff4fa',
+            'screen-start-title-neon': '#ff5ca8',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#ffb4da',
+            'screen-start-companion-font': "'Caveat', cursive",
+            'screen-start-companion-size': 1.12,
+            'screen-start-companion-color': '#ffd7ec',
+            'screen-start-companion-neon': '#ffd7ec',
+            'screen-start-panel-bg': '#321427',
+            'screen-start-button-bg': '#210c19',
+            'screen-start-button-color': '#ff8ac4',
+            'screen-start-button-neon': '#ff5ca8',
+            'screen-question-bg': '#321427',
+            'screen-win-title-font': "'Pacifico', cursive",
+            'screen-win-title-color': '#fff4fa',
+            'screen-win-title-neon': '#ff5ca8',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#ffb4da',
+            'screen-win-subtitle-neon': '#ffb4da',
+            'screen-win-panel-bg': '#321427',
+            'screen-win-button-bg': '#210c19',
+            'screen-win-button-color': '#ffd7ec',
+            'screen-win-button-neon': '#ffd7ec',
+            'screen-lose-title-font': "'Pacifico', cursive",
+            'screen-lose-title-color': '#fff4fa',
+            'screen-lose-title-neon': '#ff6f91',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#ffb4da',
+            'screen-lose-subtitle-neon': '#ffb4da',
+            'screen-lose-panel-bg': '#321427',
+            'screen-lose-button-bg': '#210c19',
+            'screen-lose-button-color': '#ff6f91',
+            'screen-lose-button-neon': '#ff6f91',
+            'screen-timeout-title-font': "'Pacifico', cursive",
+            'screen-timeout-title-color': '#fff4fa',
+            'screen-timeout-title-neon': '#ff9ec7',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#ffd7ec',
+            'screen-timeout-subtitle-neon': '#ffd7ec',
+            'screen-timeout-panel-bg': '#321427',
+            'screen-timeout-button-bg': '#210c19',
+            'screen-timeout-button-color': '#ff9ec7',
+            'screen-timeout-button-neon': '#ff9ec7',
+            'review-title-font': "'Pacifico', cursive",
+            'review-title-color': '#fff4fa',
+            'review-title-neon': '#ff5ca8',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#ff9ed3',
+            'review-label-neon': '#ff9ed3',
+            'review-answer-font': "'Poppins', sans-serif",
+            'review-answer-color': '#ffd7ec',
+            'review-answer-neon': '#ffd7ec',
+            'review-screen-bg': '#0b050a',
+            'review-card-bg': '#24111d',
+            'review-card-neon': '#ff5ca8',
+            'review-open-button-bg': '#210c19',
+            'review-open-button-color': '#ff8ac4',
+            'review-open-button-neon': '#ff5ca8',
+            'review-back-button-bg': '#210c19',
+            'review-back-button-color': '#fff4fa',
+            'review-back-button-neon': '#fff4fa'
+        }
+    },
+    space: {
+        label: '🌌 Space',
+        fields: {
+            'screen-game-frame': '#7b6dff',
+            'cfg-prog-color': '#6ce8ff',
+            'cfg-prompt-font': "'Orbitron', sans-serif",
+            'cfg-prompt-color': '#8ab8ff',
+            'cfg-q-font': "'Cinzel', serif",
+            'cfg-q-color': '#fff2b8',
+            'cfg-a-font': "'Montserrat', sans-serif",
+            'cfg-a-color': '#eef6ff',
+            'cfg-a-bg': '#2b2558',
+            'screen-answer-neon': '#6ce8ff',
+            'screen-overlay-bg': '#05060d',
+            'screen-start-title-font': "'Orbitron', sans-serif",
+            'screen-start-title-size': 2.15,
+            'screen-start-title-color': '#f8fbff',
+            'screen-start-title-neon': '#7b6dff',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#9fc9ff',
+            'screen-start-companion-font': "'Montserrat', sans-serif",
+            'screen-start-companion-color': '#ffd86b',
+            'screen-start-companion-neon': '#ffd86b',
+            'screen-start-panel-bg': '#161133',
+            'screen-start-button-bg': '#0b0b19',
+            'screen-start-button-color': '#6ce8ff',
+            'screen-start-button-neon': '#6ce8ff',
+            'screen-question-bg': '#161133',
+            'screen-win-title-font': "'Orbitron', sans-serif",
+            'screen-win-title-size': 2.15,
+            'screen-win-title-color': '#f8fbff',
+            'screen-win-title-neon': '#7b6dff',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#9fc9ff',
+            'screen-win-subtitle-neon': '#9fc9ff',
+            'screen-win-panel-bg': '#161133',
+            'screen-win-button-bg': '#0b0b19',
+            'screen-win-button-color': '#ffd86b',
+            'screen-win-button-neon': '#ffd86b',
+            'screen-lose-title-font': "'Orbitron', sans-serif",
+            'screen-lose-title-size': 2.15,
+            'screen-lose-title-color': '#f8fbff',
+            'screen-lose-title-neon': '#ff6eb6',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#ffd86b',
+            'screen-lose-subtitle-neon': '#ffd86b',
+            'screen-lose-panel-bg': '#161133',
+            'screen-lose-button-bg': '#0b0b19',
+            'screen-lose-button-color': '#ff6eb6',
+            'screen-lose-button-neon': '#ff6eb6',
+            'screen-timeout-title-font': "'Orbitron', sans-serif",
+            'screen-timeout-title-size': 2.15,
+            'screen-timeout-title-color': '#f8fbff',
+            'screen-timeout-title-neon': '#6ce8ff',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#ffd86b',
+            'screen-timeout-subtitle-neon': '#ffd86b',
+            'screen-timeout-panel-bg': '#161133',
+            'screen-timeout-button-bg': '#0b0b19',
+            'screen-timeout-button-color': '#6ce8ff',
+            'screen-timeout-button-neon': '#6ce8ff',
+            'review-title-font': "'Orbitron', sans-serif",
+            'review-title-size': 1.9,
+            'review-title-color': '#f8fbff',
+            'review-title-neon': '#7b6dff',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#ffd86b',
+            'review-label-neon': '#ffd86b',
+            'review-answer-font': "'Montserrat', sans-serif",
+            'review-answer-color': '#9fe9ff',
+            'review-answer-neon': '#9fe9ff',
+            'review-screen-bg': '#04050a',
+            'review-card-bg': '#101427',
+            'review-card-neon': '#7b6dff',
+            'review-open-button-bg': '#0b0b19',
+            'review-open-button-color': '#6ce8ff',
+            'review-open-button-neon': '#6ce8ff',
+            'review-back-button-bg': '#0b0b19',
+            'review-back-button-color': '#f8fbff',
+            'review-back-button-neon': '#f8fbff'
+        }
+    },
+    candy: {
+        label: '🍭 Candy',
+        fields: {
+            'screen-game-frame': '#ff6fb5',
+            'cfg-prog-color': '#8effd1',
+            'cfg-prompt-font': "'Poppins', sans-serif",
+            'cfg-prompt-color': '#ff91cc',
+            'cfg-q-font': "'Comic Neue', sans-serif",
+            'cfg-q-color': '#fff3b0',
+            'cfg-q-size': 34,
+            'cfg-a-font': "'Poppins', sans-serif",
+            'cfg-a-color': '#fffdfc',
+            'cfg-a-bg': '#8a4d80',
+            'screen-answer-neon': '#8effd1',
+            'screen-overlay-bg': '#150812',
+            'screen-start-title-font': "'Pacifico', cursive",
+            'screen-start-title-color': '#fff6fb',
+            'screen-start-title-neon': '#ff6fb5',
+            'screen-start-desc-font': "'Poppins', sans-serif",
+            'screen-start-desc-color': '#8effd1',
+            'screen-start-companion-font': "'Caveat', cursive",
+            'screen-start-companion-size': 1.12,
+            'screen-start-companion-color': '#fff3b0',
+            'screen-start-companion-neon': '#fff3b0',
+            'screen-start-panel-bg': '#35172d',
+            'screen-start-button-bg': '#2a1021',
+            'screen-start-button-color': '#ff91cc',
+            'screen-start-button-neon': '#ff6fb5',
+            'screen-question-bg': '#35172d',
+            'screen-win-title-font': "'Pacifico', cursive",
+            'screen-win-title-color': '#fff6fb',
+            'screen-win-title-neon': '#ff6fb5',
+            'screen-win-subtitle-font': "'Poppins', sans-serif",
+            'screen-win-subtitle-color': '#8effd1',
+            'screen-win-subtitle-neon': '#8effd1',
+            'screen-win-panel-bg': '#35172d',
+            'screen-win-button-bg': '#2a1021',
+            'screen-win-button-color': '#fff3b0',
+            'screen-win-button-neon': '#fff3b0',
+            'screen-lose-title-font': "'Pacifico', cursive",
+            'screen-lose-title-color': '#fff6fb',
+            'screen-lose-title-neon': '#ff8f66',
+            'screen-lose-subtitle-font': "'Poppins', sans-serif",
+            'screen-lose-subtitle-color': '#fff3b0',
+            'screen-lose-subtitle-neon': '#fff3b0',
+            'screen-lose-panel-bg': '#35172d',
+            'screen-lose-button-bg': '#2a1021',
+            'screen-lose-button-color': '#ff8f66',
+            'screen-lose-button-neon': '#ff8f66',
+            'screen-timeout-title-font': "'Pacifico', cursive",
+            'screen-timeout-title-color': '#fff6fb',
+            'screen-timeout-title-neon': '#8effd1',
+            'screen-timeout-subtitle-font': "'Poppins', sans-serif",
+            'screen-timeout-subtitle-color': '#fff3b0',
+            'screen-timeout-subtitle-neon': '#fff3b0',
+            'screen-timeout-panel-bg': '#35172d',
+            'screen-timeout-button-bg': '#2a1021',
+            'screen-timeout-button-color': '#8effd1',
+            'screen-timeout-button-neon': '#8effd1',
+            'review-title-font': "'Pacifico', cursive",
+            'review-title-color': '#fff6fb',
+            'review-title-neon': '#ff6fb5',
+            'review-label-font': "'Poppins', sans-serif",
+            'review-label-color': '#fff3b0',
+            'review-label-neon': '#fff3b0',
+            'review-answer-font': "'Poppins', sans-serif",
+            'review-answer-color': '#8effd1',
+            'review-answer-neon': '#8effd1',
+            'review-screen-bg': '#0a0408',
+            'review-card-bg': '#24121f',
+            'review-card-neon': '#ff6fb5',
+            'review-open-button-bg': '#2a1021',
+            'review-open-button-color': '#ff91cc',
+            'review-open-button-neon': '#ff6fb5',
+            'review-back-button-bg': '#2a1021',
+            'review-back-button-color': '#fff6fb',
+            'review-back-button-neon': '#fff6fb'
+        }
+    },
+    sea: {
+        label: '🧜 Sea',
+        fields: {
+            'screen-game-frame': '#49d8ff',
+            'cfg-prog-color': '#b9fff3',
+            'cfg-prompt-font': "'Cinzel', serif",
+            'cfg-prompt-color': '#78e9ff',
+            'cfg-q-font': "'Metamorphous', serif",
+            'cfg-q-color': '#fff8e0',
+            'cfg-a-font': "'Montserrat', sans-serif",
+            'cfg-a-color': '#f2fdff',
+            'cfg-a-bg': '#1c4961',
+            'screen-answer-neon': '#49d8ff',
+            'screen-overlay-bg': '#041018',
+            'screen-start-title-font': "'Cinzel', serif",
+            'screen-start-title-color': '#f8ffff',
+            'screen-start-title-neon': '#49d8ff',
+            'screen-start-desc-font': "'Montserrat', sans-serif",
+            'screen-start-desc-color': '#b9fff3',
+            'screen-start-companion-font': "'Montserrat', sans-serif",
+            'screen-start-companion-color': '#f7d88b',
+            'screen-start-companion-neon': '#f7d88b',
+            'screen-start-panel-bg': '#0d2236',
+            'screen-start-button-bg': '#081726',
+            'screen-start-button-color': '#49d8ff',
+            'screen-start-button-neon': '#49d8ff',
+            'screen-question-bg': '#0d2236',
+            'screen-win-title-font': "'Cinzel', serif",
+            'screen-win-title-color': '#f8ffff',
+            'screen-win-title-neon': '#49d8ff',
+            'screen-win-subtitle-font': "'Montserrat', sans-serif",
+            'screen-win-subtitle-color': '#b9fff3',
+            'screen-win-subtitle-neon': '#b9fff3',
+            'screen-win-panel-bg': '#0d2236',
+            'screen-win-button-bg': '#081726',
+            'screen-win-button-color': '#f7d88b',
+            'screen-win-button-neon': '#f7d88b',
+            'screen-lose-title-font': "'Cinzel', serif",
+            'screen-lose-title-color': '#f8ffff',
+            'screen-lose-title-neon': '#ff8e66',
+            'screen-lose-subtitle-font': "'Montserrat', sans-serif",
+            'screen-lose-subtitle-color': '#f7d88b',
+            'screen-lose-subtitle-neon': '#f7d88b',
+            'screen-lose-panel-bg': '#0d2236',
+            'screen-lose-button-bg': '#081726',
+            'screen-lose-button-color': '#ff8e66',
+            'screen-lose-button-neon': '#ff8e66',
+            'screen-timeout-title-font': "'Cinzel', serif",
+            'screen-timeout-title-color': '#f8ffff',
+            'screen-timeout-title-neon': '#49d8ff',
+            'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
+            'screen-timeout-subtitle-color': '#f7d88b',
+            'screen-timeout-subtitle-neon': '#f7d88b',
+            'screen-timeout-panel-bg': '#0d2236',
+            'screen-timeout-button-bg': '#081726',
+            'screen-timeout-button-color': '#49d8ff',
+            'screen-timeout-button-neon': '#49d8ff',
+            'review-title-font': "'Cinzel', serif",
+            'review-title-color': '#f8ffff',
+            'review-title-neon': '#49d8ff',
+            'review-label-font': "'Montserrat', sans-serif",
+            'review-label-color': '#f7d88b',
+            'review-label-neon': '#f7d88b',
+            'review-answer-font': "'Montserrat', sans-serif",
+            'review-answer-color': '#b9fff3',
+            'review-answer-neon': '#b9fff3',
+            'review-screen-bg': '#030b12',
+            'review-card-bg': '#0b1b2a',
+            'review-card-neon': '#49d8ff',
+            'review-open-button-bg': '#081726',
+            'review-open-button-color': '#49d8ff',
+            'review-open-button-neon': '#49d8ff',
+            'review-back-button-bg': '#081726',
+            'review-back-button-color': '#f8ffff',
+            'review-back-button-neon': '#f8ffff'
+        }
+    }
+};
+
+function applyAutoTheme(themeId, options = {}) {
+    const pack = AUTO_THEME_PACKS[themeId];
+    if (!pack) return false;
+    const fields = Object.assign({}, AUTO_THEME_BASE_FIELDS, pack.fields || {});
+    Object.entries(fields).forEach(([id, value]) => setFieldValue(id, value));
+    updateScreenRangeLabels();
+    updatePreview();
+    if (!options.silentToast) showEditorToast(`Применена автотема оформления: ${pack.label}.`);
+    return true;
+}
 
 function getLevelPresetIndex(level) {
     if (!level) return -1;
@@ -1928,8 +2580,11 @@ function applyLevelPreset(levelIndex, presetIndex) {
     level.bg = bg;
     level.presetIndex = presetIndex;
     if (Array.isArray(path) && path.length >= 2) level.path = path.map(p => ({...p}));
+    level.objectLayout = makeDefaultObjectLayout();
     if (meta.shooter) setAssetValue('shooter', meta.shooter);
     if (meta.finish) setAssetValue('mask', meta.finish);
+    const themeId = meta.id && meta.id.startsWith('classic-') ? 'classic' : meta.id;
+    const themed = themeId ? applyAutoTheme(themeId, { silentToast:true }) : false;
     closeModal('bg-modal');
     renderLevels(); updatePreviewBgSelect(levelIndex);
     if (pathEditorActive && activePathLevelIndex === levelIndex) {
@@ -1940,7 +2595,8 @@ function applyLevelPreset(levelIndex, presetIndex) {
     } else {
         drawPreviewPath(); updatePreview();
     }
-    const extras = meta.shooter || meta.finish ? ' Фон, траектория, пушка и финиш применены.' : ' Фон и встроенная траектория применены.';
+    const extrasBase = meta.shooter || meta.finish ? ' Фон, траектория, пушка и финиш применены.' : ' Фон и встроенная траектория применены.';
+    const extras = themed ? `${extrasBase} Автотема оформления тоже применена.` : extrasBase;
     showEditorToast(`${meta.label || `Пресет ${presetIndex+1}`}.${extras}`);
 }
 
@@ -2120,10 +2776,10 @@ function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjac
 
 let levelIdCounter = 4;
 let levels = [
-    { id: "level-1", bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup() },
-    { id: "level-2", bg: PRESETS[1], presetIndex:1, path: BUILTIN_PATH_PRESETS[1].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup() },
-    { id: "level-3", bg: PRESETS[2], presetIndex:2, path: BUILTIN_PATH_PRESETS[2].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup() },
-    { id: "level-4", bg: PRESETS[3], presetIndex:3, path: BUILTIN_PATH_PRESETS[3].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup() }
+    { id: "level-1", bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-2", bg: PRESETS[1], presetIndex:1, path: BUILTIN_PATH_PRESETS[1].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-3", bg: PRESETS[2], presetIndex:2, path: BUILTIN_PATH_PRESETS[2].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-4", bg: PRESETS[3], presetIndex:3, path: BUILTIN_PATH_PRESETS[3].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() }
 ];
 let questionsDB = [];
 
@@ -2258,6 +2914,146 @@ function getScreensConfigFromEditor() {
     };
 }
 
+
+const DEFAULT_OBJECT_LAYOUT = Object.freeze({
+    shooter: Object.freeze({x:0.5, y:0.9167, scale:1}),
+    finish: Object.freeze({offsetX:0, offsetY:0, scale:1})
+});
+function clampObjectValue(v,min,max,fallback){ v=Number(v); return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback; }
+function makeDefaultObjectLayout(){
+    return { shooter:{...DEFAULT_OBJECT_LAYOUT.shooter}, finish:{...DEFAULT_OBJECT_LAYOUT.finish} };
+}
+function normalizeObjectLayout(raw){
+    const src=raw&&typeof raw==='object'?raw:{}; const sh=src.shooter||{}; const fi=src.finish||{};
+    return {
+        shooter:{
+            x:clampObjectValue(sh.x,0.03,0.97,DEFAULT_OBJECT_LAYOUT.shooter.x),
+            y:clampObjectValue(sh.y,0.06,0.97,DEFAULT_OBJECT_LAYOUT.shooter.y),
+            scale:clampObjectValue(sh.scale,0.40,2.40,1)
+        },
+        finish:{
+            offsetX:clampObjectValue(fi.offsetX,-0.35,0.35,0),
+            offsetY:clampObjectValue(fi.offsetY,-0.35,0.35,0),
+            scale:clampObjectValue(fi.scale,0.40,2.40,1)
+        }
+    };
+}
+function selectedPreviewLevelIndex(){
+    const sel=document.getElementById('preview-bg-sel');
+    const idx=sel&&sel.value!==''?parseInt(sel.value):0;
+    return Math.max(0,Math.min(levels.length-1,Number.isFinite(idx)?idx:0));
+}
+function ensureLevelObjectLayout(idx){
+    if(!levels[idx]) return makeDefaultObjectLayout();
+    levels[idx].objectLayout=normalizeObjectLayout(levels[idx].objectLayout);
+    return levels[idx].objectLayout;
+}
+let previewObjectEditActive=false;
+let previewObjectSelection=null;
+let previewObjectGesture=null;
+
+function previewObjectSizePx(scale){
+    const box=document.getElementById('p-box');
+    const w=Math.max(320,box?.clientWidth||800);
+    return Math.max(38,90*(w/800))*clampObjectValue(scale,0.40,2.40,1);
+}
+function setPreviewObjectSelection(type){
+    previewObjectSelection=(type==='shooter'||type==='finish')?type:null;
+    document.getElementById('p-object-shooter')?.classList.toggle('selected',previewObjectSelection==='shooter');
+    document.getElementById('p-object-finish')?.classList.toggle('selected',previewObjectSelection==='finish');
+    updatePreviewObjectStatus();
+}
+function updatePreviewObjectStatus(){
+    const out=document.getElementById('p-object-status'); if(!out) return;
+    const layout=ensureLevelObjectLayout(selectedPreviewLevelIndex());
+    if(!previewObjectEditActive){ out.textContent='Пушка и финиш · мышкой'; return; }
+    const selected=previewObjectSelection==='finish'?'Финиш':previewObjectSelection==='shooter'?'Пушка':'Выберите объект';
+    const scale=previewObjectSelection==='finish'?layout.finish.scale:layout.shooter.scale;
+    out.textContent=`${selected}${previewObjectSelection?` · ${Math.round(scale*100)}%`:''}`;
+}
+function updatePreviewObjectLayer(){
+    const layer=document.getElementById('p-object-layer'); if(!layer) return;
+    const idx=selectedPreviewLevelIndex(); const level=levels[idx]; if(!level) return;
+    const layout=ensureLevelObjectLayout(idx);
+    const path=normalizePathData(level.path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
+    const shooter=document.getElementById('p-object-shooter'); const finish=document.getElementById('p-object-finish'); const anchor=document.getElementById('p-finish-anchor');
+    const shooterImg=document.getElementById('p-object-shooter-img'); const finishImg=document.getElementById('p-object-finish-img');
+    if(shooterImg) shooterImg.src=textVal('cfg-img-shooter','');
+    if(finishImg) finishImg.src=textVal('cfg-img-mask','');
+    if(shooter){
+        shooter.style.left=`${layout.shooter.x*100}%`; shooter.style.top=`${layout.shooter.y*100}%`;
+        const size=previewObjectSizePx(layout.shooter.scale); shooter.style.width=`${size}px`; shooter.style.height=`${size}px`;
+    }
+    const fx=end.x+layout.finish.offsetX, fy=end.y+layout.finish.offsetY;
+    if(finish){
+        finish.style.left=`${fx*100}%`; finish.style.top=`${fy*100}%`;
+        const size=previewObjectSizePx(layout.finish.scale); finish.style.width=`${size}px`; finish.style.height=`${size}px`;
+    }
+    if(anchor){ anchor.style.left=`${end.x*100}%`; anchor.style.top=`${end.y*100}%`; }
+    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
+}
+function syncPreviewObjectEditorVisibility(){
+    const gameVisible=previewScreenMode==='game'&&!pathEditorActive;
+    const layer=document.getElementById('p-object-layer'); const bar=document.getElementById('p-object-toolbar'); const toggle=document.getElementById('p-object-edit-toggle');
+    if(layer){ layer.style.display=gameVisible?'block':'none'; layer.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
+    if(bar){ bar.classList.toggle('visible',gameVisible); bar.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
+    if(toggle){ toggle.classList.toggle('active',gameVisible&&previewObjectEditActive); toggle.textContent=previewObjectEditActive?'✓ Готово':'✥ Редактировать объекты'; }
+    if(!gameVisible) setPreviewObjectSelection(null);
+}
+function togglePreviewObjectEdit(){
+    if(pathEditorActive) return;
+    if(previewScreenMode!=='game') setPreviewScreen('game');
+    previewObjectEditActive=!previewObjectEditActive;
+    if(!previewObjectEditActive) setPreviewObjectSelection(null);
+    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
+}
+function resetPreviewObject(type){
+    const idx=selectedPreviewLevelIndex(); if(!levels[idx]) return;
+    const layout=ensureLevelObjectLayout(idx);
+    if(type==='shooter') layout.shooter={...DEFAULT_OBJECT_LAYOUT.shooter};
+    else if(type==='finish') layout.finish={...DEFAULT_OBJECT_LAYOUT.finish};
+    levels[idx].objectLayout=layout; setPreviewObjectSelection(type); updatePreviewObjectLayer(); scheduleAutosave();
+    showEditorToast(type==='finish'?'Финиш возвращён к концу траектории.':'Положение и размер пушки сброшены.');
+}
+function beginPreviewObjectGesture(e,type,isResize){
+    if(!previewObjectEditActive||pathEditorActive||previewScreenMode!=='game') return;
+    e.preventDefault(); e.stopPropagation(); setPreviewObjectSelection(type);
+    const box=document.getElementById('p-box'); if(!box) return; const rect=box.getBoundingClientRect();
+    const idx=selectedPreviewLevelIndex(); const layout=ensureLevelObjectLayout(idx); const current=type==='shooter'?layout.shooter:layout.finish;
+    const item=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); const itemRect=item?.getBoundingClientRect();
+    previewObjectGesture={type,isResize,idx,startX:e.clientX,startY:e.clientY,rect,start:{...current},centerX:itemRect?itemRect.left+itemRect.width/2:e.clientX,centerY:itemRect?itemRect.top+itemRect.height/2:e.clientY,startDist:itemRect?Math.max(8,Math.hypot(e.clientX-(itemRect.left+itemRect.width/2),e.clientY-(itemRect.top+itemRect.height/2))):40};
+    try{e.currentTarget.setPointerCapture?.(e.pointerId);}catch(_e){}
+}
+function movePreviewObjectGesture(e){
+    const g=previewObjectGesture; if(!g||!levels[g.idx]) return;
+    const layout=ensureLevelObjectLayout(g.idx); const target=g.type==='shooter'?layout.shooter:layout.finish;
+    if(g.isResize){
+        const dist=Math.max(8,Math.hypot(e.clientX-g.centerX,e.clientY-g.centerY)); target.scale=clampObjectValue(g.start.scale*(dist/g.startDist),0.40,2.40,1);
+    } else {
+        const dx=(e.clientX-g.startX)/Math.max(1,g.rect.width), dy=(e.clientY-g.startY)/Math.max(1,g.rect.height);
+        if(g.type==='shooter'){
+            target.x=clampObjectValue(g.start.x+dx,0.03,0.97,.5); target.y=clampObjectValue(g.start.y+dy,0.06,0.97,.9167);
+        } else {
+            const path=normalizePathData(levels[g.idx].path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
+            const minX=Math.max(-0.35,0.02-end.x), maxX=Math.min(0.35,0.98-end.x);
+            const minY=Math.max(-0.35,0.02-end.y), maxY=Math.min(0.35,0.98-end.y);
+            target.offsetX=clampObjectValue(g.start.offsetX+dx,minX,maxX,0); target.offsetY=clampObjectValue(g.start.offsetY+dy,minY,maxY,0);
+        }
+    }
+    levels[g.idx].objectLayout=layout; updatePreviewObjectLayer();
+}
+function endPreviewObjectGesture(){ if(!previewObjectGesture) return; previewObjectGesture=null; scheduleAutosave(); }
+function initPreviewObjectEditor(){
+    ['shooter','finish'].forEach(type=>{
+        const el=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); if(!el) return;
+        el.addEventListener('pointerdown',e=>beginPreviewObjectGesture(e,type,!!e.target.closest?.('[data-resize-handle]')));
+    });
+    const layer=document.getElementById('p-object-layer'); if(layer) layer.addEventListener('pointerdown',e=>{ if(e.target===layer) setPreviewObjectSelection(null); });
+    window.addEventListener('pointermove',movePreviewObjectGesture,{passive:true}); window.addEventListener('pointerup',endPreviewObjectGesture); window.addEventListener('pointercancel',endPreviewObjectGesture);
+    window.addEventListener('resize',()=>updatePreviewObjectLayer());
+    updatePreviewObjectLayer();
+}
+
 let previewScreenMode='start';
 function setPreviewScreen(mode, btn=null) {
     if(pathEditorActive && mode!=='game') return;
@@ -2269,7 +3065,9 @@ function setPreviewScreen(mode, btn=null) {
     else if(mode==='question') document.getElementById('p-overlay')?.classList.remove('p-hidden');
     else if(['win','lose','timeout'].includes(mode)) document.getElementById('p-screen-end')?.classList.remove('p-hidden');
     else if(mode==='review') document.getElementById('p-screen-review')?.classList.remove('p-hidden');
+    syncPreviewObjectEditorVisibility();
     updateScreensPreview();
+    updatePreviewObjectLayer();
 }
 function stylePreviewButton(el, cfg) {
     if(!el) return; el.style.background=cfg.buttonBg; el.style.color=cfg.buttonColor; el.style.borderColor=cfg.buttonNeon;
@@ -2466,7 +3264,7 @@ class GameCore {
         // Zuma-like defeat sequence: short cause reaction -> chain escapes into goal -> 1.5s empty field -> final screen.
         this.defeatReasonText = ''; this.defeatCause = ''; this.defeatIntroUntil = 0; this.escapeStartedAt = 0; this.escapeEmptyAt = 0;
         this.initDOM(); this.cvs = document.getElementById('gameCanvas'); this.ctx = this.cvs.getContext('2d');
-        this.w=800; this.h=600; this.state='idle'; this.currentLevelIndex = 0; this.player={x:400, y:550};
+        this.w=800; this.h=600; this.state='idle'; this.currentLevelIndex = 0; this.objectLayout=makeDefaultObjectLayout(); this.player={x:400, y:550};
         
         // Глобальная статистика
         this.score=0; this.lives=this.cfg.lives || 3; this.maxLives = this.cfg.lives || 3;
@@ -2562,7 +3360,7 @@ class GameCore {
         const back=document.getElementById('g-btn-review-back'); if(back){back.innerText=er.backButtonText||this.t.closeReview||this.t.back;this.applyButtonStyle(back,{buttonBg:er.backButtonBg,buttonColor:er.backButtonColor,buttonNeon:er.backButtonNeon});}
     }
     bindEvents() {
-        const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; this.player.x=Math.max(35, Math.min(this.w-35, cx-r.left)); };
+        const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; const scale=this.objectLayout?.shooter?.scale||1; const edge=Math.max(35,45*scale); this.player.x=Math.max(edge, Math.min(this.w-edge, cx-r.left)); };
         this.cvs.addEventListener('mousemove',move); this.cvs.addEventListener('touchmove',e=>{e.preventDefault();move(e)},{passive:false}); 
         this.cvs.addEventListener('click',()=>this.shoot());
         
@@ -2578,14 +3376,25 @@ class GameCore {
         document.getElementById('g-btn-review').onclick = () => this.openErrorReview();
         document.getElementById('g-btn-review-back').onclick = () => { document.getElementById('g-review-screen').classList.add('g-hidden'); document.getElementById('g-end-screen').classList.remove('g-hidden'); this.applyFinalScreenStyle(this.finalMode || 'lose'); };
     }
-    applyLevel(idx) { document.getElementById('g-game-container').style.backgroundImage = `url('${this.cfg.levels[idx].bg}')`; this.genPath(); }
+    applyLevel(idx) {
+        const level=this.cfg.levels[idx]||{};
+        document.getElementById('g-game-container').style.backgroundImage = `url('${level.bg||''}')`;
+        this.objectLayout=normalizeObjectLayout(level.objectLayout);
+        this.player.x=this.objectLayout.shooter.x*this.w;
+        this.player.y=this.objectLayout.shooter.y*this.h;
+        this.genPath();
+    }
     
     resize() { 
         const el = document.getElementById('g-game-container'); 
         if (!el || el.clientWidth === 0) return; 
-        if (el.clientWidth !== this.w || el.clientHeight !== this.h) { 
-            this.w = el.clientWidth; this.h = el.clientHeight; this.cvs.width = this.w; this.cvs.height = this.h; 
-            this.player.y = this.h - 50; this.genPath(); 
+        if (el.clientWidth !== this.w || el.clientHeight !== this.h) {
+            const oldW=this.w||el.clientWidth; const xRatio=oldW?this.player.x/oldW:(this.objectLayout?.shooter?.x||.5);
+            this.w = el.clientWidth; this.h = el.clientHeight; this.cvs.width = this.w; this.cvs.height = this.h;
+            this.objectLayout=normalizeObjectLayout(this.cfg.levels?.[this.currentLevelIndex]?.objectLayout||this.objectLayout);
+            const edge=Math.max(35,45*(this.objectLayout.shooter.scale||1));
+            this.player.x=Math.max(edge,Math.min(this.w-edge,xRatio*this.w));
+            this.player.y=this.objectLayout.shooter.y*this.h; this.genPath();
         } 
     }
     
@@ -2748,7 +3557,7 @@ class GameCore {
         if(safeShift<=0) return;
         this.balls.forEach(bl=>{ bl.d -= safeShift; });
     }
-    shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; this.bullets.push({x:this.player.x, y:this.player.y-20, c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
+    shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; const scale=this.objectLayout?.shooter?.scale||1; this.bullets.push({x:this.player.x, y:this.player.y-(20*scale), c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
 
     triggerDefeat(reasonText, cause='balls', introDelayMs=0) {
         if(this.state==='gameover' || this.state==='defeat_intro' || this.state==='chain_escape') return;
@@ -3288,14 +4097,16 @@ class GameCore {
                     danger = remaining <= dangerDistance;
                 }
 
-                let maskSize = 90;
+                const finishLayout=this.objectLayout?.finish||DEFAULT_OBJECT_LAYOUT.finish;
+                const finishScale=clampObjectValue(finishLayout.scale,0.40,2.40,1);
+                let maskSize = 90 * finishScale;
                 let shadowBlur = this.cfg.neonEnabled ? 20 : 0;
                 let shadowColor = this.cfg.uiColor;
 
                 if (danger && this.state === 'playing') {
                     // Restore the original soft heartbeat pulse that was used before Stage 26.
                     const pulse = Math.abs(Math.sin(Date.now() / 150));
-                    maskSize = 90 + pulse * 15;
+                    maskSize = (90 + pulse * 15) * finishScale;
                     shadowBlur = 20 + pulse * 20;
                     shadowColor = 'rgba(255, 0, 0, 0.9)';
 
@@ -3305,7 +4116,7 @@ class GameCore {
                         this.lastHeartbeat = Date.now();
                     }
                 }
-                finishRender = {x:last.x, y:last.y, size:maskSize, shadowBlur, shadowColor};
+                finishRender = {x:last.x+(finishLayout.offsetX||0)*this.w, y:last.y+(finishLayout.offsetY||0)*this.h, size:maskSize, shadowBlur, shadowColor};
             }
         }
 
@@ -3338,7 +4149,8 @@ class GameCore {
         this.bullets?.forEach(b=>{ this.drawImg("c_" + b.c, b.x, b.y, this.radius * 2); });
         this.lightnings?.forEach(l => l.draw(this.ctx));
 
-        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, 90); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15, 30); } this.ctx.restore();
+        const shooterScale=this.objectLayout?.shooter?.scale||1;
+        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, 90*shooterScale); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15*shooterScale, 30*Math.min(1.45,shooterScale)); } this.ctx.restore();
 
         if(this.state==='gameover') this.fworks?.forEach(f=>f.draw(this.ctx));
     }
@@ -3408,6 +4220,7 @@ function openMazeEditorMode() {
     updatePreviewBgSelect();
     initAssetPreviews();
     initPathEditor();
+    initPreviewObjectEditor();
     updateDangerDistanceLabel();
     updatePreview(); initAutosave();
     initScreenEditor();
@@ -3730,7 +4543,7 @@ function normalizePathData(path) {
 
 function addLevel() {
     levelIdCounter += 1;
-    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup() });
+    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() });
     renderLevels(); updateQLevelSelect(); updatePreviewBgSelect(); updatePathLevelSelect(); renderQuestions();
 }
 
@@ -3759,6 +4572,7 @@ function renderLevels() {
         l.path = normalizePathData(l.path);
         l.qCount = Math.max(4, Math.min(20, parseInt(l.qCount) || 4));
         l.ballSetup = normalizeBallSetup(l.ballSetup);
+        l.objectLayout = normalizeObjectLayout(l.objectLayout);
         const card = document.createElement('div');
         card.className = 'level-card';
 
@@ -4097,6 +4911,7 @@ function enterPathEditorVisualMode() {
     const canvas = document.getElementById('preview-canvas');
     box?.classList.add('path-editing');
     canvas?.classList.add('path-editing');
+    previewObjectEditActive=false; setPreviewObjectSelection(null); syncPreviewObjectEditorVisibility();
     setPreviewScreen('game');
     drawPathEditor();
 }
@@ -4106,6 +4921,7 @@ function exitPathEditorVisualMode() {
     draggingPathPoint = -1;
     document.getElementById('p-box')?.classList.remove('path-editing');
     document.getElementById('preview-canvas')?.classList.remove('path-editing');
+    syncPreviewObjectEditorVisibility(); updatePreviewObjectLayer();
     drawPreviewPath();
 }
 
@@ -4545,6 +5361,7 @@ function changePreviewBg() {
     const sel = document.getElementById('preview-bg-sel').value; const box = document.getElementById('p-box');
     if(sel === "") { box.style.backgroundImage = 'none'; } else { let lvlIdx = parseInt(sel); if(levels[lvlIdx]) box.style.backgroundImage = `url('${levels[lvlIdx].bg}')`; }
     if (!pathEditorActive) drawPreviewPath();
+    updatePreviewObjectLayer();
 }
 function togglePreviewMode() { setPreviewScreen(previewScreenMode==='question'?'game':'question'); }
 function updatePreview() {
@@ -4560,6 +5377,7 @@ function updatePreview() {
     document.getElementById('p-card').style.boxShadow = isNeon ? `0 0 15px ${uiC}` : 'none';
     updateScreensPreview();
     drawPreviewPath();
+    updatePreviewObjectLayer();
 }
 function drawPreviewPath() {
     if (pathEditorActive) { drawPathEditor(); return; }
@@ -4581,7 +5399,7 @@ function drawPreviewPath() {
 // СОХРАНЕНИЕ / ЗАГРУЗКА ПРОЕКТА И АВТОСОХРАНЕНИЕ
 // ----------------------------------------------------
 const MAZE_PROJECT_SCHEMA = 'maze-trap-editor-project';
-const MAZE_PROJECT_VERSION = 1;
+const MAZE_PROJECT_VERSION = 2;
 const MAZE_AUTOSAVE_KEY = 'mazeTrapEditorAutosaveV1';
 let autosaveTimer = null;
 let autosaveInterval = null;
@@ -4641,8 +5459,8 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
         setFieldValue('cfg-prompt-font',cfg.promptFont); const migratedPromptColor=(!cfg.promptColor || String(cfg.promptColor).toLowerCase()==='#b8bbc5') ? '#39ff14' : cfg.promptColor; setFieldValue('cfg-prompt-color',migratedPromptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
         const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball,'special-neutral':cfg.specialBallImages?.neutral};
         Object.entries(assetValues).forEach(([key,value])=>{ if(value) setAssetValue(key,value); });
-        levels=(cfg.levels||[]).map((l,i)=>({id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex:Number.isInteger(l.presetIndex)?l.presetIndex:PRESETS.indexOf(l.bg),path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup)}));
-        if(!levels.length) levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup()}];
+        levels=(cfg.levels||[]).map((l,i)=>({id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex:Number.isInteger(l.presetIndex)?l.presetIndex:PRESETS.indexOf(l.bg),path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup),objectLayout:normalizeObjectLayout(l.objectLayout)}));
+        if(!levels.length) levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout()}];
         levelIdCounter=Math.max(levels.length,...levels.map(l=>parseInt(String(l.id||'').replace(/\D/g,''))||0));
         questionsDB=safeClone(cfg.questions||[]); normalizeQuestionDB(); applyScreensToEditor(cfg.screens || makeDefaultScreens(cfg));
         updateQLevelSelect(); renderLevels(); renderQuestions(); updatePreviewBgSelect(); initAssetPreviews(); updateDangerDistanceLabel(); updateScreenRangeLabels(); updatePreview(); updateScreensPreview();
@@ -4690,7 +5508,7 @@ function buildCurrentGameConfig(validate=true) {
             if(!Array.isArray(levels[i].path) || levels[i].path.length < 2){ showEditorToast(`Уровень ${i+1}: сначала создайте траекторию.`,'error'); return null; }
         }
     }
-    const cleanLevels = levels.map(l => ({ id:l.id, bg:l.bg, presetIndex:getLevelPresetIndex(l), path:normalizePathData(l.path), qCount:l.qCount, ballSetup:normalizeBallSetup(l.ballSetup) }));
+    const cleanLevels = levels.map(l => ({ id:l.id, bg:l.bg, presetIndex:getLevelPresetIndex(l), path:normalizePathData(l.path), qCount:l.qCount, ballSetup:normalizeBallSetup(l.ballSetup), objectLayout:normalizeObjectLayout(l.objectLayout) }));
     const screens = getScreensConfigFromEditor();
     return {
         lang: document.getElementById('cfg-lang').value,
