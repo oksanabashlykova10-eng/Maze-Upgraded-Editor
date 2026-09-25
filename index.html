@@ -2774,6 +2774,146 @@ function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjac
     return queue;
 }
 
+const DEFAULT_OBJECT_LAYOUT = Object.freeze({
+    shooter: Object.freeze({x:0.5, y:0.9167, scale:1}),
+    finish: Object.freeze({offsetX:0, offsetY:0, scale:1})
+});
+function clampObjectValue(v,min,max,fallback){ v=Number(v); return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback; }
+function makeDefaultObjectLayout(){
+    return { shooter:{...DEFAULT_OBJECT_LAYOUT.shooter}, finish:{...DEFAULT_OBJECT_LAYOUT.finish} };
+}
+function normalizeObjectLayout(raw){
+    const src=raw&&typeof raw==='object'?raw:{}; const sh=src.shooter||{}; const fi=src.finish||{};
+    return {
+        shooter:{
+            x:clampObjectValue(sh.x,0.03,0.97,DEFAULT_OBJECT_LAYOUT.shooter.x),
+            y:clampObjectValue(sh.y,0.06,0.97,DEFAULT_OBJECT_LAYOUT.shooter.y),
+            scale:clampObjectValue(sh.scale,0.40,2.40,1)
+        },
+        finish:{
+            offsetX:clampObjectValue(fi.offsetX,-0.35,0.35,0),
+            offsetY:clampObjectValue(fi.offsetY,-0.35,0.35,0),
+            scale:clampObjectValue(fi.scale,0.40,2.40,1)
+        }
+    };
+}
+function selectedPreviewLevelIndex(){
+    const sel=document.getElementById('preview-bg-sel');
+    const idx=sel&&sel.value!==''?parseInt(sel.value):0;
+    return Math.max(0,Math.min(levels.length-1,Number.isFinite(idx)?idx:0));
+}
+function ensureLevelObjectLayout(idx){
+    if(!levels[idx]) return makeDefaultObjectLayout();
+    levels[idx].objectLayout=normalizeObjectLayout(levels[idx].objectLayout);
+    return levels[idx].objectLayout;
+}
+let previewObjectEditActive=false;
+let previewObjectSelection=null;
+let previewObjectGesture=null;
+
+function previewObjectSizePx(scale){
+    const box=document.getElementById('p-box');
+    const w=Math.max(320,box?.clientWidth||800);
+    return Math.max(38,90*(w/800))*clampObjectValue(scale,0.40,2.40,1);
+}
+function setPreviewObjectSelection(type){
+    previewObjectSelection=(type==='shooter'||type==='finish')?type:null;
+    document.getElementById('p-object-shooter')?.classList.toggle('selected',previewObjectSelection==='shooter');
+    document.getElementById('p-object-finish')?.classList.toggle('selected',previewObjectSelection==='finish');
+    updatePreviewObjectStatus();
+}
+function updatePreviewObjectStatus(){
+    const out=document.getElementById('p-object-status'); if(!out) return;
+    const layout=ensureLevelObjectLayout(selectedPreviewLevelIndex());
+    if(!previewObjectEditActive){ out.textContent='Пушка и финиш · мышкой'; return; }
+    const selected=previewObjectSelection==='finish'?'Финиш':previewObjectSelection==='shooter'?'Пушка':'Выберите объект';
+    const scale=previewObjectSelection==='finish'?layout.finish.scale:layout.shooter.scale;
+    out.textContent=`${selected}${previewObjectSelection?` · ${Math.round(scale*100)}%`:''}`;
+}
+function updatePreviewObjectLayer(){
+    const layer=document.getElementById('p-object-layer'); if(!layer) return;
+    const idx=selectedPreviewLevelIndex(); const level=levels[idx]; if(!level) return;
+    const layout=ensureLevelObjectLayout(idx);
+    const path=normalizePathData(level.path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
+    const shooter=document.getElementById('p-object-shooter'); const finish=document.getElementById('p-object-finish'); const anchor=document.getElementById('p-finish-anchor');
+    const shooterImg=document.getElementById('p-object-shooter-img'); const finishImg=document.getElementById('p-object-finish-img');
+    if(shooterImg) shooterImg.src=textVal('cfg-img-shooter','');
+    if(finishImg) finishImg.src=textVal('cfg-img-mask','');
+    if(shooter){
+        shooter.style.left=`${layout.shooter.x*100}%`; shooter.style.top=`${layout.shooter.y*100}%`;
+        const size=previewObjectSizePx(layout.shooter.scale); shooter.style.width=`${size}px`; shooter.style.height=`${size}px`;
+    }
+    const fx=end.x+layout.finish.offsetX, fy=end.y+layout.finish.offsetY;
+    if(finish){
+        finish.style.left=`${fx*100}%`; finish.style.top=`${fy*100}%`;
+        const size=previewObjectSizePx(layout.finish.scale); finish.style.width=`${size}px`; finish.style.height=`${size}px`;
+    }
+    if(anchor){ anchor.style.left=`${end.x*100}%`; anchor.style.top=`${end.y*100}%`; }
+    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
+}
+function syncPreviewObjectEditorVisibility(){
+    const gameVisible=previewScreenMode==='game'&&!pathEditorActive;
+    const layer=document.getElementById('p-object-layer'); const bar=document.getElementById('p-object-toolbar'); const toggle=document.getElementById('p-object-edit-toggle');
+    if(layer){ layer.style.display=gameVisible?'block':'none'; layer.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
+    if(bar){ bar.classList.toggle('visible',gameVisible); bar.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
+    if(toggle){ toggle.classList.toggle('active',gameVisible&&previewObjectEditActive); toggle.textContent=previewObjectEditActive?'✓ Готово':'✥ Редактировать объекты'; }
+    if(!gameVisible) setPreviewObjectSelection(null);
+}
+function togglePreviewObjectEdit(){
+    if(pathEditorActive) return;
+    if(previewScreenMode!=='game') setPreviewScreen('game');
+    previewObjectEditActive=!previewObjectEditActive;
+    if(!previewObjectEditActive) setPreviewObjectSelection(null);
+    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
+}
+function resetPreviewObject(type){
+    const idx=selectedPreviewLevelIndex(); if(!levels[idx]) return;
+    const layout=ensureLevelObjectLayout(idx);
+    if(type==='shooter') layout.shooter={...DEFAULT_OBJECT_LAYOUT.shooter};
+    else if(type==='finish') layout.finish={...DEFAULT_OBJECT_LAYOUT.finish};
+    levels[idx].objectLayout=layout; setPreviewObjectSelection(type); updatePreviewObjectLayer(); scheduleAutosave();
+    showEditorToast(type==='finish'?'Финиш возвращён к концу траектории.':'Положение и размер пушки сброшены.');
+}
+function beginPreviewObjectGesture(e,type,isResize){
+    if(!previewObjectEditActive||pathEditorActive||previewScreenMode!=='game') return;
+    e.preventDefault(); e.stopPropagation(); setPreviewObjectSelection(type);
+    const box=document.getElementById('p-box'); if(!box) return; const rect=box.getBoundingClientRect();
+    const idx=selectedPreviewLevelIndex(); const layout=ensureLevelObjectLayout(idx); const current=type==='shooter'?layout.shooter:layout.finish;
+    const item=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); const itemRect=item?.getBoundingClientRect();
+    previewObjectGesture={type,isResize,idx,startX:e.clientX,startY:e.clientY,rect,start:{...current},centerX:itemRect?itemRect.left+itemRect.width/2:e.clientX,centerY:itemRect?itemRect.top+itemRect.height/2:e.clientY,startDist:itemRect?Math.max(8,Math.hypot(e.clientX-(itemRect.left+itemRect.width/2),e.clientY-(itemRect.top+itemRect.height/2))):40};
+    try{e.currentTarget.setPointerCapture?.(e.pointerId);}catch(_e){}
+}
+function movePreviewObjectGesture(e){
+    const g=previewObjectGesture; if(!g||!levels[g.idx]) return;
+    const layout=ensureLevelObjectLayout(g.idx); const target=g.type==='shooter'?layout.shooter:layout.finish;
+    if(g.isResize){
+        const dist=Math.max(8,Math.hypot(e.clientX-g.centerX,e.clientY-g.centerY)); target.scale=clampObjectValue(g.start.scale*(dist/g.startDist),0.40,2.40,1);
+    } else {
+        const dx=(e.clientX-g.startX)/Math.max(1,g.rect.width), dy=(e.clientY-g.startY)/Math.max(1,g.rect.height);
+        if(g.type==='shooter'){
+            target.x=clampObjectValue(g.start.x+dx,0.03,0.97,.5); target.y=clampObjectValue(g.start.y+dy,0.06,0.97,.9167);
+        } else {
+            const path=normalizePathData(levels[g.idx].path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
+            const minX=Math.max(-0.35,0.02-end.x), maxX=Math.min(0.35,0.98-end.x);
+            const minY=Math.max(-0.35,0.02-end.y), maxY=Math.min(0.35,0.98-end.y);
+            target.offsetX=clampObjectValue(g.start.offsetX+dx,minX,maxX,0); target.offsetY=clampObjectValue(g.start.offsetY+dy,minY,maxY,0);
+        }
+    }
+    levels[g.idx].objectLayout=layout; updatePreviewObjectLayer();
+}
+function endPreviewObjectGesture(){ if(!previewObjectGesture) return; previewObjectGesture=null; scheduleAutosave(); }
+function initPreviewObjectEditor(){
+    ['shooter','finish'].forEach(type=>{
+        const el=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); if(!el) return;
+        el.addEventListener('pointerdown',e=>beginPreviewObjectGesture(e,type,!!e.target.closest?.('[data-resize-handle]')));
+    });
+    const layer=document.getElementById('p-object-layer'); if(layer) layer.addEventListener('pointerdown',e=>{ if(e.target===layer) setPreviewObjectSelection(null); });
+    window.addEventListener('pointermove',movePreviewObjectGesture,{passive:true}); window.addEventListener('pointerup',endPreviewObjectGesture); window.addEventListener('pointercancel',endPreviewObjectGesture);
+    window.addEventListener('resize',()=>updatePreviewObjectLayer());
+    updatePreviewObjectLayer();
+}
+
+
 let levelIdCounter = 4;
 let levels = [
     { id: "level-1", bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
@@ -2914,145 +3054,6 @@ function getScreensConfigFromEditor() {
     };
 }
 
-
-const DEFAULT_OBJECT_LAYOUT = Object.freeze({
-    shooter: Object.freeze({x:0.5, y:0.9167, scale:1}),
-    finish: Object.freeze({offsetX:0, offsetY:0, scale:1})
-});
-function clampObjectValue(v,min,max,fallback){ v=Number(v); return Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback; }
-function makeDefaultObjectLayout(){
-    return { shooter:{...DEFAULT_OBJECT_LAYOUT.shooter}, finish:{...DEFAULT_OBJECT_LAYOUT.finish} };
-}
-function normalizeObjectLayout(raw){
-    const src=raw&&typeof raw==='object'?raw:{}; const sh=src.shooter||{}; const fi=src.finish||{};
-    return {
-        shooter:{
-            x:clampObjectValue(sh.x,0.03,0.97,DEFAULT_OBJECT_LAYOUT.shooter.x),
-            y:clampObjectValue(sh.y,0.06,0.97,DEFAULT_OBJECT_LAYOUT.shooter.y),
-            scale:clampObjectValue(sh.scale,0.40,2.40,1)
-        },
-        finish:{
-            offsetX:clampObjectValue(fi.offsetX,-0.35,0.35,0),
-            offsetY:clampObjectValue(fi.offsetY,-0.35,0.35,0),
-            scale:clampObjectValue(fi.scale,0.40,2.40,1)
-        }
-    };
-}
-function selectedPreviewLevelIndex(){
-    const sel=document.getElementById('preview-bg-sel');
-    const idx=sel&&sel.value!==''?parseInt(sel.value):0;
-    return Math.max(0,Math.min(levels.length-1,Number.isFinite(idx)?idx:0));
-}
-function ensureLevelObjectLayout(idx){
-    if(!levels[idx]) return makeDefaultObjectLayout();
-    levels[idx].objectLayout=normalizeObjectLayout(levels[idx].objectLayout);
-    return levels[idx].objectLayout;
-}
-let previewObjectEditActive=false;
-let previewObjectSelection=null;
-let previewObjectGesture=null;
-
-function previewObjectSizePx(scale){
-    const box=document.getElementById('p-box');
-    const w=Math.max(320,box?.clientWidth||800);
-    return Math.max(38,90*(w/800))*clampObjectValue(scale,0.40,2.40,1);
-}
-function setPreviewObjectSelection(type){
-    previewObjectSelection=(type==='shooter'||type==='finish')?type:null;
-    document.getElementById('p-object-shooter')?.classList.toggle('selected',previewObjectSelection==='shooter');
-    document.getElementById('p-object-finish')?.classList.toggle('selected',previewObjectSelection==='finish');
-    updatePreviewObjectStatus();
-}
-function updatePreviewObjectStatus(){
-    const out=document.getElementById('p-object-status'); if(!out) return;
-    const layout=ensureLevelObjectLayout(selectedPreviewLevelIndex());
-    if(!previewObjectEditActive){ out.textContent='Пушка и финиш · мышкой'; return; }
-    const selected=previewObjectSelection==='finish'?'Финиш':previewObjectSelection==='shooter'?'Пушка':'Выберите объект';
-    const scale=previewObjectSelection==='finish'?layout.finish.scale:layout.shooter.scale;
-    out.textContent=`${selected}${previewObjectSelection?` · ${Math.round(scale*100)}%`:''}`;
-}
-function updatePreviewObjectLayer(){
-    const layer=document.getElementById('p-object-layer'); if(!layer) return;
-    const idx=selectedPreviewLevelIndex(); const level=levels[idx]; if(!level) return;
-    const layout=ensureLevelObjectLayout(idx);
-    const path=normalizePathData(level.path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
-    const shooter=document.getElementById('p-object-shooter'); const finish=document.getElementById('p-object-finish'); const anchor=document.getElementById('p-finish-anchor');
-    const shooterImg=document.getElementById('p-object-shooter-img'); const finishImg=document.getElementById('p-object-finish-img');
-    if(shooterImg) shooterImg.src=textVal('cfg-img-shooter','');
-    if(finishImg) finishImg.src=textVal('cfg-img-mask','');
-    if(shooter){
-        shooter.style.left=`${layout.shooter.x*100}%`; shooter.style.top=`${layout.shooter.y*100}%`;
-        const size=previewObjectSizePx(layout.shooter.scale); shooter.style.width=`${size}px`; shooter.style.height=`${size}px`;
-    }
-    const fx=end.x+layout.finish.offsetX, fy=end.y+layout.finish.offsetY;
-    if(finish){
-        finish.style.left=`${fx*100}%`; finish.style.top=`${fy*100}%`;
-        const size=previewObjectSizePx(layout.finish.scale); finish.style.width=`${size}px`; finish.style.height=`${size}px`;
-    }
-    if(anchor){ anchor.style.left=`${end.x*100}%`; anchor.style.top=`${end.y*100}%`; }
-    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
-}
-function syncPreviewObjectEditorVisibility(){
-    const gameVisible=previewScreenMode==='game'&&!pathEditorActive;
-    const layer=document.getElementById('p-object-layer'); const bar=document.getElementById('p-object-toolbar'); const toggle=document.getElementById('p-object-edit-toggle');
-    if(layer){ layer.style.display=gameVisible?'block':'none'; layer.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
-    if(bar){ bar.classList.toggle('visible',gameVisible); bar.classList.toggle('editing',gameVisible&&previewObjectEditActive); }
-    if(toggle){ toggle.classList.toggle('active',gameVisible&&previewObjectEditActive); toggle.textContent=previewObjectEditActive?'✓ Готово':'✥ Редактировать объекты'; }
-    if(!gameVisible) setPreviewObjectSelection(null);
-}
-function togglePreviewObjectEdit(){
-    if(pathEditorActive) return;
-    if(previewScreenMode!=='game') setPreviewScreen('game');
-    previewObjectEditActive=!previewObjectEditActive;
-    if(!previewObjectEditActive) setPreviewObjectSelection(null);
-    syncPreviewObjectEditorVisibility(); updatePreviewObjectStatus();
-}
-function resetPreviewObject(type){
-    const idx=selectedPreviewLevelIndex(); if(!levels[idx]) return;
-    const layout=ensureLevelObjectLayout(idx);
-    if(type==='shooter') layout.shooter={...DEFAULT_OBJECT_LAYOUT.shooter};
-    else if(type==='finish') layout.finish={...DEFAULT_OBJECT_LAYOUT.finish};
-    levels[idx].objectLayout=layout; setPreviewObjectSelection(type); updatePreviewObjectLayer(); scheduleAutosave();
-    showEditorToast(type==='finish'?'Финиш возвращён к концу траектории.':'Положение и размер пушки сброшены.');
-}
-function beginPreviewObjectGesture(e,type,isResize){
-    if(!previewObjectEditActive||pathEditorActive||previewScreenMode!=='game') return;
-    e.preventDefault(); e.stopPropagation(); setPreviewObjectSelection(type);
-    const box=document.getElementById('p-box'); if(!box) return; const rect=box.getBoundingClientRect();
-    const idx=selectedPreviewLevelIndex(); const layout=ensureLevelObjectLayout(idx); const current=type==='shooter'?layout.shooter:layout.finish;
-    const item=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); const itemRect=item?.getBoundingClientRect();
-    previewObjectGesture={type,isResize,idx,startX:e.clientX,startY:e.clientY,rect,start:{...current},centerX:itemRect?itemRect.left+itemRect.width/2:e.clientX,centerY:itemRect?itemRect.top+itemRect.height/2:e.clientY,startDist:itemRect?Math.max(8,Math.hypot(e.clientX-(itemRect.left+itemRect.width/2),e.clientY-(itemRect.top+itemRect.height/2))):40};
-    try{e.currentTarget.setPointerCapture?.(e.pointerId);}catch(_e){}
-}
-function movePreviewObjectGesture(e){
-    const g=previewObjectGesture; if(!g||!levels[g.idx]) return;
-    const layout=ensureLevelObjectLayout(g.idx); const target=g.type==='shooter'?layout.shooter:layout.finish;
-    if(g.isResize){
-        const dist=Math.max(8,Math.hypot(e.clientX-g.centerX,e.clientY-g.centerY)); target.scale=clampObjectValue(g.start.scale*(dist/g.startDist),0.40,2.40,1);
-    } else {
-        const dx=(e.clientX-g.startX)/Math.max(1,g.rect.width), dy=(e.clientY-g.startY)/Math.max(1,g.rect.height);
-        if(g.type==='shooter'){
-            target.x=clampObjectValue(g.start.x+dx,0.03,0.97,.5); target.y=clampObjectValue(g.start.y+dy,0.06,0.97,.9167);
-        } else {
-            const path=normalizePathData(levels[g.idx].path); const end=path.length?path[path.length-1]:{x:.5,y:.5};
-            const minX=Math.max(-0.35,0.02-end.x), maxX=Math.min(0.35,0.98-end.x);
-            const minY=Math.max(-0.35,0.02-end.y), maxY=Math.min(0.35,0.98-end.y);
-            target.offsetX=clampObjectValue(g.start.offsetX+dx,minX,maxX,0); target.offsetY=clampObjectValue(g.start.offsetY+dy,minY,maxY,0);
-        }
-    }
-    levels[g.idx].objectLayout=layout; updatePreviewObjectLayer();
-}
-function endPreviewObjectGesture(){ if(!previewObjectGesture) return; previewObjectGesture=null; scheduleAutosave(); }
-function initPreviewObjectEditor(){
-    ['shooter','finish'].forEach(type=>{
-        const el=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); if(!el) return;
-        el.addEventListener('pointerdown',e=>beginPreviewObjectGesture(e,type,!!e.target.closest?.('[data-resize-handle]')));
-    });
-    const layer=document.getElementById('p-object-layer'); if(layer) layer.addEventListener('pointerdown',e=>{ if(e.target===layer) setPreviewObjectSelection(null); });
-    window.addEventListener('pointermove',movePreviewObjectGesture,{passive:true}); window.addEventListener('pointerup',endPreviewObjectGesture); window.addEventListener('pointercancel',endPreviewObjectGesture);
-    window.addEventListener('resize',()=>updatePreviewObjectLayer());
-    updatePreviewObjectLayer();
-}
 
 let previewScreenMode='start';
 function setPreviewScreen(mode, btn=null) {
