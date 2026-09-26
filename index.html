@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maze Trap - Absolute Pro Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Metamorphous&family=Orbitron:wght@400;700;900&family=Caveat:wght@700&family=Cinzel:wght@700&family=Macondo&family=Montserrat:wght@400;700;800&family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Comic+Neue:wght@700&family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Metamorphous&family=Orbitron:wght@400;700;900&family=Caveat:wght@700&family=Cinzel:wght@700&family=Macondo&family=Montserrat:wght@400;700;800&family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Comic+Neue:wght@700&family=Pacifico&family=Fredoka:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Marcellus&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -372,6 +372,16 @@
         }
         .level-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
         .level-title { margin:0; color:var(--ui-color); font-size:11px; font-weight:900; text-transform:uppercase; }
+        .level-head-actions { display:flex; align-items:center; gap:6px; }
+        .level-edit-btn { border:1px solid #4b5160; background:#11141c; color:#c7cedd; border-radius:7px; padding:6px 9px; font-size:8.5px; font-weight:900; cursor:pointer; transition:.16s; white-space:nowrap; }
+        .level-edit-btn:hover { border-color:#ffd34e; color:#fff4b0; box-shadow:0 0 10px rgba(255,211,78,.18); }
+        .level-edit-btn.active { border-color:#ffd34e; color:#18130a; background:#ffd34e; box-shadow:0 0 14px rgba(255,211,78,.38); cursor:default; }
+        .level-card.active-edit { border-color:#ffd34e; box-shadow:0 0 0 1px rgba(255,211,78,.25), 0 0 20px rgba(255,186,0,.15); }
+        .level-theme-line { margin:-2px 0 9px; color:#9ea5b5; font-size:8.7px; font-weight:800; }
+        .level-theme-line strong { color:#f6f7fb; }
+        .active-level-banner { display:flex; align-items:center; gap:7px; margin:6px 9px 0; padding:7px 9px; border:1px solid rgba(255,211,78,.28); border-radius:8px; background:linear-gradient(90deg,rgba(255,174,0,.12),rgba(255,255,255,.025)); color:#c7cedd; font-size:9px; font-weight:800; line-height:1.25; }
+        .active-level-banner .dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; background:#ffd34e; box-shadow:0 0 9px #ffd34e; }
+        .active-level-banner strong { color:#fff4b0; }
         .level-bg-row { display:grid; grid-template-columns: 82px minmax(0,1fr); gap:8px; align-items:stretch; }
         .level-bg-thumb {
             min-height: 74px;
@@ -977,8 +987,18 @@
             padding: clamp(12px, 2.2vh, 24px);
             box-sizing: border-box;
             align-items: center;
+            overflow: hidden;
         }
-        #g-end-screen #g-end-card {
+        #g-end-fx-canvas {
+            position:absolute;
+            inset:0;
+            width:100%;
+            height:100%;
+            z-index:0;
+            pointer-events:none;
+        }
+        #g-end-screen #g-end-card {            position:relative;
+            z-index:1;
             width: min(92vw, 520px);
             max-width: 520px;
             min-height: 0;
@@ -1065,6 +1085,10 @@
             <button class="tab-btn" onclick="openTab('tab-questions', this)">Вопросы</button>
             <button class="tab-btn export-tab" onclick="openTab('tab-export', this)">Экспорт</button>
         </nav>
+        <div id="active-level-banner" class="active-level-banner">
+            <span class="dot"></span>
+            <span id="active-level-banner-text"><strong>Редактируется:</strong> Уровень 1 · Классика 1</span>
+        </div>
 
         <main class="editor-main">
         <div id="tab-design" class="tab-content active">
@@ -1201,9 +1225,8 @@
                     <div class="ball-card"><img id="asset-preview-special-time-sub" alt=""><strong>−10 сек</strong><div class="ball-function">Отнимает 10 секунд и добавляет штраф 50 очков.</div><div class="ball-actions"><button onclick="pickAssetFile('special-time-sub')">Файл</button><button onclick="openAssetUrlDialog('special-time-sub')">URL</button></div><div class="asset-warning" id="asset-warning-special-time-sub"></div><input type="hidden" id="cfg-special-time-sub" value="https://img.genially.com/67961b32a116fb001568a75e/0f361898-6196-4f36-a249-7a4d108c65e1.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-compress" alt=""><strong>Стрелки внутрь</strong><div class="ball-function">Сжимает цепочку: следующие шары появляются ближе друг к другу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-compress')">Файл</button><button onclick="openAssetUrlDialog('special-compress')">URL</button></div><div class="asset-warning" id="asset-warning-special-compress"></div><input type="hidden" id="cfg-special-compress" value="https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-stretch" alt=""><strong>Стрелки наружу</strong><div class="ball-function">Растягивает цепочку: расстояние между следующими шарами увеличивается.</div><div class="ball-actions"><button onclick="pickAssetFile('special-stretch')">Файл</button><button onclick="openAssetUrlDialog('special-stretch')">URL</button></div><div class="asset-warning" id="asset-warning-special-stretch"></div><input type="hidden" id="cfg-special-stretch" value="https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png"></div>
-                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два нейтральных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
-                    <div class="ball-card"><img id="asset-preview-special-neutral" alt=""><strong>Нейтральный</strong><div class="ball-function">Серый шар без цвета: уничтожается попаданием шара любого цвета.</div><div class="ball-actions"><button onclick="pickAssetFile('special-neutral')">Файл</button><button onclick="openAssetUrlDialog('special-neutral')">URL</button></div><div class="asset-warning" id="asset-warning-special-neutral"></div><input type="hidden" id="cfg-special-neutral" value="https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png"></div>
-                </div>
+                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два обычных цветных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
+</div>
             </section>
         </div>
 
@@ -1893,7 +1916,8 @@
         </div>
 
         <div id="g-end-screen" class="g-ui-layer g-hidden">
-            <div class="g-neon-card" id="g-end-card">
+                        <canvas id="g-end-fx-canvas" aria-hidden="true"></canvas>
+<div class="g-neon-card" id="g-end-card">
                 <img src="" class="g-deco-mask" id="g-end-image">
                 <h1 id="g-end-title" class="g-h1">GAME OVER</h1>
                 <p id="g-end-reason" style="color:var(--q-color); font-size:1.4em; margin-bottom:15px; text-shadow: 0 0 5px var(--q-color);"></p>
@@ -1972,10 +1996,7 @@ const LEVEL_PRESET_META = [
     { id:'sea', label:'🧜 Sea', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/shooter_sea.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/finish_sea.png' }
 ];
 
-
 const AUTO_THEME_BASE_FIELDS = {
-    'cfg-neon': true,
-    'cfg-error-review': true,
     'cfg-prompt-size': 24,
     'cfg-q-size': 32,
     'cfg-a-size': 26,
@@ -2161,76 +2182,76 @@ const AUTO_THEME_PACKS = {
     newyear: {
         label: '🎄 New Year',
         fields: {
-            'screen-game-frame': '#79e7ff',
-            'cfg-prog-color': '#9fffe6',
+            'screen-game-frame': '#b9e8ff',
+            'cfg-prog-color': '#f8fbff',
             'cfg-prompt-font': "'Cinzel', serif",
-            'cfg-prompt-color': '#8fe9ff',
+            'cfg-prompt-color': '#9fd8ff',
             'cfg-q-font': "'Metamorphous', serif",
-            'cfg-q-color': '#fff4c2',
+            'cfg-q-color': '#ffe6a3',
             'cfg-a-font': "'Montserrat', sans-serif",
             'cfg-a-color': '#f7fcff',
-            'cfg-a-bg': '#244766',
-            'screen-answer-neon': '#79e7ff',
-            'screen-overlay-bg': '#07111f',
+            'cfg-a-bg': '#183e68',
+            'screen-answer-neon': '#b9e8ff',
+            'screen-overlay-bg': '#06101d',
             'screen-start-title-font': "'Cinzel', serif",
             'screen-start-title-color': '#ffffff',
-            'screen-start-title-neon': '#79e7ff',
+            'screen-start-title-neon': '#b9e8ff',
             'screen-start-desc-font': "'Montserrat', sans-serif",
-            'screen-start-desc-color': '#b7fff2',
+            'screen-start-desc-color': '#d9f4ff',
             'screen-start-companion-font': "'Montserrat', sans-serif",
-            'screen-start-companion-color': '#ffd76a',
-            'screen-start-companion-neon': '#ffd76a',
-            'screen-start-panel-bg': '#10243d',
-            'screen-start-button-bg': '#0a182a',
-            'screen-start-button-color': '#79e7ff',
-            'screen-start-button-neon': '#79e7ff',
-            'screen-question-bg': '#10243d',
+            'screen-start-companion-color': '#ffd166',
+            'screen-start-companion-neon': '#ffd166',
+            'screen-start-panel-bg': '#0c2747',
+            'screen-start-button-bg': '#07182b',
+            'screen-start-button-color': '#d9f4ff',
+            'screen-start-button-neon': '#b9e8ff',
+            'screen-question-bg': '#0c2747',
             'screen-win-title-font': "'Cinzel', serif",
             'screen-win-title-color': '#ffffff',
-            'screen-win-title-neon': '#79e7ff',
+            'screen-win-title-neon': '#b9e8ff',
             'screen-win-subtitle-font': "'Montserrat', sans-serif",
-            'screen-win-subtitle-color': '#b7fff2',
-            'screen-win-subtitle-neon': '#b7fff2',
-            'screen-win-panel-bg': '#10243d',
-            'screen-win-button-bg': '#0a182a',
-            'screen-win-button-color': '#ffd76a',
-            'screen-win-button-neon': '#ffd76a',
+            'screen-win-subtitle-color': '#d9f4ff',
+            'screen-win-subtitle-neon': '#d9f4ff',
+            'screen-win-panel-bg': '#0c2747',
+            'screen-win-button-bg': '#07182b',
+            'screen-win-button-color': '#ffd166',
+            'screen-win-button-neon': '#ffd166',
             'screen-lose-title-font': "'Cinzel', serif",
             'screen-lose-title-color': '#ffffff',
             'screen-lose-title-neon': '#ff7f96',
             'screen-lose-subtitle-font': "'Montserrat', sans-serif",
-            'screen-lose-subtitle-color': '#ffd76a',
-            'screen-lose-subtitle-neon': '#ffd76a',
-            'screen-lose-panel-bg': '#10243d',
-            'screen-lose-button-bg': '#0a182a',
+            'screen-lose-subtitle-color': '#ffd166',
+            'screen-lose-subtitle-neon': '#ffd166',
+            'screen-lose-panel-bg': '#0c2747',
+            'screen-lose-button-bg': '#07182b',
             'screen-lose-button-color': '#ff7f96',
             'screen-lose-button-neon': '#ff7f96',
             'screen-timeout-title-font': "'Cinzel', serif",
             'screen-timeout-title-color': '#ffffff',
-            'screen-timeout-title-neon': '#79e7ff',
+            'screen-timeout-title-neon': '#b9e8ff',
             'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
-            'screen-timeout-subtitle-color': '#ffd76a',
-            'screen-timeout-subtitle-neon': '#ffd76a',
-            'screen-timeout-panel-bg': '#10243d',
-            'screen-timeout-button-bg': '#0a182a',
-            'screen-timeout-button-color': '#79e7ff',
-            'screen-timeout-button-neon': '#79e7ff',
+            'screen-timeout-subtitle-color': '#ffd166',
+            'screen-timeout-subtitle-neon': '#ffd166',
+            'screen-timeout-panel-bg': '#0c2747',
+            'screen-timeout-button-bg': '#07182b',
+            'screen-timeout-button-color': '#d9f4ff',
+            'screen-timeout-button-neon': '#b9e8ff',
             'review-title-font': "'Cinzel', serif",
             'review-title-color': '#ffffff',
-            'review-title-neon': '#79e7ff',
+            'review-title-neon': '#b9e8ff',
             'review-label-font': "'Montserrat', sans-serif",
-            'review-label-color': '#ffd76a',
-            'review-label-neon': '#ffd76a',
+            'review-label-color': '#ffd166',
+            'review-label-neon': '#ffd166',
             'review-answer-font': "'Metamorphous', serif",
-            'review-answer-color': '#b7fff2',
-            'review-answer-neon': '#b7fff2',
+            'review-answer-color': '#d9f4ff',
+            'review-answer-neon': '#d9f4ff',
             'review-screen-bg': '#050b14',
-            'review-card-bg': '#0f1d2f',
-            'review-card-neon': '#79e7ff',
-            'review-open-button-bg': '#0a182a',
-            'review-open-button-color': '#79e7ff',
-            'review-open-button-neon': '#79e7ff',
-            'review-back-button-bg': '#0a182a',
+            'review-card-bg': '#0b2039',
+            'review-card-neon': '#b9e8ff',
+            'review-open-button-bg': '#07182b',
+            'review-open-button-color': '#d9f4ff',
+            'review-open-button-neon': '#b9e8ff',
+            'review-back-button-bg': '#07182b',
             'review-back-button-color': '#ffffff',
             'review-back-button-neon': '#ffffff'
         }
@@ -2238,79 +2259,79 @@ const AUTO_THEME_PACKS = {
     valentine: {
         label: '💗 Valentine',
         fields: {
-            'screen-game-frame': '#ff5ca8',
-            'cfg-prog-color': '#ff9ed3',
-            'cfg-prompt-font': "'Poppins', sans-serif",
-            'cfg-prompt-color': '#ff7fbe',
-            'cfg-q-font': "'Poppins', sans-serif",
-            'cfg-q-color': '#fff0f8',
-            'cfg-a-font': "'Poppins', sans-serif",
+            'screen-game-frame': '#e85d8f',
+            'cfg-prog-color': '#f4c56a',
+            'cfg-prompt-font': "'Playfair Display', serif",
+            'cfg-prompt-color': '#f2a7c1',
+            'cfg-q-font': "'Playfair Display', serif",
+            'cfg-q-color': '#fff4e8',
+            'cfg-a-font': "'Montserrat', sans-serif",
             'cfg-a-color': '#fffafc',
-            'cfg-a-bg': '#74345d',
-            'screen-answer-neon': '#ff5ca8',
-            'screen-overlay-bg': '#140913',
-            'screen-start-title-font': "'Pacifico', cursive",
-            'screen-start-title-color': '#fff4fa',
-            'screen-start-title-neon': '#ff5ca8',
+            'cfg-a-bg': '#63233d',
+            'screen-answer-neon': '#f4c56a',
+            'screen-overlay-bg': '#17080f',
+            'screen-start-title-font': "'Playfair Display', serif",
+            'screen-start-title-color': '#fff4e8',
+            'screen-start-title-neon': '#e85d8f',
             'screen-start-desc-font': "'Montserrat', sans-serif",
-            'screen-start-desc-color': '#ffb4da',
-            'screen-start-companion-font': "'Caveat', cursive",
+            'screen-start-desc-color': '#f2a7c1',
+            'screen-start-companion-font': "'Montserrat', sans-serif",
             'screen-start-companion-size': 1.12,
-            'screen-start-companion-color': '#ffd7ec',
-            'screen-start-companion-neon': '#ffd7ec',
-            'screen-start-panel-bg': '#321427',
-            'screen-start-button-bg': '#210c19',
-            'screen-start-button-color': '#ff8ac4',
-            'screen-start-button-neon': '#ff5ca8',
-            'screen-question-bg': '#321427',
-            'screen-win-title-font': "'Pacifico', cursive",
-            'screen-win-title-color': '#fff4fa',
-            'screen-win-title-neon': '#ff5ca8',
+            'screen-start-companion-color': '#f4c56a',
+            'screen-start-companion-neon': '#f4c56a',
+            'screen-start-panel-bg': '#421225',
+            'screen-start-button-bg': '#2a0b17',
+            'screen-start-button-color': '#f4c56a',
+            'screen-start-button-neon': '#e85d8f',
+            'screen-question-bg': '#421225',
+            'screen-win-title-font': "'Playfair Display', serif",
+            'screen-win-title-color': '#fff4e8',
+            'screen-win-title-neon': '#e85d8f',
             'screen-win-subtitle-font': "'Montserrat', sans-serif",
-            'screen-win-subtitle-color': '#ffb4da',
-            'screen-win-subtitle-neon': '#ffb4da',
-            'screen-win-panel-bg': '#321427',
-            'screen-win-button-bg': '#210c19',
-            'screen-win-button-color': '#ffd7ec',
-            'screen-win-button-neon': '#ffd7ec',
-            'screen-lose-title-font': "'Pacifico', cursive",
-            'screen-lose-title-color': '#fff4fa',
-            'screen-lose-title-neon': '#ff6f91',
+            'screen-win-subtitle-color': '#f2a7c1',
+            'screen-win-subtitle-neon': '#f2a7c1',
+            'screen-win-panel-bg': '#421225',
+            'screen-win-button-bg': '#2a0b17',
+            'screen-win-button-color': '#f4c56a',
+            'screen-win-button-neon': '#f4c56a',
+            'screen-lose-title-font': "'Playfair Display', serif",
+            'screen-lose-title-color': '#fff4e8',
+            'screen-lose-title-neon': '#d83b69',
             'screen-lose-subtitle-font': "'Montserrat', sans-serif",
-            'screen-lose-subtitle-color': '#ffb4da',
-            'screen-lose-subtitle-neon': '#ffb4da',
-            'screen-lose-panel-bg': '#321427',
-            'screen-lose-button-bg': '#210c19',
-            'screen-lose-button-color': '#ff6f91',
-            'screen-lose-button-neon': '#ff6f91',
-            'screen-timeout-title-font': "'Pacifico', cursive",
-            'screen-timeout-title-color': '#fff4fa',
-            'screen-timeout-title-neon': '#ff9ec7',
+            'screen-lose-subtitle-color': '#f2a7c1',
+            'screen-lose-subtitle-neon': '#f2a7c1',
+            'screen-lose-panel-bg': '#421225',
+            'screen-lose-button-bg': '#2a0b17',
+            'screen-lose-button-color': '#d83b69',
+            'screen-lose-button-neon': '#d83b69',
+            'screen-timeout-title-font': "'Playfair Display', serif",
+            'screen-timeout-title-color': '#fff4e8',
+            'screen-timeout-title-neon': '#f4c56a',
             'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
-            'screen-timeout-subtitle-color': '#ffd7ec',
-            'screen-timeout-subtitle-neon': '#ffd7ec',
-            'screen-timeout-panel-bg': '#321427',
-            'screen-timeout-button-bg': '#210c19',
-            'screen-timeout-button-color': '#ff9ec7',
-            'screen-timeout-button-neon': '#ff9ec7',
-            'review-title-font': "'Pacifico', cursive",
-            'review-title-color': '#fff4fa',
-            'review-title-neon': '#ff5ca8',
+            'screen-timeout-subtitle-color': '#f2a7c1',
+            'screen-timeout-subtitle-neon': '#f2a7c1',
+            'screen-timeout-panel-bg': '#421225',
+            'screen-timeout-button-bg': '#2a0b17',
+            'screen-timeout-button-color': '#f4c56a',
+            'screen-timeout-button-neon': '#f4c56a',
+            'review-title-font': "'Playfair Display', serif",
+            'review-title-color': '#fff4e8',
+            'review-title-neon': '#e85d8f',
             'review-label-font': "'Montserrat', sans-serif",
-            'review-label-color': '#ff9ed3',
-            'review-label-neon': '#ff9ed3',
-            'review-answer-font': "'Poppins', sans-serif",
-            'review-answer-color': '#ffd7ec',
-            'review-answer-neon': '#ffd7ec',
+            'review-label-color': '#f4c56a',
+            'review-label-neon': '#f4c56a',
+            'review-answer-font': "'Montserrat', sans-serif",
+            'review-answer-color': '#f2a7c1',
+            'review-answer-neon': '#f2a7c1',
             'review-screen-bg': '#0b050a',
-            'review-card-bg': '#24111d',
-            'review-card-neon': '#ff5ca8',
-            'review-open-button-bg': '#210c19',
-            'review-open-button-color': '#ff8ac4',
-            'review-open-button-neon': '#ff5ca8',
-            'review-back-button-bg': '#210c19',
-            'review-back-button-color': '#fff4fa',
-            'review-back-button-neon': '#fff4fa'
+            'review-card-bg': '#32101d',
+            'review-card-neon': '#e85d8f',
+            'review-open-button-bg': '#2a0b17',
+            'review-open-button-color': '#f4c56a',
+            'review-open-button-neon': '#e85d8f',
+            'review-back-button-bg': '#2a0b17',
+            'review-back-button-color': '#fff4e8',
+            'review-back-button-neon': '#fff4e8'
         }
     },
     space: {
@@ -2398,170 +2419,240 @@ const AUTO_THEME_PACKS = {
     candy: {
         label: '🍭 Candy',
         fields: {
-            'screen-game-frame': '#ff6fb5',
-            'cfg-prog-color': '#8effd1',
-            'cfg-prompt-font': "'Poppins', sans-serif",
-            'cfg-prompt-color': '#ff91cc',
-            'cfg-q-font': "'Comic Neue', sans-serif",
-            'cfg-q-color': '#fff3b0',
+            'screen-game-frame': '#22e0d0',
+            'cfg-prog-color': '#ffe45e',
+            'cfg-prompt-font': "'Fredoka', sans-serif",
+            'cfg-prompt-color': '#ff7ab8',
+            'cfg-q-font': "'Fredoka', sans-serif",
+            'cfg-q-color': '#fff7a8',
             'cfg-q-size': 34,
-            'cfg-a-font': "'Poppins', sans-serif",
+            'cfg-a-font': "'Fredoka', sans-serif",
             'cfg-a-color': '#fffdfc',
-            'cfg-a-bg': '#8a4d80',
-            'screen-answer-neon': '#8effd1',
-            'screen-overlay-bg': '#150812',
-            'screen-start-title-font': "'Pacifico', cursive",
-            'screen-start-title-color': '#fff6fb',
-            'screen-start-title-neon': '#ff6fb5',
-            'screen-start-desc-font': "'Poppins', sans-serif",
-            'screen-start-desc-color': '#8effd1',
-            'screen-start-companion-font': "'Caveat', cursive",
+            'cfg-a-bg': '#126978',
+            'screen-answer-neon': '#22e0d0',
+            'screen-overlay-bg': '#041b21',
+            'screen-start-title-font': "'Fredoka', sans-serif",
+            'screen-start-title-color': '#fffdf2',
+            'screen-start-title-neon': '#22e0d0',
+            'screen-start-desc-font': "'Fredoka', sans-serif",
+            'screen-start-desc-color': '#ff7ab8',
+            'screen-start-companion-font': "'Fredoka', sans-serif",
             'screen-start-companion-size': 1.12,
-            'screen-start-companion-color': '#fff3b0',
-            'screen-start-companion-neon': '#fff3b0',
-            'screen-start-panel-bg': '#35172d',
-            'screen-start-button-bg': '#2a1021',
-            'screen-start-button-color': '#ff91cc',
-            'screen-start-button-neon': '#ff6fb5',
-            'screen-question-bg': '#35172d',
-            'screen-win-title-font': "'Pacifico', cursive",
-            'screen-win-title-color': '#fff6fb',
-            'screen-win-title-neon': '#ff6fb5',
-            'screen-win-subtitle-font': "'Poppins', sans-serif",
-            'screen-win-subtitle-color': '#8effd1',
-            'screen-win-subtitle-neon': '#8effd1',
-            'screen-win-panel-bg': '#35172d',
-            'screen-win-button-bg': '#2a1021',
-            'screen-win-button-color': '#fff3b0',
-            'screen-win-button-neon': '#fff3b0',
-            'screen-lose-title-font': "'Pacifico', cursive",
-            'screen-lose-title-color': '#fff6fb',
-            'screen-lose-title-neon': '#ff8f66',
-            'screen-lose-subtitle-font': "'Poppins', sans-serif",
-            'screen-lose-subtitle-color': '#fff3b0',
-            'screen-lose-subtitle-neon': '#fff3b0',
-            'screen-lose-panel-bg': '#35172d',
-            'screen-lose-button-bg': '#2a1021',
-            'screen-lose-button-color': '#ff8f66',
-            'screen-lose-button-neon': '#ff8f66',
-            'screen-timeout-title-font': "'Pacifico', cursive",
-            'screen-timeout-title-color': '#fff6fb',
-            'screen-timeout-title-neon': '#8effd1',
-            'screen-timeout-subtitle-font': "'Poppins', sans-serif",
-            'screen-timeout-subtitle-color': '#fff3b0',
-            'screen-timeout-subtitle-neon': '#fff3b0',
-            'screen-timeout-panel-bg': '#35172d',
-            'screen-timeout-button-bg': '#2a1021',
-            'screen-timeout-button-color': '#8effd1',
-            'screen-timeout-button-neon': '#8effd1',
-            'review-title-font': "'Pacifico', cursive",
-            'review-title-color': '#fff6fb',
-            'review-title-neon': '#ff6fb5',
-            'review-label-font': "'Poppins', sans-serif",
-            'review-label-color': '#fff3b0',
-            'review-label-neon': '#fff3b0',
-            'review-answer-font': "'Poppins', sans-serif",
-            'review-answer-color': '#8effd1',
-            'review-answer-neon': '#8effd1',
-            'review-screen-bg': '#0a0408',
-            'review-card-bg': '#24121f',
-            'review-card-neon': '#ff6fb5',
-            'review-open-button-bg': '#2a1021',
-            'review-open-button-color': '#ff91cc',
-            'review-open-button-neon': '#ff6fb5',
-            'review-back-button-bg': '#2a1021',
-            'review-back-button-color': '#fff6fb',
-            'review-back-button-neon': '#fff6fb'
+            'screen-start-companion-color': '#ffe45e',
+            'screen-start-companion-neon': '#ffe45e',
+            'screen-start-panel-bg': '#073b46',
+            'screen-start-button-bg': '#052a32',
+            'screen-start-button-color': '#fff7a8',
+            'screen-start-button-neon': '#22e0d0',
+            'screen-question-bg': '#073b46',
+            'screen-win-title-font': "'Fredoka', sans-serif",
+            'screen-win-title-color': '#fffdf2',
+            'screen-win-title-neon': '#22e0d0',
+            'screen-win-subtitle-font': "'Fredoka', sans-serif",
+            'screen-win-subtitle-color': '#ff7ab8',
+            'screen-win-subtitle-neon': '#ff7ab8',
+            'screen-win-panel-bg': '#073b46',
+            'screen-win-button-bg': '#052a32',
+            'screen-win-button-color': '#ffe45e',
+            'screen-win-button-neon': '#ffe45e',
+            'screen-lose-title-font': "'Fredoka', sans-serif",
+            'screen-lose-title-color': '#fffdf2',
+            'screen-lose-title-neon': '#ff6b6b',
+            'screen-lose-subtitle-font': "'Fredoka', sans-serif",
+            'screen-lose-subtitle-color': '#ffe45e',
+            'screen-lose-subtitle-neon': '#ffe45e',
+            'screen-lose-panel-bg': '#073b46',
+            'screen-lose-button-bg': '#052a32',
+            'screen-lose-button-color': '#ff6b6b',
+            'screen-lose-button-neon': '#ff6b6b',
+            'screen-timeout-title-font': "'Fredoka', sans-serif",
+            'screen-timeout-title-color': '#fffdf2',
+            'screen-timeout-title-neon': '#22e0d0',
+            'screen-timeout-subtitle-font': "'Fredoka', sans-serif",
+            'screen-timeout-subtitle-color': '#ffe45e',
+            'screen-timeout-subtitle-neon': '#ffe45e',
+            'screen-timeout-panel-bg': '#073b46',
+            'screen-timeout-button-bg': '#052a32',
+            'screen-timeout-button-color': '#22e0d0',
+            'screen-timeout-button-neon': '#22e0d0',
+            'review-title-font': "'Fredoka', sans-serif",
+            'review-title-color': '#fffdf2',
+            'review-title-neon': '#22e0d0',
+            'review-label-font': "'Fredoka', sans-serif",
+            'review-label-color': '#ff7ab8',
+            'review-label-neon': '#ff7ab8',
+            'review-answer-font': "'Fredoka', sans-serif",
+            'review-answer-color': '#fff7a8',
+            'review-answer-neon': '#ffe45e',
+            'review-screen-bg': '#021013',
+            'review-card-bg': '#052a32',
+            'review-card-neon': '#22e0d0',
+            'review-open-button-bg': '#052a32',
+            'review-open-button-color': '#ff7ab8',
+            'review-open-button-neon': '#22e0d0',
+            'review-back-button-bg': '#052a32',
+            'review-back-button-color': '#fffdf2',
+            'review-back-button-neon': '#fffdf2'
         }
     },
     sea: {
         label: '🧜 Sea',
         fields: {
-            'screen-game-frame': '#49d8ff',
-            'cfg-prog-color': '#b9fff3',
-            'cfg-prompt-font': "'Cinzel', serif",
-            'cfg-prompt-color': '#78e9ff',
-            'cfg-q-font': "'Metamorphous', serif",
-            'cfg-q-color': '#fff8e0',
+            'screen-game-frame': '#27d6c6',
+            'cfg-prog-color': '#f3c982',
+            'cfg-prompt-font': "'Marcellus', serif",
+            'cfg-prompt-color': '#66eadc',
+            'cfg-q-font': "'Marcellus', serif",
+            'cfg-q-color': '#fff5dd',
             'cfg-a-font': "'Montserrat', sans-serif",
             'cfg-a-color': '#f2fdff',
-            'cfg-a-bg': '#1c4961',
-            'screen-answer-neon': '#49d8ff',
-            'screen-overlay-bg': '#041018',
-            'screen-start-title-font': "'Cinzel', serif",
+            'cfg-a-bg': '#15545a',
+            'screen-answer-neon': '#27d6c6',
+            'screen-overlay-bg': '#031517',
+            'screen-start-title-font': "'Marcellus', serif",
             'screen-start-title-color': '#f8ffff',
-            'screen-start-title-neon': '#49d8ff',
+            'screen-start-title-neon': '#27d6c6',
             'screen-start-desc-font': "'Montserrat', sans-serif",
-            'screen-start-desc-color': '#b9fff3',
+            'screen-start-desc-color': '#9ff5e9',
             'screen-start-companion-font': "'Montserrat', sans-serif",
-            'screen-start-companion-color': '#f7d88b',
-            'screen-start-companion-neon': '#f7d88b',
-            'screen-start-panel-bg': '#0d2236',
-            'screen-start-button-bg': '#081726',
-            'screen-start-button-color': '#49d8ff',
-            'screen-start-button-neon': '#49d8ff',
-            'screen-question-bg': '#0d2236',
-            'screen-win-title-font': "'Cinzel', serif",
+            'screen-start-companion-color': '#ffb58b',
+            'screen-start-companion-neon': '#ffb58b',
+            'screen-start-panel-bg': '#0b3438',
+            'screen-start-button-bg': '#062326',
+            'screen-start-button-color': '#f3c982',
+            'screen-start-button-neon': '#27d6c6',
+            'screen-question-bg': '#0b3438',
+            'screen-win-title-font': "'Marcellus', serif",
             'screen-win-title-color': '#f8ffff',
-            'screen-win-title-neon': '#49d8ff',
+            'screen-win-title-neon': '#27d6c6',
             'screen-win-subtitle-font': "'Montserrat', sans-serif",
-            'screen-win-subtitle-color': '#b9fff3',
-            'screen-win-subtitle-neon': '#b9fff3',
-            'screen-win-panel-bg': '#0d2236',
-            'screen-win-button-bg': '#081726',
-            'screen-win-button-color': '#f7d88b',
-            'screen-win-button-neon': '#f7d88b',
-            'screen-lose-title-font': "'Cinzel', serif",
+            'screen-win-subtitle-color': '#9ff5e9',
+            'screen-win-subtitle-neon': '#9ff5e9',
+            'screen-win-panel-bg': '#0b3438',
+            'screen-win-button-bg': '#062326',
+            'screen-win-button-color': '#f3c982',
+            'screen-win-button-neon': '#f3c982',
+            'screen-lose-title-font': "'Marcellus', serif",
             'screen-lose-title-color': '#f8ffff',
-            'screen-lose-title-neon': '#ff8e66',
+            'screen-lose-title-neon': '#ff7f6a',
             'screen-lose-subtitle-font': "'Montserrat', sans-serif",
-            'screen-lose-subtitle-color': '#f7d88b',
-            'screen-lose-subtitle-neon': '#f7d88b',
-            'screen-lose-panel-bg': '#0d2236',
-            'screen-lose-button-bg': '#081726',
-            'screen-lose-button-color': '#ff8e66',
-            'screen-lose-button-neon': '#ff8e66',
-            'screen-timeout-title-font': "'Cinzel', serif",
+            'screen-lose-subtitle-color': '#ffb58b',
+            'screen-lose-subtitle-neon': '#ffb58b',
+            'screen-lose-panel-bg': '#0b3438',
+            'screen-lose-button-bg': '#062326',
+            'screen-lose-button-color': '#ff7f6a',
+            'screen-lose-button-neon': '#ff7f6a',
+            'screen-timeout-title-font': "'Marcellus', serif",
             'screen-timeout-title-color': '#f8ffff',
-            'screen-timeout-title-neon': '#49d8ff',
+            'screen-timeout-title-neon': '#27d6c6',
             'screen-timeout-subtitle-font': "'Montserrat', sans-serif",
-            'screen-timeout-subtitle-color': '#f7d88b',
-            'screen-timeout-subtitle-neon': '#f7d88b',
-            'screen-timeout-panel-bg': '#0d2236',
-            'screen-timeout-button-bg': '#081726',
-            'screen-timeout-button-color': '#49d8ff',
-            'screen-timeout-button-neon': '#49d8ff',
-            'review-title-font': "'Cinzel', serif",
+            'screen-timeout-subtitle-color': '#ffb58b',
+            'screen-timeout-subtitle-neon': '#ffb58b',
+            'screen-timeout-panel-bg': '#0b3438',
+            'screen-timeout-button-bg': '#062326',
+            'screen-timeout-button-color': '#f3c982',
+            'screen-timeout-button-neon': '#27d6c6',
+            'review-title-font': "'Marcellus', serif",
             'review-title-color': '#f8ffff',
-            'review-title-neon': '#49d8ff',
+            'review-title-neon': '#27d6c6',
             'review-label-font': "'Montserrat', sans-serif",
-            'review-label-color': '#f7d88b',
-            'review-label-neon': '#f7d88b',
+            'review-label-color': '#ffb58b',
+            'review-label-neon': '#ffb58b',
             'review-answer-font': "'Montserrat', sans-serif",
-            'review-answer-color': '#b9fff3',
-            'review-answer-neon': '#b9fff3',
+            'review-answer-color': '#9ff5e9',
+            'review-answer-neon': '#9ff5e9',
             'review-screen-bg': '#030b12',
-            'review-card-bg': '#0b1b2a',
-            'review-card-neon': '#49d8ff',
-            'review-open-button-bg': '#081726',
-            'review-open-button-color': '#49d8ff',
-            'review-open-button-neon': '#49d8ff',
-            'review-back-button-bg': '#081726',
+            'review-card-bg': '#092a2d',
+            'review-card-neon': '#27d6c6',
+            'review-open-button-bg': '#062326',
+            'review-open-button-color': '#f3c982',
+            'review-open-button-neon': '#27d6c6',
+            'review-back-button-bg': '#062326',
             'review-back-button-color': '#f8ffff',
             'review-back-button-neon': '#f8ffff'
         }
     }
 };
 
+function getAutoThemeFields(themeId) {
+    const pack = AUTO_THEME_PACKS[themeId] || AUTO_THEME_PACKS.classic;
+    return Object.assign({}, AUTO_THEME_BASE_FIELDS, pack?.fields || {});
+}
+function getThemeStyleFieldIds() {
+    const ids=new Set(Object.keys(AUTO_THEME_BASE_FIELDS));
+    Object.values(AUTO_THEME_PACKS).forEach(pack=>Object.keys(pack?.fields||{}).forEach(id=>ids.add(id)));
+    return [...ids];
+}
+function applyThemeFieldsToEditor(fields, options={}) {
+    Object.entries(fields||{}).forEach(([id,value])=>setFieldValue(id,value));
+    updateScreenRangeLabels();
+    updatePreview();
+    if(!options.silentToast && options.label) showEditorToast(`Применена автотема оформления: ${options.label}.`);
+}
 function applyAutoTheme(themeId, options = {}) {
     const pack = AUTO_THEME_PACKS[themeId];
     if (!pack) return false;
-    const fields = Object.assign({}, AUTO_THEME_BASE_FIELDS, pack.fields || {});
-    Object.entries(fields).forEach(([id, value]) => setFieldValue(id, value));
-    updateScreenRangeLabels();
-    updatePreview();
-    if (!options.silentToast) showEditorToast(`Применена автотема оформления: ${pack.label}.`);
+    applyThemeFieldsToEditor(getAutoThemeFields(themeId),{silentToast:options.silentToast,label:pack.label});
     return true;
+}
+function captureThemeFieldsFromEditor(baseFields={}) {
+    const out=Object.assign({},baseFields||{});
+    getThemeStyleFieldIds().forEach(id=>{
+        const el=document.getElementById(id);
+        if(!el) return;
+        out[id]=el.type==='checkbox'?!!el.checked:el.value;
+    });
+    return out;
+}
+function saveCurrentLevelThemeFieldsFromEditor() {
+    saveActiveLevelDesignFromEditor();
+}
+function getThemeIdForPresetIndex(presetIndex) {
+    const meta = LEVEL_PRESET_META[presetIndex] || {};
+    if (!meta.id || String(meta.id).startsWith('classic-')) return 'classic';
+    return meta.id;
+}
+function getLevelThemeId(level) {
+    if (level?.themeId && AUTO_THEME_PACKS[level.themeId]) return level.themeId;
+    const idx = getLevelPresetIndex(level);
+    return getThemeIdForPresetIndex(idx);
+}
+function getLevelPresetAsset(level, type) {
+    const idx = getLevelPresetIndex(level);
+    const meta = LEVEL_PRESET_META[idx] || {};
+    if (type === 'shooter') return level?.shooter || meta.shooter || '';
+    if (type === 'finish') return level?.finish || meta.finish || '';
+    return '';
+}
+function buildLevelThemeVisuals(themeId, baseScreens, cfg={}, savedFields=null) {
+    const f = Object.assign({},getAutoThemeFields(themeId),savedFields||{});
+    const v = (id, fallback) => f[id] !== undefined ? f[id] : fallback;
+    const n = (id, fallback) => { const x=Number(v(id,fallback)); return Number.isFinite(x)?x:fallback; };
+    const s = JSON.parse(JSON.stringify(baseScreens || makeDefaultScreens(cfg)));
+    s.overlay.bgColor = v('screen-overlay-bg', s.overlay.bgColor); s.overlay.opacity = n('screen-overlay-opacity', Math.round(s.overlay.opacity*100))/100;
+    const st=s.start;
+    st.titleFont=v('screen-start-title-font',st.titleFont);st.titleSize=n('screen-start-title-size',st.titleSize);st.titleColor=v('screen-start-title-color',st.titleColor);st.titleNeon=v('screen-start-title-neon',st.titleNeon);
+    st.descFont=v('screen-start-desc-font',st.descFont);st.descSize=n('screen-start-desc-size',st.descSize);st.descColor=v('screen-start-desc-color',st.descColor);
+    st.companionFont=v('screen-start-companion-font',st.companionFont);st.companionSize=n('screen-start-companion-size',st.companionSize);st.companionColor=v('screen-start-companion-color',st.companionColor);st.companionNeon=v('screen-start-companion-neon',st.companionNeon);
+    st.panelBg=v('screen-start-panel-bg',st.panelBg);st.panelOpacity=n('screen-start-panel-opacity',Math.round(st.panelOpacity*100))/100;st.buttonBg=v('screen-start-button-bg',st.buttonBg);st.buttonColor=v('screen-start-button-color',st.buttonColor);st.buttonNeon=v('screen-start-button-neon',st.buttonNeon);
+    const q=s.question;
+    q.frameColor=v('screen-game-frame',q.frameColor);q.windowBg=v('screen-question-bg',q.windowBg);q.windowOpacity=n('screen-question-opacity',Math.round(q.windowOpacity*100))/100;
+    q.promptFont=v('cfg-prompt-font',q.promptFont);q.promptSize=n('cfg-prompt-size',q.promptSize);q.promptColor=v('cfg-prompt-color',q.promptColor);
+    q.questionFont=v('cfg-q-font',q.questionFont);q.questionSize=n('cfg-q-size',q.questionSize);q.questionColor=v('cfg-q-color',q.questionColor);
+    q.answerFont=v('cfg-a-font',q.answerFont);q.answerSize=n('cfg-a-size',q.answerSize);q.answerColor=v('cfg-a-color',q.answerColor);q.answerBg=v('cfg-a-bg',q.answerBg);q.answerNeon=v('screen-answer-neon',q.answerNeon);
+    for (const mode of ['win','lose','timeout']) {
+        const m=s[mode];
+        m.titleFont=v(`screen-${mode}-title-font`,m.titleFont);m.titleSize=n(`screen-${mode}-title-size`,m.titleSize);m.titleColor=v(`screen-${mode}-title-color`,m.titleColor);m.titleNeon=v(`screen-${mode}-title-neon`,m.titleNeon);
+        m.subtitleFont=v(`screen-${mode}-subtitle-font`,m.subtitleFont);m.subtitleSize=n(`screen-${mode}-subtitle-size`,m.subtitleSize);m.subtitleColor=v(`screen-${mode}-subtitle-color`,m.subtitleColor);m.subtitleNeon=v(`screen-${mode}-subtitle-neon`,m.subtitleNeon);
+        m.panelBg=v(`screen-${mode}-panel-bg`,m.panelBg);m.panelOpacity=n(`screen-${mode}-panel-opacity`,Math.round(m.panelOpacity*100))/100;m.buttonBg=v(`screen-${mode}-button-bg`,m.buttonBg);m.buttonColor=v(`screen-${mode}-button-color`,m.buttonColor);m.buttonNeon=v(`screen-${mode}-button-neon`,m.buttonNeon);
+    }
+    const er=s.errorReview;
+    er.titleFont=v('review-title-font',er.titleFont);er.titleSize=n('review-title-size',er.titleSize);er.titleColor=v('review-title-color',er.titleColor);er.titleNeon=v('review-title-neon',er.titleNeon);
+    er.bodySize=n('review-body-size',er.bodySize);er.labelFont=v('review-label-font',er.labelFont);er.labelSize=n('review-label-size',er.labelSize);er.labelColor=v('review-label-color',er.labelColor);er.labelNeon=v('review-label-neon',er.labelNeon);
+    er.answerFont=v('review-answer-font',er.answerFont);er.answerSize=n('review-answer-size',er.answerSize);er.answerColor=v('review-answer-color',er.answerColor);er.answerNeon=v('review-answer-neon',er.answerNeon);
+    er.screenBg=v('review-screen-bg',er.screenBg);er.screenOpacity=n('review-screen-opacity',Math.round(er.screenOpacity*100))/100;er.cardBg=v('review-card-bg',er.cardBg);er.cardOpacity=n('review-card-opacity',Math.round(er.cardOpacity*100))/100;er.cardNeon=v('review-card-neon',er.cardNeon);
+    er.openButtonBg=v('review-open-button-bg',er.openButtonBg);er.openButtonColor=v('review-open-button-color',er.openButtonColor);er.openButtonNeon=v('review-open-button-neon',er.openButtonNeon);er.backButtonBg=v('review-back-button-bg',er.backButtonBg);er.backButtonColor=v('review-back-button-color',er.backButtonColor);er.backButtonNeon=v('review-back-button-neon',er.backButtonNeon);
+    return { themeId, screens:s, uiColor:q.frameColor, progColor:v('cfg-prog-color',cfg.progColor||'#00ff66') };
 }
 
 function getLevelPresetIndex(level) {
@@ -2572,35 +2663,46 @@ function getLevelPresetIndex(level) {
 }
 
 function applyLevelPreset(levelIndex, presetIndex) {
+    if(activeLevelIndex!==levelIndex) setActiveLevel(levelIndex,{silent:true});
+    else saveActiveLevelDesignFromEditor();
     const level = levels[levelIndex];
     const bg = PRESETS[presetIndex];
     const path = BUILTIN_PATH_PRESETS[presetIndex];
     const meta = LEVEL_PRESET_META[presetIndex] || {};
     if (!level || !bg) return;
+
+    const previousScreens=level.screens ? mergeScreensConfig(level.screens,{}) : makeDefaultScreens({});
     level.bg = bg;
     level.presetIndex = presetIndex;
     if (Array.isArray(path) && path.length >= 2) level.path = path.map(p => ({...p}));
     level.objectLayout = makeDefaultObjectLayout();
-    if (meta.shooter) setAssetValue('shooter', meta.shooter);
-    if (meta.finish) setAssetValue('mask', meta.finish);
-    const themeId = meta.id && meta.id.startsWith('classic-') ? 'classic' : meta.id;
-    const themed = themeId ? applyAutoTheme(themeId, { silentToast:true }) : false;
+
+    const themeId = getThemeIdForPresetIndex(presetIndex);
+    level.themeId = themeId;
+    level.themeFields = getAutoThemeFields(themeId);
+    // Preset changes the visual language, but keeps this level's own editable texts.
+    level.screens = makeThemedLevelScreens(themeId, level.themeFields, previousScreens, {});
+    level.shooter = meta.shooter || level.shooter || '';
+    level.finish = meta.finish || level.finish || '';
+
     closeModal('bg-modal');
-    renderLevels(); updatePreviewBgSelect(levelIndex);
+    loadActiveLevelDesignToEditor();
+    renderLevels();
+    updatePreviewBgSelect(levelIndex);
+
     if (pathEditorActive && activePathLevelIndex === levelIndex) {
         pathEditorPoints = level.path.map(p => ({...p}));
         selectedPathPoint = -1;
         syncPreviewToLevel(levelIndex);
-        drawPathEditor(); updatePathEditorStats();
+        drawPathEditor();
+        updatePathEditorStats();
     } else {
-        drawPreviewPath(); updatePreview();
+        refreshActiveLevelPreview();
     }
-    const extrasBase = meta.shooter || meta.finish ? ' Фон, траектория, пушка и финиш применены.' : ' Фон и встроенная траектория применены.';
-    const extras = themed ? `${extrasBase} Автотема оформления тоже применена.` : extrasBase;
-    showEditorToast(`${meta.label || `Пресет ${presetIndex+1}`}.${extras}`);
+    showEditorToast(`${meta.label || `Пресет ${presetIndex+1}`}. Фон, траектория, объекты и оформление применены только к уровню ${levelIndex+1}.`);
 }
 
-const SPECIAL_COUNT_KEYS = ["electric", "life_add", "time_add", "compress", "time_sub", "stretch", "add_ball", "neutral"];
+const SPECIAL_COUNT_KEYS = ["electric", "life_add", "time_add", "compress", "time_sub", "stretch", "add_ball"];
 
 const SPECIAL_COUNT_LABELS = {
     electric: "⚡ Молния",
@@ -2609,8 +2711,7 @@ const SPECIAL_COUNT_LABELS = {
     compress: "⇥⇤ Сжать",
     time_sub: "⏱ −10 сек",
     stretch: "⇤⇥ Растянуть",
-    add_ball: "➕ +2 шара",
-    neutral: "⚪ Нейтральный"
+    add_ball: "➕ +2 шара"
 };
 
 function makeDefaultBallSetup() {
@@ -2618,7 +2719,7 @@ function makeDefaultBallSetup() {
         mode: "auto",
         preset: "balanced",
         avoidAdjacent: true,
-        counts: { electric:1, life_add:1, time_add:1, compress:1, time_sub:1, stretch:1, add_ball:1, neutral:2 }
+        counts: { electric:1, life_add:1, time_add:1, compress:1, time_sub:1, stretch:1, add_ball:1 }
     };
 }
 
@@ -2647,10 +2748,10 @@ function getTargetBallCount(questionCount) {
 function getAutoBallPlan(questionCount, preset = "balanced") {
     const q = Math.max(1, parseInt(questionCount) || 1);
     const tier = q <= 6 ? 1 : q <= 10 ? 1 : q <= 15 ? 2 : 3;
-    const counts = { electric:0, life_add:0, time_add:0, compress:0, time_sub:0, stretch:0, add_ball:0, neutral:0 };
+    const counts = { electric:0, life_add:0, time_add:0, compress:0, time_sub:0, stretch:0, add_ball:0 };
 
     if (preset === "bonus") {
-        // Только полезные шары: вредные типы и нейтральные отключены.
+        // Только полезные шары: вредные типы отключены.
         counts.electric = tier >= 3 ? 2 : 1;
         counts.life_add = tier >= 2 ? 1 : 1;
         counts.time_add = tier >= 2 ? 2 : 1;
@@ -2662,7 +2763,6 @@ function getAutoBallPlan(questionCount, preset = "balanced") {
         counts.time_sub = tier >= 2 ? 2 : 1;
         counts.stretch = tier >= 2 ? 2 : 1;
         counts.add_ball = tier >= 2 ? 2 : 1;
-        counts.neutral = tier >= 3 ? 2 : 1;
     } else {
         // Сбалансированный режим без перегрузки особыми шарами.
         counts.electric = tier >= 3 ? 2 : 1;
@@ -2672,7 +2772,6 @@ function getAutoBallPlan(questionCount, preset = "balanced") {
         counts.time_sub = tier >= 3 ? 2 : 1;
         counts.stretch = tier >= 2 ? 1 : 0;
         counts.add_ball = tier >= 2 ? 1 : 0;
-        counts.neutral = 1;
     }
     return { total: getTargetBallCount(q), counts };
 }
@@ -2811,10 +2910,20 @@ let previewObjectEditActive=false;
 let previewObjectSelection=null;
 let previewObjectGesture=null;
 
+function objectBaseSizeForViewport(width,height){
+    const w=Math.max(1,Number(width)||800);
+    const h=Math.max(1,Number(height)||450);
+    // One shared 16:9 reference for editor preview and the real game.
+    // On wider/taller screens we scale by the limiting axis, so a 100% object
+    // keeps the same visual proportion relative to the 16:9 background.
+    const viewportScale=Math.min(w/800,h/450);
+    return Math.max(38,90*viewportScale);
+}
 function previewObjectSizePx(scale){
     const box=document.getElementById('p-box');
-    const w=Math.max(320,box?.clientWidth||800);
-    return Math.max(38,90*(w/800))*clampObjectValue(scale,0.40,2.40,1);
+    const w=box?.clientWidth||800;
+    const h=box?.clientHeight||450;
+    return objectBaseSizeForViewport(w,h)*clampObjectValue(scale,0.40,2.40,1);
 }
 function setPreviewObjectSelection(type){
     previewObjectSelection=(type==='shooter'||type==='finish')?type:null;
@@ -2882,8 +2991,7 @@ function beginPreviewObjectGesture(e,type,isResize){
     const item=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); const itemRect=item?.getBoundingClientRect();
     previewObjectGesture={type,isResize,idx,startX:e.clientX,startY:e.clientY,rect,start:{...current},centerX:itemRect?itemRect.left+itemRect.width/2:e.clientX,centerY:itemRect?itemRect.top+itemRect.height/2:e.clientY,startDist:itemRect?Math.max(8,Math.hypot(e.clientX-(itemRect.left+itemRect.width/2),e.clientY-(itemRect.top+itemRect.height/2))):40};
     try{e.currentTarget.setPointerCapture?.(e.pointerId);}catch(_e){}
-}
-function movePreviewObjectGesture(e){
+}function movePreviewObjectGesture(e){
     const g=previewObjectGesture; if(!g||!levels[g.idx]) return;
     const layout=ensureLevelObjectLayout(g.idx); const target=g.type==='shooter'?layout.shooter:layout.finish;
     if(g.isResize){
@@ -2916,11 +3024,99 @@ function initPreviewObjectEditor(){
 
 let levelIdCounter = 4;
 let levels = [
-    { id: "level-1", bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
-    { id: "level-2", bg: PRESETS[1], presetIndex:1, path: BUILTIN_PATH_PRESETS[1].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
-    { id: "level-3", bg: PRESETS[2], presetIndex:2, path: BUILTIN_PATH_PRESETS[2].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
-    { id: "level-4", bg: PRESETS[3], presetIndex:3, path: BUILTIN_PATH_PRESETS[3].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() }
+    { id: "level-1", bg: PRESETS[0], presetIndex:0, themeId:"classic", themeFields:getAutoThemeFields('classic'), shooter:LEVEL_PRESET_META[0].shooter, finish:LEVEL_PRESET_META[0].finish, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-2", bg: PRESETS[1], presetIndex:1, themeId:"classic", themeFields:getAutoThemeFields('classic'), shooter:LEVEL_PRESET_META[1].shooter, finish:LEVEL_PRESET_META[1].finish, path: BUILTIN_PATH_PRESETS[1].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-3", bg: PRESETS[2], presetIndex:2, themeId:"classic", themeFields:getAutoThemeFields('classic'), shooter:LEVEL_PRESET_META[2].shooter, finish:LEVEL_PRESET_META[2].finish, path: BUILTIN_PATH_PRESETS[2].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() },
+    { id: "level-4", bg: PRESETS[3], presetIndex:3, themeId:"classic", themeFields:getAutoThemeFields('classic'), shooter:LEVEL_PRESET_META[3].shooter, finish:LEVEL_PRESET_META[3].finish, path: BUILTIN_PATH_PRESETS[3].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() }
 ];
+
+let activeLevelIndex = 0;
+let levelDesignLoading = false;
+
+function getLevelDisplayTheme(level) {
+    const idx=getLevelPresetIndex(level);
+    const meta=LEVEL_PRESET_META[idx] || {};
+    const themeId=getLevelThemeId(level);
+    const pack=AUTO_THEME_PACKS[themeId];
+    if (meta.label) return meta.label;
+    if (pack?.label) return pack.label;
+    return themeId==='classic' ? '◇ Classic' : themeId;
+}
+function makeThemedLevelScreens(themeId, themeFields, baseScreens=null, cfg={}) {
+    const base=mergeScreensConfig(baseScreens || makeDefaultScreens(cfg), cfg);
+    return buildLevelThemeVisuals(themeId, base, cfg, themeFields || getAutoThemeFields(themeId)).screens;
+}
+function ensureLevelDesignState(index, baseScreens=null, cfg={}) {
+    const level=levels[index];
+    if(!level) return null;
+    const themeId=getLevelThemeId(level);
+    level.themeId=themeId;
+    level.themeFields=Object.assign({},getAutoThemeFields(themeId),level.themeFields||{});
+    if(!level.screens) level.screens=makeThemedLevelScreens(themeId,level.themeFields,baseScreens,cfg);
+    else level.screens=mergeScreensConfig(level.screens,cfg);
+    return level;
+}
+function saveActiveLevelDesignFromEditor() {
+    if(levelDesignLoading) return;
+    const level=levels[activeLevelIndex];
+    if(!level) return;
+    ensureLevelDesignState(activeLevelIndex);
+    level.themeFields=captureThemeFieldsFromEditor(level.themeFields||getAutoThemeFields(getLevelThemeId(level)));
+    level.screens=getScreensConfigFromEditor();
+    const shooter=document.getElementById('cfg-img-shooter')?.value;
+    const finish=document.getElementById('cfg-img-mask')?.value;
+    if(shooter) level.shooter=shooter;
+    if(finish) level.finish=finish;
+}
+function updateActiveLevelBanner() {
+    const level=levels[activeLevelIndex];
+    const out=document.getElementById('active-level-banner-text');
+    if(!out || !level) return;
+    out.innerHTML=`<strong>Редактируется:</strong> Уровень ${activeLevelIndex+1} · ${getLevelDisplayTheme(level)}`;
+}
+function refreshActiveLevelPreview() {
+    const level=levels[activeLevelIndex]; if(!level) return;
+    const sel=document.getElementById('preview-bg-sel');
+    if(sel) sel.value=String(activeLevelIndex);
+    const box=document.getElementById('p-box');
+    if(box) box.style.backgroundImage=level.bg?`url('${level.bg}')`:'none';
+    drawPreviewPath();
+    updatePreviewObjectLayer();
+}
+function loadActiveLevelDesignToEditor() {
+    const level=ensureLevelDesignState(activeLevelIndex);
+    if(!level) return;
+    levelDesignLoading=true;
+    try {
+        applyScreensToEditor(level.screens);
+        applyThemeFieldsToEditor(level.themeFields,{silentToast:true});
+        const shooter=getLevelPresetAsset(level,'shooter');
+        const finish=getLevelPresetAsset(level,'finish');
+        if(shooter) setAssetValue('shooter',shooter);
+        if(finish) setAssetValue('mask',finish);
+        const sel=document.getElementById('preview-bg-sel');
+        if(sel) sel.value=String(activeLevelIndex);
+        const box=document.getElementById('p-box');
+        if(box) box.style.backgroundImage=level.bg?`url('${level.bg}')`:'none';
+    } finally {
+        levelDesignLoading=false;
+    }
+    updateActiveLevelBanner();
+    updatePreview();
+    updateScreensPreview();
+    updatePreviewObjectLayer();
+}
+function setActiveLevel(index, options={}) {
+    index=Math.max(0,Math.min(levels.length-1,parseInt(index)||0));
+    if(!options.skipSave && levels[activeLevelIndex]) saveActiveLevelDesignFromEditor();
+    activeLevelIndex=index;
+    ensureLevelDesignState(activeLevelIndex);
+    loadActiveLevelDesignToEditor();
+    renderLevels();
+    if(!options.silent) showEditorToast(`Редактируется уровень ${activeLevelIndex+1}: ${getLevelDisplayTheme(levels[activeLevelIndex])}.`);
+    scheduleAutosave();
+}
+
 let questionsDB = [];
 
 const I18N = {
@@ -2935,14 +3131,14 @@ const I18N = {
  };
 
 const I18N_SCREEN_EXTRAS = {
-    ru: { bonusQuestion:'Вопрос (+100)', bonusLightning:'Молния (-5)', bonusLife:'Дополнительная жизнь', bonusCompress:'Сжатие цепочки', bonusPenalty:'Штраф -10 сек.', bonusExtraBall:'Дополнительные шары (+2)', bonusStretch:'Растянуть цепочку', bonusTime:'Время +20 сек.', congrats:'ПОЗДРАВЛЯЕМ!', levelPassed:'УРОВЕНЬ {level} ПРОЙДЕН!', stLevelTotal:'ИТОГОВЫЙ СЧЕТ УРОВНЯ:', stGameTotal:'ИТОГОВЫЙ СЧЕТ ИГРЫ:' },
-    en: { bonusQuestion:'Question (+100)', bonusLightning:'Lightning (-5)', bonusLife:'Extra Life', bonusCompress:'Compress Chain', bonusPenalty:'Penalty -10s', bonusExtraBall:'Extra Balls (+2)', bonusStretch:'Stretch Chain', bonusTime:'Time +20s', congrats:'CONGRATULATIONS!', levelPassed:'LEVEL {level} CLEARED!', stLevelTotal:'LEVEL SCORE:', stGameTotal:'GAME TOTAL SCORE:' },
-    de: { bonusQuestion:'Frage (+100)', bonusLightning:'Blitz (-5)', bonusLife:'Extra-Leben', bonusCompress:'Kette verkürzen', bonusPenalty:'Strafe -10 Sek.', bonusExtraBall:'Extra-Bälle (+2)', bonusStretch:'Kette dehnen', bonusTime:'Zeit +20 Sek.', congrats:'GLÜCKWUNSCH!', levelPassed:'LEVEL {level} GESCHAFFT!', stLevelTotal:'LEVELPUNKTE:', stGameTotal:'GESAMTPUNKTZAHL DES SPIELS:' },
-    fr: { bonusQuestion:'Question (+100)', bonusLightning:'Éclair (-5)', bonusLife:'Vie supplémentaire', bonusCompress:'Resserrer la chaîne', bonusPenalty:'Pénalité -10 s', bonusExtraBall:'Billes supplémentaires (+2)', bonusStretch:'Étirer la chaîne', bonusTime:'Temps +20 s', congrats:'FÉLICITATIONS !', levelPassed:'NIVEAU {level} TERMINÉ !', stLevelTotal:'SCORE DU NIVEAU :', stGameTotal:'SCORE TOTAL DU JEU :' },
-    kk: { bonusQuestion:'Сұрақ (+100)', bonusLightning:'Найзағай (-5)', bonusLife:'Қосымша өмір', bonusCompress:'Тізбекті қысу', bonusPenalty:'Айып -10 сек.', bonusExtraBall:'Қосымша шарлар (+2)', bonusStretch:'Тізбекті созу', bonusTime:'Уақыт +20 сек.', congrats:'ҚҰТТЫҚТАЙМЫЗ!', levelPassed:'{level}-ДЕҢГЕЙ АЯҚТАЛДЫ!', stLevelTotal:'ДЕҢГЕЙ ҰПАЙЫ:', stGameTotal:'ОЙЫННЫҢ ЖАЛПЫ ҰПАЙЫ:' },
-    es: { bonusQuestion:'Pregunta (+100)', bonusLightning:'Rayo (-5)', bonusLife:'Vida extra', bonusCompress:'Comprimir cadena', bonusPenalty:'Penalización -10 s', bonusExtraBall:'Bolas extra (+2)', bonusStretch:'Estirar cadena', bonusTime:'Tiempo +20 s', congrats:'¡FELICIDADES!', levelPassed:'¡NIVEL {level} SUPERADO!', stLevelTotal:'PUNTUACIÓN DEL NIVEL:', stGameTotal:'PUNTUACIÓN TOTAL DEL JUEGO:' },
-    zh: { bonusQuestion:'问题 (+100)', bonusLightning:'闪电 (-5)', bonusLife:'额外生命', bonusCompress:'压缩球链', bonusPenalty:'惩罚 -10秒', bonusExtraBall:'额外球 (+2)', bonusStretch:'拉伸球链', bonusTime:'时间 +20秒', congrats:'恭喜！', levelPassed:'第 {level} 关完成！', stLevelTotal:'本关得分：', stGameTotal:'游戏总分：' },
-    ko: { bonusQuestion:'질문 (+100)', bonusLightning:'번개 (-5)', bonusLife:'추가 생명', bonusCompress:'공 줄 압축', bonusPenalty:'페널티 -10초', bonusExtraBall:'추가 공 (+2)', bonusStretch:'공 줄 늘리기', bonusTime:'시간 +20초', congrats:'축하합니다!', levelPassed:'{level}레벨 완료!', stLevelTotal:'레벨 점수:', stGameTotal:'게임 총점:' }
+    ru: { levelIntro:'УРОВЕНЬ {level}', flashTimeAdd:'+20 СЕК.', flashLife:'+ ЖИЗНЬ', flashCompress:'СЖАТИЕ!', flashTimeSub:'−10 СЕК.', flashStretch:'РАСТЯНУТЬ!', flashAddBall:'+2 ШАРА!', bonusQuestion:'Вопрос (+100)', bonusLightning:'Молния (-5)', bonusLife:'Дополнительная жизнь', bonusCompress:'Сжатие цепочки', bonusPenalty:'Штраф -10 сек.', bonusExtraBall:'Дополнительные шары (+2)', bonusStretch:'Растянуть цепочку', bonusTime:'Время +20 сек.', congrats:'ПОЗДРАВЛЯЕМ!', levelPassed:'УРОВЕНЬ {level} ПРОЙДЕН!', stLevelTotal:'ИТОГОВЫЙ СЧЕТ УРОВНЯ:', stGameTotal:'ИТОГОВЫЙ СЧЕТ ИГРЫ:' },
+    en: { levelIntro:'LEVEL {level}', flashTimeAdd:'+20s', flashLife:'+ LIFE', flashCompress:'COMPRESS!', flashTimeSub:'−10s', flashStretch:'STRETCH!', flashAddBall:'+2 BALLS!', bonusQuestion:'Question (+100)', bonusLightning:'Lightning (-5)', bonusLife:'Extra Life', bonusCompress:'Compress Chain', bonusPenalty:'Penalty -10s', bonusExtraBall:'Extra Balls (+2)', bonusStretch:'Stretch Chain', bonusTime:'Time +20s', congrats:'CONGRATULATIONS!', levelPassed:'LEVEL {level} CLEARED!', stLevelTotal:'LEVEL SCORE:', stGameTotal:'GAME TOTAL SCORE:' },
+    de: { levelIntro:'LEVEL {level}', flashTimeAdd:'+20 SEK.', flashLife:'+ LEBEN', flashCompress:'KOMPRIMIEREN!', flashTimeSub:'−10 SEK.', flashStretch:'DEHNEN!', flashAddBall:'+2 BÄLLE!', bonusQuestion:'Frage (+100)', bonusLightning:'Blitz (-5)', bonusLife:'Extra-Leben', bonusCompress:'Kette verkürzen', bonusPenalty:'Strafe -10 Sek.', bonusExtraBall:'Extra-Bälle (+2)', bonusStretch:'Kette dehnen', bonusTime:'Zeit +20 Sek.', congrats:'GLÜCKWUNSCH!', levelPassed:'LEVEL {level} GESCHAFFT!', stLevelTotal:'LEVELPUNKTE:', stGameTotal:'GESAMTPUNKTZAHL DES SPIELS:' },
+    fr: { levelIntro:'NIVEAU {level}', flashTimeAdd:'+20 s', flashLife:'+ VIE', flashCompress:'RESSERRER !', flashTimeSub:'−10 s', flashStretch:'ÉTIRER !', flashAddBall:'+2 BILLES !', bonusQuestion:'Question (+100)', bonusLightning:'Éclair (-5)', bonusLife:'Vie supplémentaire', bonusCompress:'Resserrer la chaîne', bonusPenalty:'Pénalité -10 s', bonusExtraBall:'Billes supplémentaires (+2)', bonusStretch:'Étirer la chaîne', bonusTime:'Temps +20 s', congrats:'FÉLICITATIONS !', levelPassed:'NIVEAU {level} TERMINÉ !', stLevelTotal:'SCORE DU NIVEAU :', stGameTotal:'SCORE TOTAL DU JEU :' },
+    kk: { levelIntro:'{level}-ДЕҢГЕЙ', flashTimeAdd:'+20 СЕК.', flashLife:'+ ӨМІР', flashCompress:'ҚЫСУ!', flashTimeSub:'−10 СЕК.', flashStretch:'СОЗУ!', flashAddBall:'+2 ШАР!', bonusQuestion:'Сұрақ (+100)', bonusLightning:'Найзағай (-5)', bonusLife:'Қосымша өмір', bonusCompress:'Тізбекті қысу', bonusPenalty:'Айып -10 сек.', bonusExtraBall:'Қосымша шарлар (+2)', bonusStretch:'Тізбекті созу', bonusTime:'Уақыт +20 сек.', congrats:'ҚҰТТЫҚТАЙМЫЗ!', levelPassed:'{level}-ДЕҢГЕЙ АЯҚТАЛДЫ!', stLevelTotal:'ДЕҢГЕЙ ҰПАЙЫ:', stGameTotal:'ОЙЫННЫҢ ЖАЛПЫ ҰПАЙЫ:' },
+    es: { levelIntro:'NIVEL {level}', flashTimeAdd:'+20 s', flashLife:'+ VIDA', flashCompress:'¡COMPRIMIR!', flashTimeSub:'−10 s', flashStretch:'¡ESTIRAR!', flashAddBall:'¡+2 BOLAS!', bonusQuestion:'Pregunta (+100)', bonusLightning:'Rayo (-5)', bonusLife:'Vida extra', bonusCompress:'Comprimir cadena', bonusPenalty:'Penalización -10 s', bonusExtraBall:'Bolas extra (+2)', bonusStretch:'Estirar cadena', bonusTime:'Tiempo +20 s', congrats:'¡FELICIDADES!', levelPassed:'¡NIVEL {level} SUPERADO!', stLevelTotal:'PUNTUACIÓN DEL NIVEL:', stGameTotal:'PUNTUACIÓN TOTAL DEL JUEGO:' },
+    zh: { levelIntro:'第 {level} 关', flashTimeAdd:'+20秒', flashLife:'+1 生命', flashCompress:'压缩！', flashTimeSub:'−10秒', flashStretch:'拉伸！', flashAddBall:'+2 球！', bonusQuestion:'问题 (+100)', bonusLightning:'闪电 (-5)', bonusLife:'额外生命', bonusCompress:'压缩球链', bonusPenalty:'惩罚 -10秒', bonusExtraBall:'额外球 (+2)', bonusStretch:'拉伸球链', bonusTime:'时间 +20秒', congrats:'恭喜！', levelPassed:'第 {level} 关完成！', stLevelTotal:'本关得分：', stGameTotal:'游戏总分：' },
+    ko: { levelIntro:'{level}레벨', flashTimeAdd:'+20초', flashLife:'+ 생명', flashCompress:'압축!', flashTimeSub:'−10초', flashStretch:'늘리기!', flashAddBall:'+2 공!', bonusQuestion:'질문 (+100)', bonusLightning:'번개 (-5)', bonusLife:'추가 생명', bonusCompress:'공 줄 압축', bonusPenalty:'페널티 -10초', bonusExtraBall:'추가 공 (+2)', bonusStretch:'공 줄 늘리기', bonusTime:'시간 +20초', congrats:'축하합니다!', levelPassed:'{level}레벨 완료!', stLevelTotal:'레벨 점수:', stGameTotal:'게임 총점:' }
 };
 Object.entries(I18N_SCREEN_EXTRAS).forEach(([lang,extra]) => Object.assign(I18N[lang] || I18N.ru, extra));
 
@@ -2960,6 +3156,9 @@ const SCREEN_FONT_OPTIONS = [
     ["Comic Neue", "'Comic Neue', cursive"],
     ["Caveat", "'Caveat', cursive"],
     ["Macondo", "'Macondo', cursive"],
+    ["Fredoka (Candy)", "'Fredoka', sans-serif"],
+    ["Playfair Display (Romantic)", "'Playfair Display', serif"],
+    ["Marcellus (Ocean)", "'Marcellus', serif"],
     ["Arial", "Arial, sans-serif"],
     ["Verdana", "Verdana, sans-serif"]
 ];
@@ -3152,7 +3351,7 @@ function renderPreviewRules() {
 
 function initScreenEditor() {
     initScreenFontSelects();
-    document.querySelectorAll('.screen-control').forEach(el=>{el.addEventListener('input',()=>{updatePreview();updateScreensPreview();});el.addEventListener('change',()=>{updatePreview();updateScreensPreview();});});
+    document.querySelectorAll('.screen-control').forEach(el=>{el.addEventListener('input',()=>{saveCurrentLevelThemeFieldsFromEditor();updatePreview();updateScreensPreview();});el.addEventListener('change',()=>{saveCurrentLevelThemeFieldsFromEditor();updatePreview();updateScreensPreview();});});
     document.querySelectorAll('[data-preview-target]').forEach(sec=>sec.addEventListener('focusin',()=>setPreviewScreen(sec.dataset.previewTarget)));
     updateScreenRangeLabels(); setPreviewScreen('start');
 }
@@ -3260,11 +3459,13 @@ function getCorrectAnswerSummary(q) {
 class GameCore {
     constructor() {
         this.cfg = window.GAME_CFG;
-        this.screens = mergeScreensConfig(this.cfg.screens || {}, this.cfg);
+        this.baseScreens = mergeScreensConfig(this.cfg.screens || {}, this.cfg);
+        this.screens = this.baseScreens; this.levelVisual={themeId:'classic',uiColor:this.cfg.uiColor||'#39ff14',progColor:this.cfg.progColor||'#00ff66'};
         this.recordedMistakeAttempts = new Set(); this.activeQuestionAttemptKey = ''; this.finalMode = 'start'; this.levelRunCounts = {}; this.levelQuestionTarget = 0;
         // Zuma-like defeat sequence: short cause reaction -> chain escapes into goal -> 1.5s empty field -> final screen.
         this.defeatReasonText = ''; this.defeatCause = ''; this.defeatIntroUntil = 0; this.escapeStartedAt = 0; this.escapeEmptyAt = 0;
         this.initDOM(); this.cvs = document.getElementById('gameCanvas'); this.ctx = this.cvs.getContext('2d');
+        this.fxCanvas = document.getElementById('g-end-fx-canvas'); this.fxCtx = this.fxCanvas ? this.fxCanvas.getContext('2d') : null;
         this.w=800; this.h=600; this.state='idle'; this.currentLevelIndex = 0; this.objectLayout=makeDefaultObjectLayout(); this.player={x:400, y:550};
         
         // Глобальная статистика
@@ -3281,7 +3482,7 @@ class GameCore {
         this.bulletSpeed = 24;
         this.colors = ["red", "blue", "green", "yellow", "purple", "orange"];
         this.bTypes = {
-            normal: { imgKey: "c_" }, neutral: { imgKey: "t_neutral" }, question: { imgKey: "t_question" },
+            normal: { imgKey: "c_" }, question: { imgKey: "t_question" },
             time_add: { imgKey: "t_time_add" }, life_add: { imgKey: "t_life_add" }, compress: { imgKey: "t_compress" },
             time_sub: { imgKey: "t_time_sub" }, stretch: { imgKey: "t_stretch" }, add_ball: { imgKey: "t_add_ball" }, electric: { imgKey: "t_electric" }
         };
@@ -3300,7 +3501,6 @@ class GameCore {
             t_compress: this.cfg.specialBallImages?.compress || 'https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png',
             t_stretch: this.cfg.specialBallImages?.stretch || 'https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png',
             t_add_ball: this.cfg.specialBallImages?.add_ball || 'https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png',
-            t_neutral: this.cfg.specialBallImages?.neutral || 'https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png', 
             t_electric: this.cfg.specialBallImages?.electric || 'https://img.genially.com/67961b32a116fb001568a75e/0756d8a9-aae1-44b6-9d91-f824c6aa4e11.png',
             shooter: this.cfg.imgShooter, 
             center_mask: this.cfg.imgMask 
@@ -3361,7 +3561,7 @@ class GameCore {
         const back=document.getElementById('g-btn-review-back'); if(back){back.innerText=er.backButtonText||this.t.closeReview||this.t.back;this.applyButtonStyle(back,{buttonBg:er.backButtonBg,buttonColor:er.backButtonColor,buttonNeon:er.backButtonNeon});}
     }
     bindEvents() {
-        const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; const scale=this.objectLayout?.shooter?.scale||1; const edge=Math.max(35,45*scale); this.player.x=Math.max(edge, Math.min(this.w-edge, cx-r.left)); };
+        const move=(e)=>{ const r=this.cvs.getBoundingClientRect(); const cx=e.touches?e.touches[0].clientX:e.clientX; const scale=this.objectLayout?.shooter?.scale||1; const edge=Math.max(35,(this.getObjectBaseSize()/2)*scale); this.player.x=Math.max(edge, Math.min(this.w-edge, cx-r.left)); };
         this.cvs.addEventListener('mousemove',move); this.cvs.addEventListener('touchmove',e=>{e.preventDefault();move(e)},{passive:false}); 
         this.cvs.addEventListener('click',()=>this.shoot());
         
@@ -3377,8 +3577,29 @@ class GameCore {
         document.getElementById('g-btn-review').onclick = () => this.openErrorReview();
         document.getElementById('g-btn-review-back').onclick = () => { document.getElementById('g-review-screen').classList.add('g-hidden'); document.getElementById('g-end-screen').classList.remove('g-hidden'); this.applyFinalScreenStyle(this.finalMode || 'lose'); };
     }
+    applyLevelVisualTheme(level) {
+        const themeId=getLevelThemeId(level);
+        this.levelVisual=buildLevelThemeVisuals(themeId,level?.screens || this.baseScreens,this.cfg,level?.themeFields);
+        this.screens=this.levelVisual.screens;
+        const q=this.screens.question, r=document.documentElement;
+        r.style.setProperty('--game-font',q.questionFont || this.cfg.fontFamily || "'Metamorphous', serif");
+        r.style.setProperty('--ui-color',this.levelVisual.uiColor);r.style.setProperty('--prog-color',this.levelVisual.progColor);
+        r.style.setProperty('--prompt-color',q.promptColor);r.style.setProperty('--prompt-size',`${q.promptSize}px`);r.style.setProperty('--prompt-font',q.promptFont);
+        r.style.setProperty('--q-color',q.questionColor);r.style.setProperty('--q-size',`${q.questionSize}px`);r.style.setProperty('--q-font',q.questionFont);
+        r.style.setProperty('--a-color',q.answerColor);r.style.setProperty('--a-size',`${q.answerSize}px`);r.style.setProperty('--a-font',q.answerFont);r.style.setProperty('--a-bg',hexToRgba(q.answerBg,.60));r.style.setProperty('--answer-neon',q.answerNeon);
+        r.style.setProperty('--neon-glow',this.cfg.neonEnabled!==false?`0 0 10px ${this.levelVisual.uiColor}`:'none');
+        const shooterUrl=getLevelPresetAsset(level,'shooter') || this.cfg.imgShooter || '';
+        const finishUrl=getLevelPresetAsset(level,'finish') || this.cfg.imgMask || '';
+        this.currentLevelAssets={shooter:shooterUrl,finish:finishUrl};
+        if(shooterUrl){this.IMG_URLS.shooter=shooterUrl;this.ASSETS.shooter.src=shooterUrl;}
+        if(finishUrl){this.IMG_URLS.center_mask=finishUrl;this.ASSETS.center_mask.src=finishUrl;}
+        const startImage=document.getElementById('g-start-image');if(startImage)startImage.src=finishUrl||shooterUrl;
+        const endImage=document.getElementById('g-end-image');if(endImage)endImage.src=shooterUrl;
+        this.applyScreenConfig();
+    }
     applyLevel(idx) {
         const level=this.cfg.levels[idx]||{};
+        this.applyLevelVisualTheme(level);
         document.getElementById('g-game-container').style.backgroundImage = `url('${level.bg||''}')`;
         this.objectLayout=normalizeObjectLayout(level.objectLayout);
         this.player.x=this.objectLayout.shooter.x*this.w;
@@ -3392,8 +3613,9 @@ class GameCore {
         if (el.clientWidth !== this.w || el.clientHeight !== this.h) {
             const oldW=this.w||el.clientWidth; const xRatio=oldW?this.player.x/oldW:(this.objectLayout?.shooter?.x||.5);
             this.w = el.clientWidth; this.h = el.clientHeight; this.cvs.width = this.w; this.cvs.height = this.h;
+            if(this.fxCanvas){ this.fxCanvas.width=this.w; this.fxCanvas.height=this.h; }
             this.objectLayout=normalizeObjectLayout(this.cfg.levels?.[this.currentLevelIndex]?.objectLayout||this.objectLayout);
-            const edge=Math.max(35,45*(this.objectLayout.shooter.scale||1));
+            const edge=Math.max(35,(this.getObjectBaseSize()/2)*(this.objectLayout.shooter.scale||1));
             this.player.x=Math.max(edge,Math.min(this.w-edge,xRatio*this.w));
             this.player.y=this.objectLayout.shooter.y*this.h; this.genPath();
         } 
@@ -3449,6 +3671,15 @@ class GameCore {
         
         this.createQueue(); this.ui();
         this.lastFrameTime = performance.now();
+        this.clearEndFireworks();
+        if(this.cfg.levels.length > 1){
+            const introLevel=lvlIdx;
+            setTimeout(()=>{
+                if(this.state==='playing' && this.currentLevelIndex===introLevel){
+                    this.showFlash(withLevel(this.t.levelIntro || 'LEVEL {level}', introLevel+1), 1250, 'level');
+                }
+            },140);
+        }
         
         if(this.tmr) clearInterval(this.tmr); 
         this.tmr=setInterval(()=>{ 
@@ -3533,7 +3764,7 @@ class GameCore {
         this.sortBallsFrontToBack();
         const headD=this.balls.length ? this.balls[0].d : 0;
         for(let n=1;n<=count;n++){
-            this.balls.push({ d:headD + this.curSpacing*n, type:'neutral', c:'gray' });
+            this.balls.push({ d:headD + this.curSpacing*n, type:'normal', c:this.rndCol() });
         }
         this.sortBallsFrontToBack();
     }
@@ -3558,7 +3789,7 @@ class GameCore {
         if(safeShift<=0) return;
         this.balls.forEach(bl=>{ bl.d -= safeShift; });
     }
-    shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; const scale=this.objectLayout?.shooter?.scale||1; this.bullets.push({x:this.player.x, y:this.player.y-(20*scale), c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
+    shoot() { if(this.state!=='playing' || this.questionInProgress || performance.now() < (this.blockShootUntil||0) || this.bullets.length>0) return; const scale=this.objectLayout?.shooter?.scale||1; const objectRatio=this.getObjectBaseSize()/90; this.bullets.push({x:this.player.x, y:this.player.y-(20*scale*objectRatio), c:this.nextCol}); this.nextCol=this.rndCol(); AudioSys.shot(); }
 
     triggerDefeat(reasonText, cause='balls', introDelayMs=0) {
         if(this.state==='gameover' || this.state==='defeat_intro' || this.state==='chain_escape') return;
@@ -3710,19 +3941,19 @@ class GameCore {
             toRemove.forEach(i => { if(i < this.balls.length) { let tb = this.balls[i]; let thex = HEX_MAP[tb.c] || "#fff"; for(let k=0;k<5;k++) this.parts.push(new Part(tb.x, tb.y, thex)); this.balls.splice(i,1); } });
             this.ui(); return;
         }
-        if(b.type==='neutral' || b.type==='normal'){ this.balls.splice(idx,1); this.score+=10; this.scoreBalls+=10; AudioSys.hit(); this.ui(); return; }
+        if(b.type==='normal'){ this.balls.splice(idx,1); this.score+=10; this.scoreBalls+=10; AudioSys.hit(); this.ui(); return; }
 
         switch(b.type){
             case 'question': this.state='paused_for_q'; this.activeQuestionBall=b; AudioSys.bonus(); this.ask(); break;
-            case 'time_add': this.time+=20; AudioSys.bonus(); this.showFlash("+20s"); this.balls.splice(idx,1); this.scoreBonus+=20; this.score+=20; break;
-            case 'life_add': if(this.lives<5)this.lives++; this.showFlash("+LIFE"); AudioSys.bonus(); this.balls.splice(idx,1); break;
-            case 'compress': { const next=Math.max(48,this.curSpacing-12); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash("COMPRESS!"); AudioSys.bonus(); break; }
-            case 'time_sub': this.time=Math.max(0,this.time-10); this.showFlash("-10s!"); AudioSys.bad(); this.sPen+=50; this.balls.splice(idx,1); break;
-            case 'stretch': { const next=Math.min(85,this.curSpacing+16); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash("STRETCH!"); AudioSys.bad(); break; }
+            case 'time_add': this.time+=20; AudioSys.bonus(); this.showFlash(this.t.flashTimeAdd || "+20s"); this.balls.splice(idx,1); this.scoreBonus+=20; this.score+=20; break;
+            case 'life_add': if(this.lives<5)this.lives++; this.showFlash(this.t.flashLife || "+LIFE"); AudioSys.bonus(); this.balls.splice(idx,1); break;
+            case 'compress': { const next=Math.max(48,this.curSpacing-12); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash(this.t.flashCompress || "COMPRESS!"); AudioSys.bonus(); break; }
+            case 'time_sub': this.time=Math.max(0,this.time-10); this.showFlash(this.t.flashTimeSub || "-10s!"); AudioSys.bad(); this.sPen+=50; this.balls.splice(idx,1); break;
+            case 'stretch': { const next=Math.min(85,this.curSpacing+16); this.balls.splice(idx,1); this.reflowChainSpacing(next); this.showFlash(this.t.flashStretch || "STRETCH!"); AudioSys.bad(); break; }
             case 'add_ball':
                 this.balls.splice(idx,1);
                 this.addPenaltyBalls(2);
-                this.showFlash("+2 BALLS!");
+                this.showFlash(this.t.flashAddBall || "+2 BALLS!");
                 AudioSys.bad();
                 break;
             default: this.balls.splice(idx,1);
@@ -3730,7 +3961,21 @@ class GameCore {
         this.ui();
     }
     
-    showFlash(txt){ const el=document.getElementById('g-float-text'); el.innerText=txt; el.style.opacity=1; el.style.transform="translate(-50%,-50%) scale(1.5)"; setTimeout(()=>{ el.style.opacity=0; el.style.transform="translate(-50%,-50%) scale(1)"; },800); }
+    showFlash(txt,duration=800,kind='bonus'){
+        const el=document.getElementById('g-float-text'); if(!el) return;
+        if(this.flashTimer) clearTimeout(this.flashTimer);
+        el.innerText=txt;
+        const accent=this.levelVisual?.uiColor || this.cfg.uiColor || '#00ffff';
+        el.style.fontSize=kind==='level'?'clamp(44px,7vw,78px)':'60px';
+        el.style.color='#ffffff';
+        el.style.textShadow=`0 0 10px ${accent}, 0 0 24px ${accent}, 0 0 42px ${accent}`;
+        el.style.opacity=1;
+        el.style.transform="translate(-50%,-50%) scale(1.5)";
+        this.flashTimer=setTimeout(()=>{
+            el.style.opacity=0;
+            el.style.transform="translate(-50%,-50%) scale(1)";
+        },duration);
+    }
     shakeScreen() { const c = document.getElementById('g-game-container'); c.classList.remove('g-shake'); void c.offsetWidth; c.classList.add('g-shake'); }
     
     ask() {
@@ -3744,8 +3989,7 @@ class GameCore {
         const q = this.levelQuestions[this.nextQIndex];
         this.nextQIndex++;
         this.activeQuestion = q;
-        this.activeQuestionAttemptKey = `${this.currentLevelIndex}:${this.nextQIndex}:${q?.id || 'question'}`;
-        this.questionInProgress = true;
+        this.activeQuestionAttemptKey = `${this.currentLevelIndex}:${this.nextQIndex}:${q?.id || 'question'}`;        this.questionInProgress = true;
         this.blockShootUntil = Number.POSITIVE_INFINITY;
         const screen = document.getElementById('g-quiz-screen');
         const card = document.getElementById('g-question-card');
@@ -3962,7 +4206,16 @@ class GameCore {
     applyFinalScreenStyle(mode='lose') {
         const cfg=this.screens[mode] || this.screens.lose;
         const card=document.getElementById('g-end-card'); const title=document.getElementById('g-end-title'); const btn=document.getElementById('g-btn-restart'); const reason=document.getElementById('g-end-reason');
-        const endImage=document.getElementById('g-end-image'); if(endImage) endImage.src=mode==='win'?(this.cfg.imgMask || this.cfg.imgShooter || ''):(this.cfg.imgShooter || this.cfg.imgMask || '');
+
+        // IMPORTANT: final-screen decoration belongs to the CURRENT LEVEL.
+        // Stage 33 used the global editor imgMask/imgShooter here, so the image
+        // from the last edited level leaked into every level during testing.
+        const currentLevel=this.cfg.levels?.[this.currentLevelIndex] || {};
+        const levelShooter=getLevelPresetAsset(currentLevel,'shooter') || this.IMG_URLS?.shooter || this.cfg.imgShooter || '';
+        const levelFinish=getLevelPresetAsset(currentLevel,'finish') || this.IMG_URLS?.center_mask || this.cfg.imgMask || '';
+        const endImage=document.getElementById('g-end-image');
+        if(endImage) endImage.src=mode==='win' ? (levelFinish || levelShooter) : (levelShooter || levelFinish);
+
         if(card){card.style.background=hexToRgba(cfg.panelBg,cfg.panelOpacity);card.style.borderColor=cfg.titleNeon;card.style.boxShadow=this.cfg.neonEnabled!==false?`0 0 28px ${hexToRgba(cfg.titleNeon,.3)}`:'none';}
         if(title){title.style.fontFamily=cfg.titleFont;title.style.fontSize=`${cfg.titleSize}em`;title.style.color=cfg.titleColor;title.style.textShadow=this.cfg.neonEnabled!==false?`0 0 12px ${cfg.titleNeon},0 0 22px ${cfg.titleNeon}`:'none';}
         if(reason){reason.style.fontFamily=cfg.subtitleFont || "'Montserrat', sans-serif";reason.style.fontSize=`${cfg.subtitleSize || 1.15}em`;reason.style.color=cfg.subtitleColor || '#ffe600';reason.style.textShadow=this.cfg.neonEnabled!==false?`0 0 8px ${cfg.subtitleNeon || cfg.subtitleColor || '#ffe600'}`:'none';}
@@ -3987,8 +4240,6 @@ class GameCore {
         } else {
             this.statChecked++; this.combo=0; this.statWrong++; this.levelWrong++; this.lives--; AudioSys.wrong(); this.shakeScreen();
             this.recordMistake(q,userAnswer);
-            let maxD=0; if(this.balls.length>0) maxD=this.balls.reduce((m,b)=>Math.max(m,b.d),0);
-            for(let k=1;k<=3;k++) this.balls.push({d:maxD+(this.curSpacing*k),type:'neutral',c:'gray'}); this.sortBallsFrontToBack();
         }
         this.activeQuestion=null; this.activeQuestionAttemptKey=''; this.ui();
         if(this.lives<=0){this.triggerDefeat(this.t.errLife,'life',600);return;}
@@ -4076,7 +4327,20 @@ class GameCore {
         document.getElementById('g-progress-fill').style.width = ((this.qDone / this.levelQuestions.length) * 100) + '%'; 
     }
     
+    getObjectBaseSize() { return objectBaseSizeForViewport(this.w || 800, this.h || 450); }
     drawImg(key, x, y, size) { if(this.ASSETS[key] && this.ASSETS[key].complete) { this.ctx.drawImage(this.ASSETS[key], x - size/2, y - size/2, size, size); } }
+    clearEndFireworks(){
+        if(!this.fxCtx || !this.fxCanvas) return;
+        this.fxCtx.clearRect(0,0,this.fxCanvas.width,this.fxCanvas.height);
+    }
+    drawEndFireworks(){
+        if(!this.fxCtx || !this.fxCanvas) return;
+        if(this.fxCanvas.width!==this.w || this.fxCanvas.height!==this.h){
+            this.fxCanvas.width=this.w; this.fxCanvas.height=this.h;
+        }
+        this.fxCtx.clearRect(0,0,this.w,this.h);
+        if(this.state==='gameover' && this.isWin) this.fworks?.forEach(f=>f.draw(this.fxCtx));
+    }
     
     draw() {
         this.ctx.clearRect(0,0,this.w,this.h);
@@ -4100,14 +4364,15 @@ class GameCore {
 
                 const finishLayout=this.objectLayout?.finish||DEFAULT_OBJECT_LAYOUT.finish;
                 const finishScale=clampObjectValue(finishLayout.scale,0.40,2.40,1);
-                let maskSize = 90 * finishScale;
+                const objectBaseSize=this.getObjectBaseSize();
+                let maskSize = objectBaseSize * finishScale;
                 let shadowBlur = this.cfg.neonEnabled ? 20 : 0;
-                let shadowColor = this.cfg.uiColor;
+                let shadowColor = this.levelVisual?.uiColor || this.cfg.uiColor;
 
                 if (danger && this.state === 'playing') {
                     // Restore the original soft heartbeat pulse that was used before Stage 26.
                     const pulse = Math.abs(Math.sin(Date.now() / 150));
-                    maskSize = (90 + pulse * 15) * finishScale;
+                    maskSize = (objectBaseSize + pulse * objectBaseSize * (15/90)) * finishScale;
                     shadowBlur = 20 + pulse * 20;
                     shadowColor = 'rgba(255, 0, 0, 0.9)';
 
@@ -4151,9 +4416,11 @@ class GameCore {
         this.lightnings?.forEach(l => l.draw(this.ctx));
 
         const shooterScale=this.objectLayout?.shooter?.scale||1;
-        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, 90*shooterScale); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15*shooterScale, 30*Math.min(1.45,shooterScale)); } this.ctx.restore();
+        const shooterBaseSize=this.getObjectBaseSize();
+        const shooterRatio=shooterBaseSize/90;
+        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, shooterBaseSize*shooterScale); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15*shooterScale*shooterRatio, 30*Math.min(1.45,shooterScale)); } this.ctx.restore();
 
-        if(this.state==='gameover') this.fworks?.forEach(f=>f.draw(this.ctx));
+        this.drawEndFireworks();
     }
     loop(now = performance.now()) {
         if(!this.lastFrameTime) this.lastFrameTime = now;
@@ -4216,19 +4483,25 @@ function openMazeEditorMode() {
     activateTabById('tab-design');
     normalizeQuestionDB();
     updateQLevelSelect();
+    levels.forEach((_,i)=>ensureLevelDesignState(i,makeDefaultScreens({}),{}));
+    activeLevelIndex=Math.max(0,Math.min(activeLevelIndex,levels.length-1));
     renderLevels();
     renderQuestions();
-    updatePreviewBgSelect();
+    updatePreviewBgSelect(activeLevelIndex);
     initAssetPreviews();
     initPathEditor();
     initPreviewObjectEditor();
     updateDangerDistanceLabel();
-    updatePreview(); initAutosave();
     initScreenEditor();
+    loadActiveLevelDesignToEditor();
+    updatePreview(); initAutosave();
     updateScreensPreview();
 }
 
 window.onload = async () => {
+    // Защита действует и в редакторе, и в автономной / hosted-игре.
+    installBasicGameProtection();
+
     // Автономный режим для srcdoc / скачанного HTML.
     // GAME_CFG внедряется генератором напрямую и не зависит от адреса редактора.
     if (window.__MAZE_STANDALONE__ === true && window.GAME_CFG) {
@@ -4294,8 +4567,7 @@ const DEFAULT_ASSET_URLS = {
     "special-time-sub": "https://img.genially.com/67961b32a116fb001568a75e/0f361898-6196-4f36-a249-7a4d108c65e1.png",
     "special-compress": "https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png",
     "special-stretch": "https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png",
-    "special-add-ball": "https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png",
-    "special-neutral": "https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png"
+    "special-add-ball": "https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"
 };
 
 const ASSET_META = {
@@ -4317,8 +4589,7 @@ const ASSET_META = {
     "special-time-sub": { input: "cfg-special-time-sub", preview: "asset-preview-special-time-sub", warning: "asset-warning-special-time-sub" },
     "special-compress": { input: "cfg-special-compress", preview: "asset-preview-special-compress", warning: "asset-warning-special-compress" },
     "special-stretch": { input: "cfg-special-stretch", preview: "asset-preview-special-stretch", warning: "asset-warning-special-stretch" },
-    "special-add-ball": { input: "cfg-special-add-ball", preview: "asset-preview-special-add-ball", warning: "asset-warning-special-add-ball" },
-    "special-neutral": { input: "cfg-special-neutral", preview: "asset-preview-special-neutral", warning: "asset-warning-special-neutral" }
+    "special-add-ball": { input: "cfg-special-add-ball", preview: "asset-preview-special-add-ball", warning: "asset-warning-special-add-ball" }
 };
 
 let pendingAssetKey = null;
@@ -4346,6 +4617,10 @@ function setAssetValue(key, value) {
     const preview = document.getElementById(meta.preview);
     if (input) input.value = value;
     if (preview) preview.src = value;
+    if(!levelDesignLoading && levels?.[activeLevelIndex]) {
+        if(key==='shooter') levels[activeLevelIndex].shooter=value;
+        if(key==='mask') levels[activeLevelIndex].finish=value;
+    }
     updatePreview();
     updateScreensPreview();
 }
@@ -4483,7 +4758,7 @@ function applyBallPreset(name, button) {
     [
         "ball-red", "ball-blue", "ball-green", "ball-yellow", "ball-purple", "ball-orange",
         "special-question", "special-electric", "special-life", "special-time-add", "special-time-sub",
-        "special-compress", "special-stretch", "special-add-ball", "special-neutral"
+        "special-compress", "special-stretch", "special-add-ball"
     ].forEach(key => {
         setAssetValue(key, DEFAULT_ASSET_URLS[key]);
         showAssetWarning(key, "");
@@ -4544,7 +4819,8 @@ function normalizePathData(path) {
 
 function addLevel() {
     levelIdCounter += 1;
-    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() });
+    const themeFields=getAutoThemeFields('classic');
+    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, themeId:'classic', themeFields, screens:makeThemedLevelScreens('classic',themeFields,makeDefaultScreens({}),{}), shooter:LEVEL_PRESET_META[0].shooter, finish:LEVEL_PRESET_META[0].finish, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() });
     renderLevels(); updateQLevelSelect(); updatePreviewBgSelect(); updatePathLevelSelect(); renderQuestions();
 }
 
@@ -4554,15 +4830,19 @@ function removeLevel(idx) {
         return;
     }
     const removedId = levels[idx]?.id;
+    saveActiveLevelDesignFromEditor();
     levels.splice(idx, 1);
+    if(idx < activeLevelIndex) activeLevelIndex--;
+    else if(idx === activeLevelIndex) activeLevelIndex=Math.min(activeLevelIndex,levels.length-1);
     if (removedId) {
         questionsDB.forEach(q => {
             if (Array.isArray(q.levelIds) && !q.levelIds.includes('all')) q.levelIds = q.levelIds.filter(id => id !== removedId);
         });
     }
     if (activePathLevelIndex >= levels.length) activePathLevelIndex = levels.length - 1;
-    renderLevels(); updateQLevelSelect(); updatePreviewBgSelect(); updatePathLevelSelect(); renderQuestions();
-    if (pathEditorActive) loadPathEditorLevel(Math.max(0, activePathLevelIndex));
+    renderLevels(); updateQLevelSelect(); updatePreviewBgSelect(activeLevelIndex); updatePathLevelSelect(); renderQuestions();
+    loadActiveLevelDesignToEditor();
+    if (pathEditorActive) loadPathEditorLevel(Math.max(0, Math.min(activePathLevelIndex,levels.length-1)));
 }
 
 function renderLevels() {
@@ -4575,17 +4855,26 @@ function renderLevels() {
         l.ballSetup = normalizeBallSetup(l.ballSetup);
         l.objectLayout = normalizeObjectLayout(l.objectLayout);
         const card = document.createElement('div');
-        card.className = 'level-card';
+        card.className = `level-card${i===activeLevelIndex?' active-edit':''}`;
 
         const head = document.createElement('div');
         head.className = 'level-head';
         const title = document.createElement('h3');
         title.className = 'level-title';
         title.textContent = `Уровень ${i + 1}`;
+        const headActions=document.createElement('div'); headActions.className='level-head-actions';
+        const editBtn=document.createElement('button'); editBtn.type='button'; editBtn.className=`level-edit-btn${i===activeLevelIndex?' active':''}`;
+        editBtn.textContent=i===activeLevelIndex?'● Редактируется':'✎ Редактировать';
+        editBtn.title=i===activeLevelIndex?'Сейчас настройки редактора относятся к этому уровню':'Сделать этот уровень активным для вкладок «Дизайн», «Экраны» и «Игра»';
+        editBtn.onclick=()=>{ if(i!==activeLevelIndex) setActiveLevel(i); };
         const del = document.createElement('button');
         del.className = 'btn-del'; del.type = 'button'; del.textContent = '✕'; del.title = 'Удалить уровень';
         del.onclick = () => removeLevel(i);
-        head.append(title, del);
+        headActions.append(editBtn,del);
+        head.append(title, headActions);
+
+        const themeLine=document.createElement('div'); themeLine.className='level-theme-line';
+        themeLine.innerHTML=`ТЕМА: <strong>${getLevelDisplayTheme(l)}</strong>${i===activeLevelIndex?' · настройки вкладок относятся к этому уровню':''}`;
 
         const bgLabel = document.createElement('div');
         bgLabel.className = 'section-note'; bgLabel.style.margin = '0 0 6px'; bgLabel.style.fontWeight = '800';
@@ -4599,10 +4888,9 @@ function renderLevels() {
         const actions = document.createElement('div');
         actions.className = 'level-bg-actions';
         const presetBtn = makeLevelButton('Пресеты', () => openBgModal(i));
-        const fileBtn = makeLevelButton('📁 Файл', () => pickLevelBgFile(i));
-        const urlBtn = makeLevelButton('🔗 URL', () => openLevelBgUrlDialog(i));
-        const resetBtn = makeLevelButton('↺ Classic 1', () => applyLevelPreset(i, 0));
-        actions.append(presetBtn, fileBtn, urlBtn, resetBtn);
+        const fileBtn = makeLevelButton('📁 Файл', () => { if(activeLevelIndex!==i) setActiveLevel(i,{silent:true}); pickLevelBgFile(i); });
+        const urlBtn = makeLevelButton('🔗 URL', () => { if(activeLevelIndex!==i) setActiveLevel(i,{silent:true}); openLevelBgUrlDialog(i); });
+        actions.append(presetBtn, fileBtn, urlBtn);
         const warn = document.createElement('div'); warn.className = 'level-warning'; warn.id = `level-bg-warning-${i}`;
         bgRow.append(thumb, actions, warn);
 
@@ -4699,8 +4987,7 @@ function renderLevels() {
 
         chain.append(chainTitle, topRow, summary);
 
-        if (l.ballSetup.mode === 'manual') {
-            const manual = document.createElement('div'); manual.className = 'manual-counts';
+        if (l.ballSetup.mode === 'manual') {            const manual = document.createElement('div'); manual.className = 'manual-counts';
             const qFixed = document.createElement('div'); qFixed.className = 'special-count-row';
             const qName = document.createElement('span'); qName.className = 'question-count-fixed'; qName.textContent = '❓ Вопрос';
             const qVal = document.createElement('span'); qVal.className = 'question-count-fixed'; qVal.textContent = `×${l.qCount}`;
@@ -4727,7 +5014,7 @@ function renderLevels() {
         const spacingText = document.createElement('span'); spacingText.textContent = 'Не ставить особые шары и вопросы подряд. Первые и последние 2 шара оставлять обычными.';
         spacingLabel.append(spacingCheck, spacingText); chain.appendChild(spacingLabel);
 
-        card.append(head, bgLabel, bgRow, controls, chain);
+        card.append(head, themeLine, bgLabel, bgRow, controls, chain);
         cont.appendChild(card);
     });
 }
@@ -4769,7 +5056,8 @@ function setLevelBackground(index, value, warning = '') {
     levels[index].presetIndex = PRESETS.indexOf(value);
     if (levels[index].presetIndex < 0) levels[index].presetIndex = null;
     renderLevels();
-    updatePreviewBgSelect(index);
+    updatePreviewBgSelect(activeLevelIndex);
+    if(index===activeLevelIndex) refreshActiveLevelPreview();
     showLevelWarning(index, warning);
     if (pathEditorActive && activePathLevelIndex === index) syncPreviewToLevel(index);
 }
@@ -4827,6 +5115,7 @@ async function saveLevelBgUrl() {
 }
 
 function openBgModal(index) {
+    if(activeLevelIndex!==index) setActiveLevel(index,{silent:true});
     pendingLevelBgIndex = index;
     const grid = document.getElementById('bg-presets');
     grid.innerHTML = '';
@@ -4878,6 +5167,7 @@ function updatePathLevelSelect() {
 }
 
 function openPathEditor(index) {
+    if(activeLevelIndex!==index) setActiveLevel(index,{silent:true});
     activePathLevelIndex = index;
     activateTabById('tab-levels');
     pathEditorActive = true;
@@ -4900,6 +5190,7 @@ function loadPathEditorLevel(index) {
 }
 
 function syncPreviewToLevel(index) {
+    if(index!==activeLevelIndex) setActiveLevel(index,{silent:true});
     const sel = document.getElementById('preview-bg-sel');
     if (sel) sel.value = String(index);
     const box = document.getElementById('p-box');
@@ -5351,7 +5642,7 @@ const QUESTION_AI_GUIDE = `1. Один правильный ответ:
 
 function updatePreviewBgSelect(preferredIndex = null) {
     const sel = document.getElementById('preview-bg-sel');
-    const previous = preferredIndex !== null ? String(preferredIndex) : sel.value;
+    const previous = preferredIndex !== null ? String(preferredIndex) : String(activeLevelIndex);
     sel.innerHTML = '<option value="">Черный фон</option>';
     levels.forEach((l, i) => { const opt = document.createElement('option'); opt.value = String(i); opt.textContent = `Фон Уровня ${i+1}`; sel.appendChild(opt); });
     if (previous !== '' && levels[parseInt(previous)]) sel.value = previous;
@@ -5359,8 +5650,16 @@ function updatePreviewBgSelect(preferredIndex = null) {
     changePreviewBg();
 }
 function changePreviewBg() {
-    const sel = document.getElementById('preview-bg-sel').value; const box = document.getElementById('p-box');
-    if(sel === "") { box.style.backgroundImage = 'none'; } else { let lvlIdx = parseInt(sel); if(levels[lvlIdx]) box.style.backgroundImage = `url('${levels[lvlIdx].bg}')`; }
+    const raw=document.getElementById('preview-bg-sel').value;
+    const box=document.getElementById('p-box');
+    if(raw===''){ if(box) box.style.backgroundImage='none'; return; }
+    const idx=Math.max(0,Math.min(levels.length-1,parseInt(raw)||0));
+    if(idx!==activeLevelIndex){
+        setActiveLevel(idx,{silent:true});
+        return;
+    }
+    const level=levels[idx];
+    if(level && box) box.style.backgroundImage=`url('${level.bg}')`;
     if (!pathEditorActive) drawPreviewPath();
     updatePreviewObjectLayer();
 }
@@ -5458,13 +5757,23 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
         setFieldValue('project-name',snapshot.projectName || 'Maze Trap Project');
         setFieldValue('cfg-lang',cfg.lang || 'ru'); setFieldValue('cfg-lives',cfg.lives ?? 3); setFieldValue('cfg-time',cfg.timerStart ?? 120); setFieldValue('cfg-pause-timer-questions',cfg.pauseTimerOnQuestions !== false); setFieldValue('cfg-danger-distance-cm',cfg.dangerDistanceCm ?? 6); setFieldValue('cfg-speed',cfg.speed ?? 1.2); setFieldValue('cfg-neon',cfg.neonEnabled !== false); setFieldValue('cfg-random-questions',cfg.randomQuestions !== false); setFieldValue('cfg-math-enabled',!!cfg.mathEnabled); setFieldValue('cfg-prog-color',cfg.progColor || '#00ff66');
         setFieldValue('cfg-prompt-font',cfg.promptFont); const migratedPromptColor=(!cfg.promptColor || String(cfg.promptColor).toLowerCase()==='#b8bbc5') ? '#39ff14' : cfg.promptColor; setFieldValue('cfg-prompt-color',migratedPromptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
-        const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball,'special-neutral':cfg.specialBallImages?.neutral};
+        const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball};
         Object.entries(assetValues).forEach(([key,value])=>{ if(value) setAssetValue(key,value); });
-        levels=(cfg.levels||[]).map((l,i)=>({id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex:Number.isInteger(l.presetIndex)?l.presetIndex:PRESETS.indexOf(l.bg),path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup),objectLayout:normalizeObjectLayout(l.objectLayout)}));
-        if(!levels.length) levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout()}];
+        levels=(cfg.levels||[]).map((l,i)=>{
+            const presetIndex=Number.isInteger(l.presetIndex)?l.presetIndex:PRESETS.indexOf(l.bg);
+            const meta=LEVEL_PRESET_META[presetIndex]||LEVEL_PRESET_META[0];
+            const themeId=l.themeId||getThemeIdForPresetIndex(presetIndex);
+            const themeFields=Object.assign({},getAutoThemeFields(themeId),l.themeFields||{});
+            const screens=l.screens
+                ? mergeScreensConfig(l.screens,cfg)
+                : makeThemedLevelScreens(themeId,themeFields,cfg.screens||makeDefaultScreens(cfg),cfg);
+            return {id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex,themeId,themeFields,screens,shooter:l.shooter||meta.shooter||cfg.imgShooter||'',finish:l.finish||meta.finish||cfg.imgMask||'',path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup),objectLayout:normalizeObjectLayout(l.objectLayout)};
+        });
+        if(!levels.length){const tf=getAutoThemeFields('classic');levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,themeId:'classic',themeFields:tf,screens:makeThemedLevelScreens('classic',tf,cfg.screens||makeDefaultScreens(cfg),cfg),shooter:LEVEL_PRESET_META[0].shooter,finish:LEVEL_PRESET_META[0].finish,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout()}];}
         levelIdCounter=Math.max(levels.length,...levels.map(l=>parseInt(String(l.id||'').replace(/\D/g,''))||0));
-        questionsDB=safeClone(cfg.questions||[]); normalizeQuestionDB(); applyScreensToEditor(cfg.screens || makeDefaultScreens(cfg));
-        updateQLevelSelect(); renderLevels(); renderQuestions(); updatePreviewBgSelect(); initAssetPreviews(); updateDangerDistanceLabel(); updateScreenRangeLabels(); updatePreview(); updateScreensPreview();
+        questionsDB=safeClone(cfg.questions||[]); normalizeQuestionDB();
+        activeLevelIndex=Math.max(0,Math.min(parseInt(cfg.activeLevelIndex)||0,levels.length-1));
+        updateQLevelSelect(); renderLevels(); renderQuestions(); updatePreviewBgSelect(activeLevelIndex); initAssetPreviews(); updateDangerDistanceLabel(); updateScreenRangeLabels(); loadActiveLevelDesignToEditor(); updatePreview(); updateScreensPreview();
         const status=document.getElementById('autosave-status'); if(status) status.textContent=fromAutosave?'Автосохранение восстановлено.':`Проект загружен: ${snapshot.projectName||'Maze Trap Project'}`;
     } finally { isApplyingProject=false; }
     scheduleAutosave();
@@ -5501,6 +5810,7 @@ function initAutosave(){
 // ГЕНЕРАЦИЯ БЕЗОПАСНОГО И СКРЫТОГО IFRAME
 // ----------------------------------------------------
 function buildCurrentGameConfig(validate=true) {
+    saveActiveLevelDesignFromEditor();
     if(validate && questionsDB.length === 0) { showEditorToast('Добавьте вопросы во вкладке «Вопросы».','error'); return null; }
     if(validate) {
         for (let i=0;i<levels.length;i++) {
@@ -5509,7 +5819,10 @@ function buildCurrentGameConfig(validate=true) {
             if(!Array.isArray(levels[i].path) || levels[i].path.length < 2){ showEditorToast(`Уровень ${i+1}: сначала создайте траекторию.`,'error'); return null; }
         }
     }
-    const cleanLevels = levels.map(l => ({ id:l.id, bg:l.bg, presetIndex:getLevelPresetIndex(l), path:normalizePathData(l.path), qCount:l.qCount, ballSetup:normalizeBallSetup(l.ballSetup), objectLayout:normalizeObjectLayout(l.objectLayout) }));
+    const cleanLevels = levels.map((l,i) => {
+        const level=ensureLevelDesignState(i);
+        return { id:level.id, bg:level.bg, presetIndex:getLevelPresetIndex(level), themeId:getLevelThemeId(level), themeFields:Object.assign({},getAutoThemeFields(getLevelThemeId(level)),level.themeFields||{}), screens:mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{}), shooter:getLevelPresetAsset(level,'shooter'), finish:getLevelPresetAsset(level,'finish'), path:normalizePathData(level.path), qCount:level.qCount, ballSetup:normalizeBallSetup(level.ballSetup), objectLayout:normalizeObjectLayout(level.objectLayout) };
+    });
     const screens = getScreensConfigFromEditor();
     return {
         lang: document.getElementById('cfg-lang').value,
@@ -5550,10 +5863,10 @@ function buildCurrentGameConfig(validate=true) {
             question: document.getElementById('cfg-special-question').value, electric: document.getElementById('cfg-special-electric').value,
             life_add: document.getElementById('cfg-special-life').value, time_add: document.getElementById('cfg-special-time-add').value,
             time_sub: document.getElementById('cfg-special-time-sub').value, compress: document.getElementById('cfg-special-compress').value,
-            stretch: document.getElementById('cfg-special-stretch').value, add_ball: document.getElementById('cfg-special-add-ball').value,
-            neutral: document.getElementById('cfg-special-neutral').value
+            stretch: document.getElementById('cfg-special-stretch').value, add_ball: document.getElementById('cfg-special-add-ball').value
         },
         levels: cleanLevels,
+        activeLevelIndex,
         questions: questionsDB
     };
 }
@@ -5672,8 +5985,7 @@ async function generateAndCopyHostedGameLink(){
 
 function safeSerializeConfig(config) {
     // Безопасно для помещения JSON внутрь inline <script>.
-    return JSON.stringify(config)
-        .replace(/</g, '\\u003C')
+    return JSON.stringify(config)        .replace(/</g, '\\u003C')
         .replace(/>/g, '\\u003E')
         .replace(/&/g, '\\u0026')
         .replace(/\u2028/g, '\\u2028')
