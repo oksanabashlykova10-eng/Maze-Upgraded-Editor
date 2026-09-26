@@ -997,7 +997,8 @@
             z-index:0;
             pointer-events:none;
         }
-        #g-end-screen #g-end-card {            position:relative;
+        #g-end-screen #g-end-card {
+            position:relative;
             z-index:1;
             width: min(92vw, 520px);
             max-width: 520px;
@@ -1225,7 +1226,7 @@
                     <div class="ball-card"><img id="asset-preview-special-time-sub" alt=""><strong>−10 сек</strong><div class="ball-function">Отнимает 10 секунд и добавляет штраф 50 очков.</div><div class="ball-actions"><button onclick="pickAssetFile('special-time-sub')">Файл</button><button onclick="openAssetUrlDialog('special-time-sub')">URL</button></div><div class="asset-warning" id="asset-warning-special-time-sub"></div><input type="hidden" id="cfg-special-time-sub" value="https://img.genially.com/67961b32a116fb001568a75e/0f361898-6196-4f36-a249-7a4d108c65e1.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-compress" alt=""><strong>Стрелки внутрь</strong><div class="ball-function">Сжимает цепочку: следующие шары появляются ближе друг к другу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-compress')">Файл</button><button onclick="openAssetUrlDialog('special-compress')">URL</button></div><div class="asset-warning" id="asset-warning-special-compress"></div><input type="hidden" id="cfg-special-compress" value="https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-stretch" alt=""><strong>Стрелки наружу</strong><div class="ball-function">Растягивает цепочку: расстояние между следующими шарами увеличивается.</div><div class="ball-actions"><button onclick="pickAssetFile('special-stretch')">Файл</button><button onclick="openAssetUrlDialog('special-stretch')">URL</button></div><div class="asset-warning" id="asset-warning-special-stretch"></div><input type="hidden" id="cfg-special-stretch" value="https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png"></div>
-                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два обычных цветных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
+                    <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два серых штрафных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
 </div>
             </section>
         </div>
@@ -1995,6 +1996,7 @@ const LEVEL_PRESET_META = [
     { id:'candy', label:'🍭 Candy', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/candy/shooter_candy.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/candy/finish_candy.png' },
     { id:'sea', label:'🧜 Sea', shooter:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/shooter_sea.png', finish:'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/themes/sea/finish_sea.png' }
 ];
+
 
 const AUTO_THEME_BASE_FIELDS = {
     'cfg-prompt-size': 24,
@@ -2991,7 +2993,8 @@ function beginPreviewObjectGesture(e,type,isResize){
     const item=document.getElementById(type==='shooter'?'p-object-shooter':'p-object-finish'); const itemRect=item?.getBoundingClientRect();
     previewObjectGesture={type,isResize,idx,startX:e.clientX,startY:e.clientY,rect,start:{...current},centerX:itemRect?itemRect.left+itemRect.width/2:e.clientX,centerY:itemRect?itemRect.top+itemRect.height/2:e.clientY,startDist:itemRect?Math.max(8,Math.hypot(e.clientX-(itemRect.left+itemRect.width/2),e.clientY-(itemRect.top+itemRect.height/2))):40};
     try{e.currentTarget.setPointerCapture?.(e.pointerId);}catch(_e){}
-}function movePreviewObjectGesture(e){
+}
+function movePreviewObjectGesture(e){
     const g=previewObjectGesture; if(!g||!levels[g.idx]) return;
     const layout=ensureLevelObjectLayout(g.idx); const target=g.type==='shooter'?layout.shooter:layout.finish;
     if(g.isResize){
@@ -3482,7 +3485,7 @@ class GameCore {
         this.bulletSpeed = 24;
         this.colors = ["red", "blue", "green", "yellow", "purple", "orange"];
         this.bTypes = {
-            normal: { imgKey: "c_" }, question: { imgKey: "t_question" },
+            normal: { imgKey: "c_" }, neutral: { imgKey: "t_neutral" }, question: { imgKey: "t_question" },
             time_add: { imgKey: "t_time_add" }, life_add: { imgKey: "t_life_add" }, compress: { imgKey: "t_compress" },
             time_sub: { imgKey: "t_time_sub" }, stretch: { imgKey: "t_stretch" }, add_ball: { imgKey: "t_add_ball" }, electric: { imgKey: "t_electric" }
         };
@@ -3494,6 +3497,10 @@ class GameCore {
             c_yellow: this.cfg.ballImages?.yellow || 'https://img.genially.com/67961b32a116fb001568a75e/0a927476-ce04-4639-b1a4-cd50af772e9d.png', 
             c_purple: this.cfg.ballImages?.purple || 'https://img.genially.com/67961b32a116fb001568a75e/affefaf3-fdaf-4135-94a9-07b73fe69771.png',
             c_orange: this.cfg.ballImages?.orange || 'https://img.genially.com/67961b32a116fb001568a75e/b95a4f50-92c9-4435-bdba-001911d7a06c.png',
+            // Серый штрафной шар используется только динамически:
+            // после неправильного ответа и бонуса +2 шара.
+            // В настройке состава цепочки он намеренно не показывается.
+            t_neutral: 'https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png',
             t_question: this.cfg.specialBallImages?.question || 'https://img.genially.com/67961b32a116fb001568a75e/87a94615-9492-4862-8d39-d5a93e8fb3e2.png',
             t_life_add: this.cfg.specialBallImages?.life_add || 'https://img.genially.com/67961b32a116fb001568a75e/213dec47-3717-4811-a68b-20fe7262ec2d.png',
             t_time_add: this.cfg.specialBallImages?.time_add || 'https://img.genially.com/67961b32a116fb001568a75e/20e3d09b-849b-4617-a0c5-6b5cc893b4a1.png',
@@ -3764,7 +3771,7 @@ class GameCore {
         this.sortBallsFrontToBack();
         const headD=this.balls.length ? this.balls[0].d : 0;
         for(let n=1;n<=count;n++){
-            this.balls.push({ d:headD + this.curSpacing*n, type:'normal', c:this.rndCol() });
+            this.balls.push({ d:headD + this.curSpacing*n, type:'neutral', c:'gray' });
         }
         this.sortBallsFrontToBack();
     }
@@ -3941,7 +3948,7 @@ class GameCore {
             toRemove.forEach(i => { if(i < this.balls.length) { let tb = this.balls[i]; let thex = HEX_MAP[tb.c] || "#fff"; for(let k=0;k<5;k++) this.parts.push(new Part(tb.x, tb.y, thex)); this.balls.splice(i,1); } });
             this.ui(); return;
         }
-        if(b.type==='normal'){ this.balls.splice(idx,1); this.score+=10; this.scoreBalls+=10; AudioSys.hit(); this.ui(); return; }
+        if(b.type==='neutral' || b.type==='normal'){ this.balls.splice(idx,1); this.score+=10; this.scoreBalls+=10; AudioSys.hit(); this.ui(); return; }
 
         switch(b.type){
             case 'question': this.state='paused_for_q'; this.activeQuestionBall=b; AudioSys.bonus(); this.ask(); break;
@@ -3989,7 +3996,8 @@ class GameCore {
         const q = this.levelQuestions[this.nextQIndex];
         this.nextQIndex++;
         this.activeQuestion = q;
-        this.activeQuestionAttemptKey = `${this.currentLevelIndex}:${this.nextQIndex}:${q?.id || 'question'}`;        this.questionInProgress = true;
+        this.activeQuestionAttemptKey = `${this.currentLevelIndex}:${this.nextQIndex}:${q?.id || 'question'}`;
+        this.questionInProgress = true;
         this.blockShootUntil = Number.POSITIVE_INFINITY;
         const screen = document.getElementById('g-quiz-screen');
         const card = document.getElementById('g-question-card');
@@ -4240,6 +4248,12 @@ class GameCore {
         } else {
             this.statChecked++; this.combo=0; this.statWrong++; this.levelWrong++; this.lives--; AudioSys.wrong(); this.shakeScreen();
             this.recordMistake(q,userAnswer);
+            // Ошибка в вопросе: три серых штрафных шара добавляются в хвост цепочки.
+            // Они не входят в ручную настройку количества специальных шаров.
+            let maxD=0;
+            if(this.balls.length>0) maxD=this.balls.reduce((m,b)=>Math.max(m,b.d),0);
+            for(let k=1;k<=3;k++) this.balls.push({d:maxD+(this.curSpacing*k),type:'neutral',c:'gray'});
+            this.sortBallsFrontToBack();
         }
         this.activeQuestion=null; this.activeQuestionAttemptKey=''; this.ui();
         if(this.lives<=0){this.triggerDefeat(this.t.errLife,'life',600);return;}
@@ -4987,7 +5001,8 @@ function renderLevels() {
 
         chain.append(chainTitle, topRow, summary);
 
-        if (l.ballSetup.mode === 'manual') {            const manual = document.createElement('div'); manual.className = 'manual-counts';
+        if (l.ballSetup.mode === 'manual') {
+            const manual = document.createElement('div'); manual.className = 'manual-counts';
             const qFixed = document.createElement('div'); qFixed.className = 'special-count-row';
             const qName = document.createElement('span'); qName.className = 'question-count-fixed'; qName.textContent = '❓ Вопрос';
             const qVal = document.createElement('span'); qVal.className = 'question-count-fixed'; qVal.textContent = `×${l.qCount}`;
@@ -5985,7 +6000,8 @@ async function generateAndCopyHostedGameLink(){
 
 function safeSerializeConfig(config) {
     // Безопасно для помещения JSON внутрь inline <script>.
-    return JSON.stringify(config)        .replace(/</g, '\\u003C')
+    return JSON.stringify(config)
+        .replace(/</g, '\\u003C')
         .replace(/>/g, '\\u003E')
         .replace(/&/g, '\\u0026')
         .replace(/\u2028/g, '\\u2028')
