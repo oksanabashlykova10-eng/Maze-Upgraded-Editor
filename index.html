@@ -1211,7 +1211,45 @@
         #g-float-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: #fff; text-shadow: 0 0 20px #00ffff; font-weight: 900; opacity: 0; pointer-events: none; z-index: 150; transition: opacity 0.5s, transform 0.5s; white-space: nowrap; font-family: var(--game-font); }
         .g-shake { animation: shakeAnim 0.4s; }
         @keyframes shakeAnim { 0% { transform: translate(0,0); } 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(4px, 2px); } 100% { transform: translate(0,0); } }
-    </style>
+    
+        /* STAGE 45 — smart question images */
+        .g-question-card {
+            max-height:88vh !important;
+        }
+        .g-q-image {
+            width:auto !important;
+            height:auto !important;
+            max-width:min(360px,48%) !important;
+            max-height:min(24vh,230px) !important;
+            object-fit:contain !important;
+            margin:0 auto 10px !important;
+        }
+        .g-question-card[data-type="order"] .g-q-image,
+        .g-question-card[data-type="multi"] .g-q-image,
+        .g-question-card[data-type="pairs"] .g-q-image,
+        .g-question-card[data-type="categories"] .g-q-image,
+        .g-question-card[data-type="gaps"] .g-q-image {
+            max-width:min(300px,40%) !important;
+            max-height:min(19vh,180px) !important;
+            margin-bottom:8px !important;
+        }
+        @media (max-width:700px), (max-height:650px) {
+            .g-question-card { max-height:90vh !important; }
+            .g-q-image {
+                max-width:min(280px,68%) !important;
+                max-height:min(20vh,170px) !important;
+                margin-bottom:7px !important;
+            }
+            .g-question-card[data-type="order"] .g-q-image,
+            .g-question-card[data-type="multi"] .g-q-image,
+            .g-question-card[data-type="pairs"] .g-q-image,
+            .g-question-card[data-type="categories"] .g-q-image,
+            .g-question-card[data-type="gaps"] .g-q-image {
+                max-height:min(16vh,135px) !important;
+            }
+        }
+
+</style>
 </head>
 <body>
 
@@ -4644,6 +4682,62 @@ class GameCore {
     }
     shakeScreen() { const c = document.getElementById('g-game-container'); c.classList.remove('g-shake'); void c.offsetWidth; c.classList.add('g-shake'); }
     
+    fitQuestionImageToCard() {
+        const card=document.getElementById('g-question-card');
+        const img=document.getElementById('g-q-image');
+        if(!card) return;
+
+        // A new question always opens from the top.
+        card.scrollTop=0;
+
+        if(!img || img.classList.contains('g-hidden') || !img.src) return;
+
+        const denseTypes=new Set(['order','multi','pairs','categories','gaps']);
+        const dense=denseTypes.has(card.dataset.type||'');
+
+        // Normal visual limit. The image is not cropped; only its display size changes.
+        const defaultMax=Math.max(
+            dense ? 105 : 125,
+            Math.min(dense ? 180 : 230, window.innerHeight * (dense ? 0.19 : 0.24))
+        );
+        img.style.setProperty('max-height',`${defaultMax}px`,'important');
+
+        const fit=()=>{
+            card.scrollTop=0;
+            let overflow=Math.max(0,card.scrollHeight-card.clientHeight);
+
+            // If the illustration itself causes overflow, shrink only the illustration.
+            if(overflow>4){
+                const current=img.getBoundingClientRect().height || defaultMax;
+                const minHeight=dense ? 90 : 105;
+                const next=Math.max(minHeight,current-overflow-10);
+                if(next<current) img.style.setProperty('max-height',`${next}px`,'important');
+            }
+
+            // Fonts and grids can settle one frame later.
+            requestAnimationFrame(()=>{
+                const overflow2=Math.max(0,card.scrollHeight-card.clientHeight);
+                if(overflow2>4){
+                    const current=img.getBoundingClientRect().height || defaultMax;
+                    const minHeight=dense ? 82 : 96;
+                    const next=Math.max(minHeight,current-overflow2-8);
+                    if(next<current) img.style.setProperty('max-height',`${next}px`,'important');
+                }
+                card.scrollTop=0;
+            });
+        };
+
+        requestAnimationFrame(fit);
+
+        // Refit after the actual image dimensions become known.
+        if(!img.complete){
+            img.onload=()=>{
+                fit();
+                img.onload=null;
+            };
+        }
+    }
+
     ask() {
         // Жёсткая гарантия: popup не может открыться больше qCount раз за уровень.
         if (this.nextQIndex >= this.levelQuestionTarget || this.nextQIndex >= this.levelQuestions.length) {
@@ -4674,7 +4768,14 @@ class GameCore {
         qTextEl.textContent = questionIsRenderedInsideInteraction ? '' : (q.question || '');
         qTextEl.style.display = (!questionIsRenderedInsideInteraction && q.question) ? 'block' : 'none';
         content.replaceChildren();
-        if (q.img) { imageEl.src = q.img; imageEl.classList.remove('g-hidden'); } else { imageEl.removeAttribute('src'); imageEl.classList.add('g-hidden'); }
+        imageEl.style.removeProperty('max-height');
+        if (q.img) {
+            imageEl.src = q.img;
+            imageEl.classList.remove('g-hidden');
+        } else {
+            imageEl.removeAttribute('src');
+            imageEl.classList.add('g-hidden');
+        }
 
         switch(q.type) {
             case 'choice': this.renderChoice(q, content); break;
@@ -4688,8 +4789,16 @@ class GameCore {
             case 'open': this.renderOpen(q, content); break;
             default: this.renderOpen({question:q.question || q.sourceLine || 'Question'}, content); break;
         }
+
+        // Keep illustrations compact enough to avoid an unnecessary inner scrollbar.
+        // If the task itself is genuinely long, scrolling is still allowed.
+        this.fitQuestionImageToCard();
+
         if (this.cfg.mathEnabled) {
-            ensureMathJaxLoaded().then(() => MathJax.typesetPromise([promptEl, qTextEl, content])).catch(() => {});
+            ensureMathJaxLoaded()
+                .then(() => MathJax.typesetPromise([promptEl, qTextEl, content]))
+                .then(() => this.fitQuestionImageToCard())
+                .catch(() => {});
         }
     }
 
