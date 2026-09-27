@@ -5715,7 +5715,7 @@ function showProtectedPresetUrlState(statusId,previewId,current,message){
     const status=document.getElementById(statusId);
     const preview=document.getElementById(previewId);
     if(status){
-        status.textContent=message || '✓ Сейчас используется встроенное изображение пресета. Его служебный адрес скрыт.';
+        status.textContent=message || ' ';
         status.className='url-check-status ok';
     }
     if(preview && current){
@@ -5742,7 +5742,7 @@ function openAssetUrlDialog(key) {
             'asset-url-status',
             'asset-url-preview',
             current,
-            '✓ Используется встроенное изображение редактора. Служебный адрес скрыт. Вставьте свою HTTPS-ссылку, если хотите заменить его.'
+            ' '
         );
     } else if(urlInput.value) {
         scheduleImageUrlCheck('asset-url-input','asset-url-status','asset-url-preview');
