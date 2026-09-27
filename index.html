@@ -268,6 +268,35 @@
 
         /* SCREENS TAB */
         .screen-section-card { border-color: rgba(255,158,0,.28); }
+        .screen-scope-card {
+            border:1px solid #2b3340;
+            background:linear-gradient(135deg,rgba(83,231,255,.08),rgba(155,124,255,.035) 58%,#0b0c11);
+        }
+        .screen-scope-title {
+            display:flex; align-items:center; justify-content:space-between; gap:8px;
+            color:#fff; font-size:10px; font-weight:900; letter-spacing:.35px; text-transform:uppercase;
+        }
+        .screen-scope-badge {
+            flex:0 0 auto; padding:4px 7px; border-radius:999px; border:1px solid #53e7ff;
+            color:#bff7ff; font-size:7.8px; font-weight:900; box-shadow:0 0 10px rgba(83,231,255,.16);
+        }
+        .start-mode-card {
+            margin-top:9px; padding:9px; border-radius:8px; border:1px solid #303643; background:#0b0d13;
+        }
+        .start-mode-note { margin-top:7px; color:#949baa; font-size:8.8px; line-height:1.45; }
+        .global-start-auto-note {
+            margin:8px 0 10px; padding:8px 9px; border:1px solid rgba(83,231,255,.25);
+            border-radius:7px; background:rgba(83,231,255,.055); color:#b9eefa; font-size:8.8px; line-height:1.45;
+        }
+        .global-start-custom-controls.auto-locked { opacity:.55; }
+        .global-start-custom-controls.auto-locked input,
+        .global-start-custom-controls.auto-locked select,
+        .global-start-custom-controls.auto-locked textarea { cursor:not-allowed; }
+        .level-screen-scope {
+            margin:2px 0 7px; padding:8px 10px; border:1px solid rgba(255,211,78,.22);
+            border-radius:8px; background:rgba(255,211,78,.045); color:#ffe89b;
+            font-size:8.8px; font-weight:900; line-height:1.45;
+        }
         .screen-subtitle {
             margin: 11px 0 7px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.12);
             color: var(--tab-accent); font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .25px;
@@ -1375,50 +1404,75 @@
                 <p class="section-note">Системные надписи игры переводятся автоматически. Пользовательские заголовки и вопросы не переводятся.</p>
             </section>
 
-            <section class="panel-section screen-section-card">
-                <h3 class="section-title">▣ Фон экранов</h3>
-                <div class="color-picker-group"><span>Цвет затемнения</span><input type="color" id="screen-overlay-bg" class="screen-control" value="#000000"></div>
-                <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="screen-overlay-opacity" class="screen-control" min="0" max="100" value="82"><span id="screen-overlay-opacity-value">82%</span></div>
-                <p class="section-note">Это общий overlay стартового, финальных экранов и работы над ошибками. Фон самого уровня настраивается отдельно во вкладке «Уровни».</p>
+            <section class="panel-section screen-scope-card">
+                <div class="screen-scope-title">
+                    <span>🌐 ОБЩИЙ ЭКРАН ИГРЫ</span>
+                    <span class="screen-scope-badge">1 НА ВСЮ ИГРУ</span>
+                </div>
+                <div class="start-mode-card">
+                    <div class="field" style="margin:0;">
+                        <label>Стиль стартового экрана</label>
+                        <select id="global-start-mode" onchange="handleGlobalStartModeChange()">
+                            <option value="auto">Авто · стиль Уровня 1</option>
+                            <option value="custom">Настроить отдельно</option>
+                        </select>
+                    </div>
+                    <div class="start-mode-note" id="global-start-mode-note">По умолчанию старт автоматически повторяет визуальный стиль Уровня 1.</div>
+                </div>
             </section>
 
-            <section class="panel-section screen-section-card" data-preview-target="start">
-                <h3 class="section-title">▶ Экран старта</h3>
-                <div class="field"><label>Главный заголовок</label><input type="text" id="screen-start-title" class="screen-control" value="MAZE TRAP"></div>
+            <section class="panel-section screen-section-card" id="global-start-editor-section" data-preview-target="start">
+                <h3 class="section-title">▶ Экран старта · общий для всей игры</h3>
+                <div class="global-start-auto-note" id="global-start-auto-note">Авто: старт наследует стиль Уровня 1.</div>
+                <div class="global-start-custom-controls" id="global-start-custom-controls">
+                    <div class="screen-subtitle">Затемнение стартового экрана</div>
+                    <div class="color-picker-group"><span>Цвет затемнения</span><input type="color" id="global-start-overlay-bg" class="global-start-control" value="#000000"></div>
+                    <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="global-start-overlay-opacity" class="global-start-control" min="0" max="100" value="82"><span id="global-start-overlay-opacity-value">82%</span></div>
+                <div class="field"><label>Главный заголовок</label><input type="text" id="screen-start-title" class="global-start-control" value="MAZE TRAP"></div>
                 <div class="compact-grid-2">
-                    <div class="field"><label>Шрифт заголовка</label><select id="screen-start-title-font" class="screen-font-select screen-control" data-default="'Metamorphous', serif"></select></div>
-                    <div class="field"><label>Размер заголовка</label><input type="number" id="screen-start-title-size" class="screen-control" min="1" max="4" step="0.1" value="2.2"></div>
+                    <div class="field"><label>Шрифт заголовка</label><select id="screen-start-title-font" class="screen-font-select global-start-control" data-default="'Metamorphous', serif"></select></div>
+                    <div class="field"><label>Размер заголовка</label><input type="number" id="screen-start-title-size" class="global-start-control" min="1" max="4" step="0.1" value="2.2"></div>
                 </div>
                 <div class="color-grid">
-                    <div class="color-picker-group"><span>Цвет заголовка</span><input type="color" id="screen-start-title-color" class="screen-control" value="#ffffff"></div>
-                    <div class="color-picker-group"><span>Неон заголовка</span><input type="color" id="screen-start-title-neon" class="screen-control" value="#39ff14"></div>
+                    <div class="color-picker-group"><span>Цвет заголовка</span><input type="color" id="screen-start-title-color" class="global-start-control" value="#ffffff"></div>
+                    <div class="color-picker-group"><span>Неон заголовка</span><input type="color" id="screen-start-title-neon" class="global-start-control" value="#39ff14"></div>
                 </div>
-                <div class="field" style="margin-top:9px;"><label>Текст-описание</label><textarea id="screen-start-description" class="screen-control" rows="3" placeholder="Пусто = использовать системное описание цели игры"></textarea></div>
+                <div class="field" style="margin-top:9px;"><label>Текст-описание</label><textarea id="screen-start-description" class="global-start-control" rows="3" placeholder="Пусто = использовать системное описание цели игры"></textarea></div>
                 <div class="compact-grid-2">
-                    <div class="field"><label>Шрифт описания</label><select id="screen-start-desc-font" class="screen-font-select screen-control" data-default="'Montserrat', sans-serif"></select></div>
-                    <div class="field"><label>Размер описания</label><input type="number" id="screen-start-desc-size" class="screen-control" min="0.7" max="2.5" step="0.1" value="1.0"></div>
+                    <div class="field"><label>Шрифт описания</label><select id="screen-start-desc-font" class="screen-font-select global-start-control" data-default="'Montserrat', sans-serif"></select></div>
+                    <div class="field"><label>Размер описания</label><input type="number" id="screen-start-desc-size" class="global-start-control" min="0.7" max="2.5" step="0.1" value="1.0"></div>
                 </div>
-                <div class="color-picker-group"><span>Цвет описания</span><input type="color" id="screen-start-desc-color" class="screen-control" value="#39ff14"></div>
+                <div class="color-picker-group"><span>Цвет описания</span><input type="color" id="screen-start-desc-color" class="global-start-control" value="#39ff14"></div>
                 <div class="screen-subtitle">Сопровождающий текст</div>
-                <div class="field"><label>Вторая строка</label><input type="text" id="screen-start-companion-text" class="screen-control" placeholder="Пусто = автоматический перевод «Иначе придется уничтожить все шары»"></div>
+                <div class="field"><label>Вторая строка</label><input type="text" id="screen-start-companion-text" class="global-start-control" placeholder="Пусто = автоматический перевод «Иначе придется уничтожить все шары»"></div>
                 <div class="compact-grid-2">
-                    <div class="field"><label>Шрифт</label><select id="screen-start-companion-font" class="screen-font-select screen-control" data-default="'Montserrat', sans-serif"></select></div>
-                    <div class="field"><label>Размер</label><input type="number" id="screen-start-companion-size" class="screen-control" min="0.7" max="2.5" step="0.1" value="1.0"></div>
+                    <div class="field"><label>Шрифт</label><select id="screen-start-companion-font" class="screen-font-select global-start-control" data-default="'Montserrat', sans-serif"></select></div>
+                    <div class="field"><label>Размер</label><input type="number" id="screen-start-companion-size" class="global-start-control" min="0.7" max="2.5" step="0.1" value="1.0"></div>
                 </div>
                 <div class="color-grid">
-                    <div class="color-picker-group"><span>Цвет</span><input type="color" id="screen-start-companion-color" class="screen-control" value="#ffe600"></div>
-                    <div class="color-picker-group"><span>Неон</span><input type="color" id="screen-start-companion-neon" class="screen-control" value="#ffe600"></div>
+                    <div class="color-picker-group"><span>Цвет</span><input type="color" id="screen-start-companion-color" class="global-start-control" value="#ffe600"></div>
+                    <div class="color-picker-group"><span>Неон</span><input type="color" id="screen-start-companion-neon" class="global-start-control" value="#ffe600"></div>
                 </div>
                 <div class="screen-subtitle">Текстовая подложка</div>
-                <div class="color-picker-group"><span>Цвет подложки</span><input type="color" id="screen-start-panel-bg" class="screen-control" value="#0f0519"></div>
-                <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="screen-start-panel-opacity" class="screen-control" min="0" max="100" value="92"><span id="screen-start-panel-opacity-value">92%</span></div>
+                <div class="color-picker-group"><span>Цвет подложки</span><input type="color" id="screen-start-panel-bg" class="global-start-control" value="#0f0519"></div>
+                <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="screen-start-panel-opacity" class="global-start-control" min="0" max="100" value="92"><span id="screen-start-panel-opacity-value">92%</span></div>
                 <div class="screen-subtitle">Кнопка</div>
-                <div class="field"><label>Текст кнопки</label><input type="text" id="screen-start-button-text" class="screen-control" placeholder="Пусто = автоматический перевод"></div>
+                <div class="field"><label>Текст кнопки</label><input type="text" id="screen-start-button-text" class="global-start-control" placeholder="Пусто = автоматический перевод"></div>
                 <div class="color-grid">
-                    <div class="color-picker-group"><span>Фон кнопки</span><input type="color" id="screen-start-button-bg" class="screen-control" value="#050509"></div>
-                    <div class="color-picker-group"><span>Текст кнопки</span><input type="color" id="screen-start-button-color" class="screen-control" value="#39ff14"></div>
-                    <div class="color-picker-group"><span>Неон кнопки</span><input type="color" id="screen-start-button-neon" class="screen-control" value="#39ff14"></div>
+                    <div class="color-picker-group"><span>Фон кнопки</span><input type="color" id="screen-start-button-bg" class="global-start-control" value="#050509"></div>
+                    <div class="color-picker-group"><span>Текст кнопки</span><input type="color" id="screen-start-button-color" class="global-start-control" value="#39ff14"></div>
+                    <div class="color-picker-group"><span>Неон кнопки</span><input type="color" id="screen-start-button-neon" class="global-start-control" value="#39ff14"></div>
                 </div>
+                </div>
+            </section>
+
+            <div class="level-screen-scope" id="screens-level-context">🎮 ЭКРАНЫ ТЕКУЩЕГО УРОВНЯ · Уровень 1</div>
+
+            <section class="panel-section screen-section-card">
+                <h3 class="section-title">▣ Затемнение экранов уровня</h3>
+                <div class="color-picker-group"><span>Цвет затемнения</span><input type="color" id="screen-overlay-bg" class="screen-control" value="#000000"></div>
+                <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="screen-overlay-opacity" class="screen-control" min="0" max="100" value="82"><span id="screen-overlay-opacity-value">82%</span></div>
+                <p class="section-note">Это затемнение вопросов, финальных экранов и работы над ошибками текущего уровня. Стартовый экран теперь общий для всей игры и настраивается отдельно выше.</p>
             </section>
 
             <section class="panel-section screen-section-card" data-preview-target="game">
@@ -1777,7 +1831,7 @@
 
             <section class="panel-section">
                 <h3 class="section-title">↗ Экспорт игры</h3>
-                <p class="section-note">Скачайте автономный HTML или скопируйте готовый код для вставки в Genially → Вставка → Другое / внешний контент.</p>
+                <p class="section-note">Скачайте автономный HTML или скопируйте код для Genially. Если в проекте есть картинки, загруженные с компьютера, при экспорте в Genially редактор автоматически создаст их более лёгкие копии. Оригиналы в проекте не изменяются.</p>
                 <input type="hidden" id="export-game-link" value="">
                 <div class="export-action-stack" style="display:grid;gap:8px;">
                     <button class="btn-main" style="width:100%;" type="button" onclick="downloadStandaloneHtml()">⬇ Скачать игру HTML</button>
@@ -1804,7 +1858,7 @@
             </div>
         </div>
         <div class="preview-mode-tabs" aria-label="Экраны предпросмотра">
-            <button class="preview-mode-btn active" data-preview-mode="start" onclick="setPreviewScreen('start', this)">Старт</button>
+            <button class="preview-mode-btn active" data-preview-mode="start" onclick="setPreviewScreen('start', this)">Старт · общий</button>
             <button class="preview-mode-btn" data-preview-mode="game" onclick="setPreviewScreen('game', this)">Игра</button>
             <button class="preview-mode-btn" data-preview-mode="question" onclick="setPreviewScreen('question', this)">Вопрос</button>
             <button class="preview-mode-btn" data-preview-mode="win" onclick="setPreviewScreen('win', this)">Победа</button>
@@ -2916,7 +2970,10 @@ function getThemeStyleFieldIds() {
     return [...ids];
 }
 function applyThemeFieldsToEditor(fields, options={}) {
-    Object.entries(fields||{}).forEach(([id,value])=>setFieldValue(id,value));
+    Object.entries(fields||{}).forEach(([id,value])=>{
+        if(String(id).startsWith('screen-start-')) return;
+        setFieldValue(id,value);
+    });
     updateScreenRangeLabels();
     updatePreview();
     if(!options.silentToast && options.label) showEditorToast(`Применена автотема оформления: ${options.label}.`);
@@ -2930,6 +2987,7 @@ function applyAutoTheme(themeId, options = {}) {
 function captureThemeFieldsFromEditor(baseFields={}) {
     const out=Object.assign({},baseFields||{});
     getThemeStyleFieldIds().forEach(id=>{
+        if(String(id).startsWith('screen-start-')) return;
         const el=document.getElementById(id);
         if(!el) return;
         out[id]=el.type==='checkbox'?!!el.checked:el.value;
@@ -3155,14 +3213,18 @@ function buildLevelQuestionSequence(pool, targetCount, randomOrder=true, runInde
 
 function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjacent = true) {
     const questions = Math.max(0, parseInt(questionCount) || 0);
-    const specialItems = [];
+    const eventItems = [];
+
+    // Question balls and every enabled special ball are rebuilt from scratch
+    // every time a level starts. This means a replay receives a fresh order too.
+    for (let i = 0; i < questions; i++) eventItems.push("question");
     SPECIAL_COUNT_KEYS.forEach(key => {
         const n = Math.max(0, parseInt(counts?.[key]) || 0);
-        for (let i = 0; i < n; i++) specialItems.push(key);
+        for (let i = 0; i < n; i++) eventItems.push(key);
     });
-    shuffleArray(specialItems);
+    shuffleArray(eventItems);
 
-    const eventCount = questions + specialItems.length;
+    const eventCount = eventItems.length;
     let total = Math.max(parseInt(requestedTotal) || 0, eventCount + 6);
     if (avoidAdjacent) total = Math.max(total, eventCount * 2 + 5);
 
@@ -3173,35 +3235,33 @@ function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjac
     const canUse = idx => {
         if (idx < minIndex || idx > maxIndex || queue[idx] !== "normal") return false;
         if (!avoidAdjacent) return true;
-        return (idx - 1 < 0 || queue[idx - 1] === "normal") && (idx + 1 >= total || queue[idx + 1] === "normal");
+        return (idx - 1 < 0 || queue[idx - 1] === "normal") &&
+               (idx + 1 >= total || queue[idx + 1] === "normal");
     };
 
-    const findNearest = desired => {
-        for (let d = 0; d < total; d++) {
-            const a = desired - d, b = desired + d;
-            if (canUse(a)) return a;
-            if (b !== a && canUse(b)) return b;
-        }
-        return -1;
-    };
-
-    // Вопросы распределяем по уровню примерно равномерно.
-    for (let i = 0; i < questions; i++) {
-        const desired = Math.round(((i + 1) * (total - 1)) / (questions + 1));
-        const slot = findNearest(Math.max(minIndex, Math.min(maxIndex, desired)));
-        if (slot >= 0) queue[slot] = "question";
-    }
-
-    // Остальные особые шары заполняют свободные интервалы.
+    // All safe slots are shuffled on EACH call, so question/special positions
+    // are not fixed from one playthrough to the next.
     const candidates = [];
     for (let i = minIndex; i <= maxIndex; i++) candidates.push(i);
     shuffleArray(candidates);
-    specialItems.forEach(type => {
+
+    eventItems.forEach(type => {
         let slot = candidates.find(idx => canUse(idx));
-        if (slot == null) slot = queue.findIndex((v, idx) => idx >= minIndex && idx <= maxIndex && v === "normal");
-        if (slot >= 0) queue[slot] = type;
+        if (slot == null) {
+            // Fallback only when there are too many event balls for the requested
+            // spacing. Counts are preserved, while start/end safety remains.
+            const fallback = candidates.find(idx => queue[idx] === "normal");
+            slot = fallback == null ? -1 : fallback;
+        }
+        if (slot >= 0) {
+            queue[slot] = type;
+            const p = candidates.indexOf(slot);
+            if (p >= 0) candidates.splice(p, 1);
+        }
     });
 
+    // Normal ball colours are already chosen by rndCol() at spawn time, so
+    // their colour order is also fresh on every level run.
     return queue;
 }
 
@@ -3366,6 +3426,13 @@ let levels = [
 let activeLevelIndex = 0;
 let levelDesignLoading = false;
 
+// Start Screen is global: one screen for the whole game.
+let globalStartSettings = {
+    mode: 'auto',
+    customStart: null,
+    customOverlay: null
+};
+
 function getLevelDisplayTheme(level) {
     const idx=getLevelPresetIndex(level);
     const meta=LEVEL_PRESET_META[idx] || {};
@@ -3395,7 +3462,12 @@ function saveActiveLevelDesignFromEditor() {
     if(!level) return;
     ensureLevelDesignState(activeLevelIndex);
     level.themeFields=captureThemeFieldsFromEditor(level.themeFields||getAutoThemeFields(getLevelThemeId(level)));
-    level.screens=getScreensConfigFromEditor();
+
+    const previous=mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{});
+    const edited=getScreensConfigFromEditor();
+    edited.start=previous.start; // Start is global, never saved into the current level from these controls.
+    level.screens=edited;
+
     const shooter=document.getElementById('cfg-img-shooter')?.value;
     const finish=document.getElementById('cfg-img-mask')?.value;
     if(shooter) level.shooter=shooter;
@@ -3406,6 +3478,8 @@ function updateActiveLevelBanner() {
     const out=document.getElementById('active-level-banner-text');
     if(!out || !level) return;
     out.innerHTML=`<strong>Редактируется:</strong> Уровень ${activeLevelIndex+1} · ${getLevelDisplayTheme(level)}`;
+    const screenContext=document.getElementById('screens-level-context');
+    if(screenContext) screenContext.textContent=`🎮 ЭКРАНЫ ТЕКУЩЕГО УРОВНЯ · Уровень ${activeLevelIndex+1} · ${getLevelDisplayTheme(level)}`;
 }
 function refreshActiveLevelPreview() {
     const level=levels[activeLevelIndex]; if(!level) return;
@@ -3421,7 +3495,7 @@ function loadActiveLevelDesignToEditor() {
     if(!level) return;
     levelDesignLoading=true;
     try {
-        applyScreensToEditor(level.screens);
+        applyScreensToEditor(level.screens,{includeStart:false});
         applyThemeFieldsToEditor(level.themeFields,{silentToast:true});
         const shooter=getLevelPresetAsset(level,'shooter');
         const finish=getLevelPresetAsset(level,'finish');
@@ -3435,6 +3509,7 @@ function loadActiveLevelDesignToEditor() {
         levelDesignLoading=false;
     }
     updateActiveLevelBanner();
+    loadGlobalStartToEditor();
     updatePreview();
     updateScreensPreview();
     updatePreviewObjectLayer();
@@ -3548,6 +3623,135 @@ function mergeScreensConfig(raw={}, cfg={}) {
     };
 }
 
+
+function clonePlain(value){
+    return JSON.parse(JSON.stringify(value));
+}
+function getLevelOneStartBundle(){
+    const level=ensureLevelDesignState(0,makeDefaultScreens({}),{}) || levels[0] || {};
+    const levelScreens=mergeScreensConfig(
+        level.screens || makeThemedLevelScreens(
+            getLevelThemeId(level),
+            level.themeFields||getAutoThemeFields(getLevelThemeId(level)),
+            makeDefaultScreens({}),
+            {}
+        ),
+        {}
+    );
+    return {
+        start:clonePlain(levelScreens.start),
+        overlay:clonePlain(levelScreens.overlay),
+        bg:level.bg||'',
+        image:getLevelPresetAsset(level,'finish') || getLevelPresetAsset(level,'shooter') || ''
+    };
+}
+function normalizeGlobalStartSettings(raw=null,fallbackScreens=null){
+    const inherited=getLevelOneStartBundle();
+    const source=raw&&typeof raw==='object'?raw:{};
+    const fallback=fallbackScreens?mergeScreensConfig(fallbackScreens,{}):null;
+    return {
+        mode:source.mode==='custom'?'custom':'auto',
+        customStart:source.customStart
+            ? {...inherited.start,...source.customStart}
+            : {...inherited.start,...(fallback?fallback.start:{})},
+        customOverlay:source.customOverlay
+            ? {...inherited.overlay,...source.customOverlay}
+            : {...inherited.overlay,...(fallback?fallback.overlay:{})}
+    };
+}
+function getResolvedGlobalStart(){
+    const inherited=getLevelOneStartBundle();
+    if(globalStartSettings.mode!=='custom') return inherited;
+    return {
+        ...inherited,
+        start:{...inherited.start,...(globalStartSettings.customStart||{})},
+        overlay:{...inherited.overlay,...(globalStartSettings.customOverlay||{})}
+    };
+}
+function applyStartFieldsToEditor(startRaw){
+    const start={...makeDefaultScreens({}).start,...(startRaw||{})};
+    setFieldValue('screen-start-title',start.title);
+    setFieldValue('screen-start-title-font',start.titleFont);
+    setFieldValue('screen-start-title-size',start.titleSize);
+    setFieldValue('screen-start-title-color',start.titleColor);
+    setFieldValue('screen-start-title-neon',start.titleNeon);
+    setFieldValue('screen-start-description',start.description);
+    setFieldValue('screen-start-desc-font',start.descFont);
+    setFieldValue('screen-start-desc-size',start.descSize);
+    setFieldValue('screen-start-desc-color',start.descColor);
+    setFieldValue('screen-start-companion-text',start.companionText);
+    setFieldValue('screen-start-companion-font',start.companionFont);
+    setFieldValue('screen-start-companion-size',start.companionSize);
+    setFieldValue('screen-start-companion-color',start.companionColor);
+    setFieldValue('screen-start-companion-neon',start.companionNeon);
+    setFieldValue('screen-start-panel-bg',start.panelBg);
+    setOpacityField('screen-start-panel-opacity',start.panelOpacity);
+    setFieldValue('screen-start-button-text',start.buttonText);
+    setFieldValue('screen-start-button-bg',start.buttonBg);
+    setFieldValue('screen-start-button-color',start.buttonColor);
+    setFieldValue('screen-start-button-neon',start.buttonNeon);
+}
+function readGlobalStartFromEditor(){
+    const s=getScreensConfigFromEditor();
+    return {
+        start:clonePlain(s.start),
+        overlay:{
+            bgColor:textVal('global-start-overlay-bg','#000000'),
+            opacity:numVal('global-start-overlay-opacity',82)/100
+        }
+    };
+}
+function saveGlobalStartFromEditor(){
+    if(levelDesignLoading || globalStartSettings.mode!=='custom') return;
+    const data=readGlobalStartFromEditor();
+    globalStartSettings.customStart=data.start;
+    globalStartSettings.customOverlay=data.overlay;
+}
+function updateGlobalStartModeUI(){
+    const mode=globalStartSettings.mode==='custom'?'custom':'auto';
+    const select=document.getElementById('global-start-mode');
+    if(select) select.value=mode;
+    const wrap=document.getElementById('global-start-custom-controls');
+    const controls=wrap?.querySelectorAll('.global-start-control')||[];
+    controls.forEach(el=>{el.disabled=mode==='auto';});
+    wrap?.classList.toggle('auto-locked',mode==='auto');
+
+    const note=document.getElementById('global-start-auto-note');
+    const modeNote=document.getElementById('global-start-mode-note');
+    if(mode==='auto'){
+        if(note) note.innerHTML='<strong>Авто · Уровень 1.</strong> Заголовки, шрифты, цвета, подложка и затемнение автоматически берутся из оформления первого уровня.';
+        if(modeNote) modeNote.textContent='Поменяйте тему или оформление Уровня 1 — стартовый экран обновится вместе с ним.';
+    } else {
+        if(note) note.innerHTML='<strong>Отдельная настройка.</strong> Тексты, шрифты, цвета, подложка и затемнение старта не зависят от текущего уровня. Фон игры и декоративное изображение остаются от Уровня 1.';
+        if(modeNote) modeNote.textContent='Этот старт остаётся одним на всю игру, даже если уровни оформлены по-разному.';
+    }
+}
+function loadGlobalStartToEditor(){
+    if(!globalStartSettings.customStart || !globalStartSettings.customOverlay){
+        globalStartSettings=normalizeGlobalStartSettings(globalStartSettings);
+    }
+    const resolved=getResolvedGlobalStart();
+    applyStartFieldsToEditor(resolved.start);
+    setFieldValue('global-start-overlay-bg',resolved.overlay.bgColor);
+    setOpacityField('global-start-overlay-opacity',resolved.overlay.opacity);
+    updateGlobalStartModeUI();
+    updateScreenRangeLabels();
+}
+function handleGlobalStartModeChange(){
+    if(globalStartSettings.mode==='custom') saveGlobalStartFromEditor();
+    const next=document.getElementById('global-start-mode')?.value==='custom'?'custom':'auto';
+    if(next==='custom' && (!globalStartSettings.customStart || !globalStartSettings.customOverlay)){
+        const inherited=getLevelOneStartBundle();
+        globalStartSettings.customStart=clonePlain(inherited.start);
+        globalStartSettings.customOverlay=clonePlain(inherited.overlay);
+    }
+    globalStartSettings.mode=next;
+    loadGlobalStartToEditor();
+    updatePreview();
+    updateScreensPreview();
+    scheduleAutosave();
+}
+
 function initScreenFontSelects() {
     document.querySelectorAll('.screen-font-select').forEach(sel=>{
         if(sel.options.length) return;
@@ -3608,26 +3812,36 @@ function stylePreviewButton(el, cfg) {
     el.style.boxShadow=`0 0 14px ${cfg.buttonNeon}`; el.style.textShadow=`0 0 8px ${cfg.buttonNeon}`;
 }
 function updateScreenRangeLabels() {
-    const pairs=[['screen-overlay-opacity','screen-overlay-opacity-value'],['screen-start-panel-opacity','screen-start-panel-opacity-value'],['screen-question-opacity','screen-question-opacity-value'],['screen-win-panel-opacity','screen-win-panel-opacity-value'],['screen-lose-panel-opacity','screen-lose-panel-opacity-value'],['screen-timeout-panel-opacity','screen-timeout-panel-opacity-value'],['review-screen-opacity','review-screen-opacity-value'],['review-card-opacity','review-card-opacity-value']];
+    const pairs=[['screen-overlay-opacity','screen-overlay-opacity-value'],['global-start-overlay-opacity','global-start-overlay-opacity-value'],['screen-start-panel-opacity','screen-start-panel-opacity-value'],['screen-question-opacity','screen-question-opacity-value'],['screen-win-panel-opacity','screen-win-panel-opacity-value'],['screen-lose-panel-opacity','screen-lose-panel-opacity-value'],['screen-timeout-panel-opacity','screen-timeout-panel-opacity-value'],['review-screen-opacity','review-screen-opacity-value'],['review-card-opacity','review-card-opacity-value']];
     pairs.forEach(([a,b])=>{const input=document.getElementById(a), out=document.getElementById(b);if(input&&out)out.textContent=`${input.value}%`;});
 }
 function updateScreensPreview() {
     const s=getScreensConfigFromEditor(); const er=s.errorReview; const lang=textVal('cfg-lang','ru'); const t=I18N[lang]||I18N.ru;
+    const globalStart=getResolvedGlobalStart();
+    const start=globalStart.start;
     updateScreenRangeLabels();
     const selectedRaw=document.getElementById('preview-bg-sel')?.value;
     const selectedLevelIndex=selectedRaw===''?0:Math.max(0,Math.min(levels.length-1,parseInt(selectedRaw)||0));
     const levelNumber=selectedLevelIndex+1; const totalLevels=Math.max(1,levels.length);
-    const box=document.getElementById('p-box'); if(box){box.style.borderColor=s.question.frameColor;box.style.boxShadow=`0 0 22px ${hexToRgba(s.question.frameColor,.18)}, inset 0 0 35px rgba(0,0,0,.5)`;}
-    document.querySelectorAll('#p-screen-start,#p-overlay,#p-screen-end').forEach(el=>el.style.background=hexToRgba(s.overlay.bgColor,s.overlay.opacity));
+    const box=document.getElementById('p-box');
+    if(box){
+        box.style.borderColor=s.question.frameColor;
+        box.style.boxShadow=`0 0 22px ${hexToRgba(s.question.frameColor,.18)}, inset 0 0 35px rgba(0,0,0,.5)`;
+        const bg=previewScreenMode==='start' ? globalStart.bg : (levels[selectedLevelIndex]?.bg||'');
+        box.style.backgroundImage=bg?`url('${bg}')`:'none';
+    }
+    const startLayer=document.getElementById('p-screen-start');
+    if(startLayer) startLayer.style.background=hexToRgba(globalStart.overlay.bgColor,globalStart.overlay.opacity);
+    document.querySelectorAll('#p-overlay,#p-screen-end').forEach(el=>el.style.background=hexToRgba(s.overlay.bgColor,s.overlay.opacity));
     const reviewLayer=document.getElementById('p-screen-review'); if(reviewLayer) reviewLayer.style.background=hexToRgba(er.screenBg,er.screenOpacity);
 
-    const startCard=document.getElementById('p-start-card'); if(startCard){startCard.style.background=hexToRgba(s.start.panelBg,s.start.panelOpacity);startCard.style.borderColor=s.start.titleNeon;startCard.style.boxShadow=`0 0 24px ${hexToRgba(s.start.titleNeon,.35)}`;}
-    const startTitle=document.getElementById('p-start-title'); if(startTitle){startTitle.textContent=s.start.title||'MAZE TRAP';startTitle.style.fontFamily=s.start.titleFont;startTitle.style.fontSize=`${s.start.titleSize}em`;startTitle.style.color=s.start.titleColor;startTitle.style.textShadow=`0 0 12px ${s.start.titleNeon}`;}
-    const startGoal=document.getElementById('p-start-goal'); if(startGoal){startGoal.textContent=s.start.description||t.goal||'';startGoal.style.fontFamily=s.start.descFont;startGoal.style.fontSize=`${Math.max(.8,s.start.descSize)}em`;startGoal.style.color=s.start.descColor;startGoal.style.textShadow='none';}
-    const startOtherwise=document.getElementById('p-start-otherwise'); if(startOtherwise){startOtherwise.textContent=s.start.companionText||t.otherwise||'';startOtherwise.style.fontFamily=s.start.companionFont;startOtherwise.style.fontSize=`${s.start.companionSize}em`;startOtherwise.style.color=s.start.companionColor;startOtherwise.style.textShadow=`0 0 8px ${s.start.companionNeon}`;}
-    const startMask=document.getElementById('p-start-mask'); if(startMask)startMask.src=textVal('cfg-img-mask','');
+    const startCard=document.getElementById('p-start-card'); if(startCard){startCard.style.background=hexToRgba(start.panelBg,start.panelOpacity);startCard.style.borderColor=start.titleNeon;startCard.style.boxShadow=`0 0 24px ${hexToRgba(start.titleNeon,.35)}`;}
+    const startTitle=document.getElementById('p-start-title'); if(startTitle){startTitle.textContent=start.title||'MAZE TRAP';startTitle.style.fontFamily=start.titleFont;startTitle.style.fontSize=`${start.titleSize}em`;startTitle.style.color=start.titleColor;startTitle.style.textShadow=`0 0 12px ${start.titleNeon}`;}
+    const startGoal=document.getElementById('p-start-goal'); if(startGoal){startGoal.textContent=start.description||t.goal||'';startGoal.style.fontFamily=start.descFont;startGoal.style.fontSize=`${Math.max(.8,start.descSize)}em`;startGoal.style.color=start.descColor;startGoal.style.textShadow='none';}
+    const startOtherwise=document.getElementById('p-start-otherwise'); if(startOtherwise){startOtherwise.textContent=start.companionText||t.otherwise||'';startOtherwise.style.fontFamily=start.companionFont;startOtherwise.style.fontSize=`${start.companionSize}em`;startOtherwise.style.color=start.companionColor;startOtherwise.style.textShadow=`0 0 8px ${start.companionNeon}`;}
+    const startMask=document.getElementById('p-start-mask'); if(startMask)startMask.src=globalStart.image||'';
     renderPreviewRules();
-    const startBtn=document.getElementById('p-start-btn'); if(startBtn){startBtn.textContent=s.start.buttonText||t.start;stylePreviewButton(startBtn,s.start);}
+    const startBtn=document.getElementById('p-start-btn'); if(startBtn){startBtn.textContent=start.buttonText||t.start;stylePreviewButton(startBtn,start);}
 
     const qOverlay=document.getElementById('p-overlay'); if(qOverlay) qOverlay.style.background=hexToRgba(s.overlay.bgColor,s.overlay.opacity);
     const qCard=document.getElementById('p-card'); if(qCard){qCard.style.background=hexToRgba(s.question.windowBg,s.question.windowOpacity);qCard.style.borderColor=s.question.frameColor;qCard.style.boxShadow=`0 0 18px ${hexToRgba(s.question.frameColor,.3)}`;}
@@ -3685,9 +3899,33 @@ function renderPreviewRules() {
 
 function initScreenEditor() {
     initScreenFontSelects();
-    document.querySelectorAll('.screen-control').forEach(el=>{el.addEventListener('input',()=>{saveCurrentLevelThemeFieldsFromEditor();updatePreview();updateScreensPreview();});el.addEventListener('change',()=>{saveCurrentLevelThemeFieldsFromEditor();updatePreview();updateScreensPreview();});});
+
+    document.querySelectorAll('.screen-control').forEach(el=>{
+        const refresh=()=>{
+            saveCurrentLevelThemeFieldsFromEditor();
+            if(globalStartSettings.mode==='auto') loadGlobalStartToEditor();
+            updatePreview();
+            updateScreensPreview();
+        };
+        el.addEventListener('input',refresh);
+        el.addEventListener('change',refresh);
+    });
+
+    document.querySelectorAll('.global-start-control').forEach(el=>{
+        const refresh=()=>{
+            saveGlobalStartFromEditor();
+            updatePreview();
+            updateScreensPreview();
+            scheduleAutosave();
+        };
+        el.addEventListener('input',refresh);
+        el.addEventListener('change',refresh);
+    });
+
     document.querySelectorAll('[data-preview-target]').forEach(sec=>sec.addEventListener('focusin',()=>setPreviewScreen(sec.dataset.previewTarget)));
-    updateScreenRangeLabels(); setPreviewScreen('start');
+    loadGlobalStartToEditor();
+    updateScreenRangeLabels();
+    setPreviewScreen('start');
 }
 
 // Звуковая система
@@ -3790,10 +4028,29 @@ function getCorrectAnswerSummary(q) {
     }
 }
 
+function resolveRuntimeGlobalStart(cfg){
+    const first=cfg?.levels?.[0]||{};
+    const firstScreens=mergeScreensConfig(first.screens || cfg.screens || {}, cfg||{});
+    const raw=cfg?.globalStart||{};
+    const mode=raw.mode==='custom'?'custom':'auto';
+    return {
+        mode,
+        start:mode==='custom'
+            ? {...firstScreens.start,...(raw.customStart||{})}
+            : {...firstScreens.start},
+        overlay:mode==='custom'
+            ? {...firstScreens.overlay,...(raw.customOverlay||{})}
+            : {...firstScreens.overlay},
+        bg:first.bg||'',
+        image:first.finish || first.shooter || cfg.imgMask || cfg.imgShooter || ''
+    };
+}
+
 class GameCore {
     constructor() {
         this.cfg = window.GAME_CFG;
         this.baseScreens = mergeScreensConfig(this.cfg.screens || {}, this.cfg);
+        this.globalStart = resolveRuntimeGlobalStart(this.cfg);
         this.screens = this.baseScreens; this.levelVisual={themeId:'classic',uiColor:this.cfg.uiColor||'#39ff14',progColor:this.cfg.progColor||'#00ff66'};
         this.recordedMistakeAttempts = new Set(); this.activeQuestionAttemptKey = ''; this.finalMode = 'start'; this.levelRunCounts = {}; this.levelQuestionTarget = 0;
         // Zuma-like defeat sequence: short cause reaction -> chain escapes into goal -> 1.5s empty field -> final screen.
@@ -3857,7 +4114,7 @@ class GameCore {
         r.style.setProperty('--q-color', qv.questionColor); r.style.setProperty('--q-size', `${qv.questionSize}px`); r.style.setProperty('--q-font', qv.questionFont);
         r.style.setProperty('--a-color', qv.answerColor); r.style.setProperty('--a-size', `${qv.answerSize}px`); r.style.setProperty('--a-font', qv.answerFont); r.style.setProperty('--a-bg', hexToRgba(qv.answerBg,.60)); r.style.setProperty('--answer-neon', qv.answerNeon);
         r.style.setProperty('--neon-glow', this.cfg.neonEnabled ? `0 0 10px ${this.cfg.uiColor || qv.frameColor}` : 'none');
-        const startImage=document.getElementById('g-start-image'); if(startImage) startImage.src=this.cfg.imgMask || this.cfg.imgShooter || '';
+        const startImage=document.getElementById('g-start-image'); if(startImage) startImage.src=this.globalStart?.image || this.cfg.imgMask || this.cfg.imgShooter || '';
         const endImage=document.getElementById('g-end-image'); if(endImage) endImage.src=this.cfg.imgShooter || '';
         document.querySelectorAll('.dyn-heart').forEach(el => el.src = this.cfg.imgHeart);
         document.querySelectorAll('.dyn-clock').forEach(el => el.src = this.cfg.imgClock);
@@ -3879,15 +4136,63 @@ class GameCore {
         el.style.background=cfg.buttonBg || '#050509'; el.style.color=cfg.buttonColor || '#fff'; el.style.borderColor=cfg.buttonNeon || cfg.buttonColor || '#fff';
         const glow=this.cfg.neonEnabled !== false; el.style.boxShadow=glow?`0 0 14px ${hexToRgba(cfg.buttonNeon || cfg.buttonColor || '#fff',.4)}`:'none'; el.style.textShadow=glow?`0 0 8px ${cfg.buttonNeon || cfg.buttonColor || '#fff'}`:'none';
     }
+    applyGlobalStartScreen() {
+        const gs=this.globalStart || resolveRuntimeGlobalStart(this.cfg);
+        const start=gs.start || makeDefaultScreens(this.cfg).start;
+        const layer=document.getElementById('g-start-screen');
+        if(layer) layer.style.background=hexToRgba(gs.overlay?.bgColor||'#000000',gs.overlay?.opacity??.82);
+
+        const startImage=document.getElementById('g-start-image');
+        if(startImage) startImage.src=gs.image||'';
+
+        const startCard=document.getElementById('g-start-card');
+        if(startCard){
+            startCard.style.background=hexToRgba(start.panelBg,start.panelOpacity);
+            startCard.style.borderColor=start.titleNeon;
+            startCard.style.boxShadow=this.cfg.neonEnabled!==false?`0 0 28px ${hexToRgba(start.titleNeon,.28)}`:'none';
+        }
+        const startTitle=document.getElementById('g-start-title');
+        if(startTitle){
+            startTitle.textContent=start.title||'MAZE TRAP';
+            startTitle.style.fontFamily=start.titleFont;
+            startTitle.style.fontSize=`${start.titleSize}em`;
+            startTitle.style.color=start.titleColor;
+            startTitle.style.textShadow=this.cfg.neonEnabled!==false?`0 0 12px ${start.titleNeon},0 0 22px ${start.titleNeon}`:'none';
+        }
+        const goal=document.getElementById('t-goal');
+        if(goal){
+            goal.textContent=start.description || this.t.goal;
+            goal.style.whiteSpace='pre-line';
+            goal.style.fontFamily=start.descFont;
+            goal.style.fontSize=`${start.descSize}em`;
+            goal.style.color=start.descColor;
+            goal.style.textShadow='none';
+        }
+        const otherwise=document.getElementById('t-otherwise');
+        if(otherwise){
+            otherwise.textContent=start.companionText || this.t.otherwise;
+            otherwise.style.fontFamily=start.companionFont;
+            otherwise.style.fontSize=`${start.companionSize}em`;
+            otherwise.style.color=start.companionColor;
+            otherwise.style.textShadow=this.cfg.neonEnabled!==false?`0 0 8px ${start.companionNeon}`:'none';
+        }
+        const startBtn=document.getElementById('g-btn-start');
+        if(startBtn){
+            startBtn.innerText=start.buttonText||this.t.start;
+            this.applyButtonStyle(startBtn,start);
+        }
+    }
+    showGlobalStartScreen() {
+        const game=document.getElementById('g-game-container');
+        if(game && this.globalStart?.bg) game.style.backgroundImage=`url('${this.globalStart.bg}')`;
+        this.applyGlobalStartScreen();
+        document.getElementById('g-start-screen')?.classList.remove('g-hidden');
+    }
     applyScreenConfig() {
-        const s=this.screens, q=s.question, start=s.start, er=s.errorReview;
+        const s=this.screens, q=s.question, er=s.errorReview;
         document.querySelectorAll('.g-ui-layer').forEach(el=>el.style.background=hexToRgba(s.overlay.bgColor,s.overlay.opacity));
+        this.applyGlobalStartScreen();
         const game=document.getElementById('g-game-container'); if(game) game.style.boxShadow=`inset 0 0 0 2px ${q.frameColor}, inset 0 0 25px ${hexToRgba(q.frameColor,.22)}`;
-        const startCard=document.getElementById('g-start-card'); if(startCard){startCard.style.background=hexToRgba(start.panelBg,start.panelOpacity);startCard.style.borderColor=start.titleNeon;startCard.style.boxShadow=this.cfg.neonEnabled!==false?`0 0 28px ${hexToRgba(start.titleNeon,.28)}`:'none';}
-        const startTitle=document.getElementById('g-start-title'); if(startTitle){startTitle.textContent=start.title||'MAZE TRAP';startTitle.style.fontFamily=start.titleFont;startTitle.style.fontSize=`${start.titleSize}em`;startTitle.style.color=start.titleColor;startTitle.style.textShadow=this.cfg.neonEnabled!==false?`0 0 12px ${start.titleNeon},0 0 22px ${start.titleNeon}`:'none';}
-        const goal=document.getElementById('t-goal'); if(goal){goal.textContent=start.description || this.t.goal;goal.style.whiteSpace='pre-line';goal.style.fontFamily=start.descFont;goal.style.fontSize=`${start.descSize}em`;goal.style.color=start.descColor;goal.style.textShadow='none';}
-        const otherwise=document.getElementById('t-otherwise'); if(otherwise){otherwise.textContent=start.companionText || this.t.otherwise;otherwise.style.fontFamily=start.companionFont;otherwise.style.fontSize=`${start.companionSize}em`;otherwise.style.color=start.companionColor;otherwise.style.textShadow=this.cfg.neonEnabled!==false?`0 0 8px ${start.companionNeon}`:'none';}
-        const startBtn=document.getElementById('g-btn-start'); if(startBtn){startBtn.innerText=start.buttonText||this.t.start;this.applyButtonStyle(startBtn,start);}
         const qCard=document.getElementById('g-question-card'); if(qCard){qCard.style.background=hexToRgba(q.windowBg,q.windowOpacity);qCard.style.borderColor=q.frameColor;qCard.style.boxShadow=this.cfg.neonEnabled!==false?`0 0 28px ${hexToRgba(q.frameColor,.26)}`:'none';}
         document.documentElement.style.setProperty('--review-card-neon',er.cardNeon); document.documentElement.style.setProperty('--review-card-bg',hexToRgba(er.cardBg,er.cardOpacity));
         document.documentElement.style.setProperty('--review-body-size',`${er.bodySize}rem`);
@@ -3909,7 +4214,7 @@ class GameCore {
             if (this.isWin && this.currentLevelIndex < this.cfg.levels.length - 1) { 
                 this.start(this.currentLevelIndex + 1); 
             } else { 
-                document.getElementById('g-start-screen').classList.remove('g-hidden'); 
+                this.showGlobalStartScreen();
             } 
         };
         document.getElementById('g-btn-review').onclick = () => this.openErrorReview();
@@ -3931,7 +4236,6 @@ class GameCore {
         this.currentLevelAssets={shooter:shooterUrl,finish:finishUrl};
         if(shooterUrl){this.IMG_URLS.shooter=shooterUrl;this.ASSETS.shooter.src=shooterUrl;}
         if(finishUrl){this.IMG_URLS.center_mask=finishUrl;this.ASSETS.center_mask.src=finishUrl;}
-        const startImage=document.getElementById('g-start-image');if(startImage)startImage.src=finishUrl||shooterUrl;
         const endImage=document.getElementById('g-end-image');if(endImage)endImage.src=shooterUrl;
         this.applyScreenConfig();
     }
@@ -4857,6 +5161,7 @@ function openMazeEditorMode() {
     updateQLevelSelect();
     levels.forEach((_,i)=>ensureLevelDesignState(i,makeDefaultScreens({}),{}));
     activeLevelIndex=Math.max(0,Math.min(activeLevelIndex,levels.length-1));
+    globalStartSettings=normalizeGlobalStartSettings(globalStartSettings);
     renderLevels();
     renderQuestions();
     updatePreviewBgSelect(activeLevelIndex);
@@ -6112,7 +6417,7 @@ function updateProjectMediaStatus(){
     const out=document.getElementById('project-media-status');if(!out)return;
     const sources=collectProjectMediaSources();const embedded=sources.filter(v=>String(v).startsWith('data:image/'));const urls=sources.filter(v=>/^https?:/i.test(String(v)));
     const bytes=embedded.reduce((sum,v)=>sum+approxDataUrlBytes(v),0);
-    out.innerHTML=`<strong>Медиа проекта:</strong> встроенных файлов ${embedded.length}${embedded.length?` · ~${formatBytesShort(bytes)}`:''}; URL ${urls.length}.<br>${embedded.length?'Для Genially лучше заменить встроенные картинки на URL: gzip хорошо сжимает текст, но почти не уменьшает уже сжатые PNG/JPEG/WebP.':'Отлично: изображения подключены по URL и почти не увеличивают код игры.'}`;
+    out.innerHTML=`<strong>Медиа проекта:</strong> встроенных файлов ${embedded.length}${embedded.length?` · ~${formatBytesShort(bytes)}`:''}; URL ${urls.length}.<br>${embedded.length?'Файлы можно использовать: для Genially редактор сделает облегчённые копии автоматически. Если картинок станет очень много, самые крупные всё же лучше заменить на URL.':'Отлично: изображения подключены по URL и почти не увеличивают код игры.'}`;
     out.style.color=bytes>5*1024*1024?'#ff6b6b':embedded.length?'#ffb347':'#65ff9a';
 }
 
@@ -6287,14 +6592,11 @@ function setFieldValue(id,value) {
     else el.value=String(value);
 }
 function setOpacityField(id,value) { if(value!==undefined && value!==null) setFieldValue(id,Math.round(Number(value)*100)); }
-function applyScreensToEditor(screensRaw) {
+function applyScreensToEditor(screensRaw,{includeStart=true}={}) {
     const s=mergeScreensConfig(screensRaw||{},{});
     setFieldValue('screen-overlay-bg',s.overlay.bgColor); setOpacityField('screen-overlay-opacity',s.overlay.opacity);
     const start=s.start;
-    setFieldValue('screen-start-title',start.title); setFieldValue('screen-start-title-font',start.titleFont); setFieldValue('screen-start-title-size',start.titleSize); setFieldValue('screen-start-title-color',start.titleColor); setFieldValue('screen-start-title-neon',start.titleNeon);
-    setFieldValue('screen-start-description',start.description); setFieldValue('screen-start-desc-font',start.descFont); setFieldValue('screen-start-desc-size',start.descSize); setFieldValue('screen-start-desc-color',start.descColor);
-    setFieldValue('screen-start-companion-text',start.companionText); setFieldValue('screen-start-companion-font',start.companionFont); setFieldValue('screen-start-companion-size',start.companionSize); setFieldValue('screen-start-companion-color',start.companionColor); setFieldValue('screen-start-companion-neon',start.companionNeon);
-    setFieldValue('screen-start-panel-bg',start.panelBg); setOpacityField('screen-start-panel-opacity',start.panelOpacity); setFieldValue('screen-start-button-text',start.buttonText); setFieldValue('screen-start-button-bg',start.buttonBg); setFieldValue('screen-start-button-color',start.buttonColor); setFieldValue('screen-start-button-neon',start.buttonNeon);
+    if(includeStart) applyStartFieldsToEditor(start);
     const q=s.question;
     setFieldValue('screen-game-frame',q.frameColor); setFieldValue('screen-question-bg',q.windowBg); setOpacityField('screen-question-opacity',q.windowOpacity); setFieldValue('screen-answer-neon',q.answerNeon);
     for(const [prefix,cfg] of [['win',s.win],['lose',s.lose],['timeout',s.timeout]]){
@@ -6332,6 +6634,7 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
         });
         if(!levels.length){const tf=getAutoThemeFields('classic');levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,themeId:'classic',themeFields:tf,screens:makeThemedLevelScreens('classic',tf,cfg.screens||makeDefaultScreens(cfg),cfg),shooter:LEVEL_PRESET_META[0].shooter,finish:LEVEL_PRESET_META[0].finish,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout()}];}
         levelIdCounter=Math.max(levels.length,...levels.map(l=>parseInt(String(l.id||'').replace(/\D/g,''))||0));
+        globalStartSettings=normalizeGlobalStartSettings(cfg.globalStart||null,cfg.screens||null);
         questionsDB=safeClone(cfg.questions||[]); normalizeQuestionDB();
         activeLevelIndex=Math.max(0,Math.min(parseInt(cfg.activeLevelIndex)||0,levels.length-1));
         updateQLevelSelect(); renderLevels(); renderQuestions(); updatePreviewBgSelect(activeLevelIndex); initAssetPreviews(); updateDangerDistanceLabel(); updateScreenRangeLabels(); loadActiveLevelDesignToEditor(); updatePreview(); updateScreensPreview();
@@ -6380,6 +6683,7 @@ function buildCurrentGameConfig(validate=true) {
             if(!Array.isArray(levels[i].path) || levels[i].path.length < 2){ showEditorToast(`Уровень ${i+1}: сначала создайте траекторию.`,'error'); return null; }
         }
     }
+    saveGlobalStartFromEditor();
     const cleanLevels = levels.map((l,i) => {
         const level=ensureLevelDesignState(i);
         return { id:level.id, bg:level.bg, presetIndex:getLevelPresetIndex(level), themeId:getLevelThemeId(level), themeFields:Object.assign({},getAutoThemeFields(getLevelThemeId(level)),level.themeFields||{}), screens:mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{}), shooter:getLevelPresetAsset(level,'shooter'), finish:getLevelPresetAsset(level,'finish'), path:normalizePathData(level.path), qCount:level.qCount, ballSetup:normalizeBallSetup(level.ballSetup), objectLayout:normalizeObjectLayout(level.objectLayout) };
@@ -6397,6 +6701,11 @@ function buildCurrentGameConfig(validate=true) {
         randomQuestions: document.getElementById('cfg-random-questions').checked,
         errorReview: screens.errorReview.enabled,
         screens,
+        globalStart:{
+            mode:globalStartSettings.mode==='custom'?'custom':'auto',
+            customStart:clonePlain(globalStartSettings.customStart||getLevelOneStartBundle().start),
+            customOverlay:clonePlain(globalStartSettings.customOverlay||getLevelOneStartBundle().overlay)
+        },
         mathEnabled: document.getElementById('cfg-math-enabled')?.checked || false,
         uiColor: document.getElementById('screen-game-frame')?.value || '#39ff14',
         progColor: document.getElementById('cfg-prog-color').value,
@@ -6489,7 +6798,36 @@ function getCurrentPublishedBaseUrl() {
         return '';
     }
 }
-function makeHostedRuntimeConfig(config){
+function isEmbeddedImageValue(value){
+    return typeof value==='string' && /^data:image\//i.test(value);
+}
+async function compressEmbeddedDataImage(dataUrl,maxBytes,maxDimension){
+    if(!isEmbeddedImageValue(dataUrl)) return dataUrl;
+    try{
+        const blob=await (await fetch(dataUrl)).blob();
+        if(blob.size<=maxBytes) return dataUrl;
+        const file=new File([blob],'embedded-image',{type:blob.type||'image/webp'});
+        return await compressImageToLimit(file,maxBytes,maxDimension);
+    }catch(e){
+        console.warn('Hosted image optimization skipped:',e);
+        return dataUrl;
+    }
+}
+async function optimizeHostedImageValue(value,profile,cache,stats){
+    if(!isEmbeddedImageValue(value)) return value;
+    const key=`${profile.maxBytes}|${profile.maxDimension}|${value}`;
+    if(cache.has(key)) return cache.get(key);
+    const before=approxDataUrlBytes(value);
+    const optimized=await compressEmbeddedDataImage(value,profile.maxBytes,profile.maxDimension);
+    const after=approxDataUrlBytes(optimized);
+    cache.set(key,optimized);
+    stats.files++;
+    stats.before+=before;
+    stats.after+=after;
+    if(after<before) stats.optimized++;
+    return optimized;
+}
+async function makeHostedRuntimeConfig(config,aggressive=false){
     const copy=safeClone(config);
     copy.questions=(copy.questions||[]).map(q=>{
         const item={...q};
@@ -6497,7 +6835,53 @@ function makeHostedRuntimeConfig(config){
         delete item.level;
         return item;
     });
-    return copy;
+
+    const profiles=aggressive ? {
+        question:{maxBytes:45*1024,maxDimension:720},
+        background:{maxBytes:95*1024,maxDimension:1100},
+        object:{maxBytes:55*1024,maxDimension:650},
+        icon:{maxBytes:18*1024,maxDimension:320}
+    } : {
+        question:{maxBytes:90*1024,maxDimension:960},
+        background:{maxBytes:180*1024,maxDimension:1280},
+        object:{maxBytes:95*1024,maxDimension:800},
+        icon:{maxBytes:32*1024,maxDimension:384}
+    };
+
+    const cache=new Map();
+    const stats={files:0,optimized:0,before:0,after:0,aggressive};
+
+    // Main objects / HUD
+    copy.imgShooter=await optimizeHostedImageValue(copy.imgShooter,profiles.object,cache,stats);
+    copy.imgMask=await optimizeHostedImageValue(copy.imgMask,profiles.object,cache,stats);
+    copy.imgHeart=await optimizeHostedImageValue(copy.imgHeart,profiles.icon,cache,stats);
+    copy.imgClock=await optimizeHostedImageValue(copy.imgClock,profiles.icon,cache,stats);
+    copy.imgScore=await optimizeHostedImageValue(copy.imgScore,profiles.icon,cache,stats);
+
+    // Normal + special balls
+    for(const key of Object.keys(copy.ballImages||{})){
+        copy.ballImages[key]=await optimizeHostedImageValue(copy.ballImages[key],profiles.icon,cache,stats);
+    }
+    for(const key of Object.keys(copy.specialBallImages||{})){
+        copy.specialBallImages[key]=await optimizeHostedImageValue(copy.specialBallImages[key],profiles.icon,cache,stats);
+    }
+
+    // Per-level media
+    for(const level of (copy.levels||[])){
+        level.bg=await optimizeHostedImageValue(level.bg,profiles.background,cache,stats);
+        level.shooter=await optimizeHostedImageValue(level.shooter,profiles.object,cache,stats);
+        level.finish=await optimizeHostedImageValue(level.finish,profiles.object,cache,stats);
+
+        // Stage 41 no longer needs a separate Start inside each level at runtime.
+        if(level.screens?.start) delete level.screens.start;
+    }
+
+    // Question illustrations
+    for(const q of (copy.questions||[])){
+        q.img=await optimizeHostedImageValue(q.img,profiles.question,cache,stats);
+    }
+
+    return {config:copy,stats};
 }
 async function generateHostedGameLink() {
     const config=buildCurrentGameConfig(true); if(!config) return '';
@@ -6508,25 +6892,58 @@ async function generateHostedGameLink() {
         if(info){ info.textContent='Откройте опубликованную HTTPS-версию редактора и повторите экспорт.'; info.style.color='#ff6b6b'; }
         return '';
     }
-    const runtimeConfig=makeHostedRuntimeConfig(config);
-    const payload=await encodeConfigForPlay(runtimeConfig);
-    const link=`${base}#play=${payload}`;
-    const field=document.getElementById('export-game-link'); if(field) field.value=link;
+
     const info=document.getElementById('export-link-info');
-    const hasEmbeddedImages=/data:image\//i.test(JSON.stringify(runtimeConfig));
-    if(link.length>60000){
+    if(info){
+        info.textContent='Подготавливаю лёгкую версию картинок для Genially…';
+        info.style.color='#ffd34e';
+    }
+
+    let prepared=await makeHostedRuntimeConfig(config,false);
+    let runtimeConfig=prepared.config;
+    let stats=prepared.stats;
+    let payload=await encodeConfigForPlay(runtimeConfig);
+    let link=`${base}#play=${payload}`;
+
+    // The old 60,000-character stop was too strict: a single embedded image
+    // could trip it. If the link is genuinely heavy, do a second, stronger
+    // export-only pass before deciding it is too large.
+    const SOFT_WARNING=350000;
+    const HARD_LIMIT=1200000;
+
+    if(link.length>HARD_LIMIT && stats.files>0){
+        if(info) info.textContent='Проект тяжёлый — дополнительно оптимизирую встроенные картинки…';
+        prepared=await makeHostedRuntimeConfig(config,true);
+        runtimeConfig=prepared.config;
+        stats=prepared.stats;
+        payload=await encodeConfigForPlay(runtimeConfig);
+        link=`${base}#play=${payload}`;
+    }
+
+    const field=document.getElementById('export-game-link');
+    if(field) field.value=link;
+
+    if(link.length>HARD_LIMIT){
         if(info){
-            info.textContent=hasEmbeddedImages
-                ? 'Проект слишком большой для надёжной вставки в Genially. Замените изображения, загруженные с компьютера, на URL или используйте «Скачать игру HTML».'
-                : 'Проект получился слишком большим для надёжной ссылки Genially. Используйте «Скачать игру HTML».';
+            info.textContent=`Ссылка получилась ${link.length.toLocaleString('ru-RU')} символов. Здесь уже слишком много встроенных файлов для надёжной передачи через Genially. Замените несколько самых больших картинок на URL.`;
             info.style.color='#ff6b6b';
         }
-        showEditorToast('Игра слишком большая для ссылки Genially.','error');
+        showEditorToast('Для Genially слишком много встроенных изображений. Несколько больших картинок нужно заменить на URL.','error');
         return '';
     }
+
+    const saved=Math.max(0,stats.before-stats.after);
+    const optimizeText=stats.files
+        ? ` · файловых картинок: ${stats.files}, для Genially уменьшено примерно на ${formatBytesShort(saved)}`
+        : ' · все изображения подключены по URL';
+
     if(info){
-        info.textContent=`Код для Genially готов · компактная игровая ссылка ${link.length.toLocaleString('ru-RU')} символов.`;
-        info.style.color=hasEmbeddedImages?'#ffb347':'#65ff9a';
+        info.textContent=`Код для Genially готов · ссылка ${link.length.toLocaleString('ru-RU')} символов${optimizeText}. Оригиналы проекта не изменены.`;
+        info.style.color=link.length>SOFT_WARNING?'#ffb347':'#65ff9a';
+    }
+
+    if(link.length>SOFT_WARNING){
+        showEditorToast('Код готов. Ссылка крупная, но копирование разрешено; для максимальной надёжности большие изображения лучше хранить по URL.');
     }
     return link;
 }
@@ -6537,7 +6954,10 @@ async function copyForGenially(){
     const iframe=`<iframe src="${escapeHtmlAttr(link)}" width="100%" height="100%" frameborder="0" allowfullscreen style="width:100%;height:100%;border:0;"></iframe>`;
     await copyTextToClipboard(iframe,'Код для Genially скопирован.');
     const info=document.getElementById('export-link-info');
-    if(info) info.textContent='Код скопирован. В Genially откройте «Вставка → Другое / внешний контент» и вставьте его туда.';
+    if(info){
+        const previous=info.textContent;
+        info.textContent=`Код скопирован. В Genially: «Вставка → Другое / внешний контент». ${previous}`;
+    }
 }
 async function generateAndCopyHostedGameLink(){
     // Совместимость со старыми кнопками/проектами.
