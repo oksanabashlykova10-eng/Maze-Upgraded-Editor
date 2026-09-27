@@ -4342,7 +4342,26 @@ class GameCore {
     }
     
     getObjectBaseSize() { return objectBaseSizeForViewport(this.w || 800, this.h || 450); }
-    drawImg(key, x, y, size) { if(this.ASSETS[key] && this.ASSETS[key].complete) { this.ctx.drawImage(this.ASSETS[key], x - size/2, y - size/2, size, size); } }
+    drawImg(key, x, y, size) {
+        if(this.ASSETS[key] && this.ASSETS[key].complete) {
+            this.ctx.drawImage(this.ASSETS[key], x - size/2, y - size/2, size, size);
+        }
+    }
+    getContainedAssetSize(key, boxSize) {
+        const img=this.ASSETS[key];
+        if(!img || !img.complete) return {w:boxSize,h:boxSize};
+        const iw=img.naturalWidth || img.width || boxSize;
+        const ih=img.naturalHeight || img.height || boxSize;
+        if(!iw || !ih) return {w:boxSize,h:boxSize};
+        const ratio=Math.min(boxSize/iw, boxSize/ih);
+        return {w:iw*ratio,h:ih*ratio};
+    }
+    drawAssetContain(key, x, y, boxSize) {
+        const img=this.ASSETS[key];
+        if(!img || !img.complete) return;
+        const {w,h}=this.getContainedAssetSize(key,boxSize);
+        this.ctx.drawImage(img, x-w/2, y-h/2, w, h);
+    }
     clearEndFireworks(){
         if(!this.fxCtx || !this.fxCanvas) return;
         this.fxCtx.clearRect(0,0,this.fxCanvas.width,this.fxCanvas.height);
@@ -4416,11 +4435,10 @@ class GameCore {
             this.ctx.save();
             this.ctx.shadowBlur = finishRender.shadowBlur;
             this.ctx.shadowColor = finishRender.shadowColor;
-            this.ctx.drawImage(
-                this.ASSETS['center_mask'],
-                finishRender.x - finishRender.size/2,
-                finishRender.y - finishRender.size/2,
-                finishRender.size,
+            this.drawAssetContain(
+                'center_mask',
+                finishRender.x,
+                finishRender.y,
                 finishRender.size
             );
             this.ctx.restore();
@@ -4432,7 +4450,16 @@ class GameCore {
         const shooterScale=this.objectLayout?.shooter?.scale||1;
         const shooterBaseSize=this.getObjectBaseSize();
         const shooterRatio=shooterBaseSize/90;
-        this.ctx.save(); this.ctx.translate(this.player.x, this.player.y); this.drawImg("shooter", 0, 0, shooterBaseSize*shooterScale); if(this.bullets.length===0 && this.state==='playing'){ this.drawImg("c_" + this.nextCol, 0, -15*shooterScale*shooterRatio, 30*Math.min(1.45,shooterScale)); } this.ctx.restore();
+        this.ctx.save();
+        this.ctx.translate(this.player.x, this.player.y);
+        this.drawAssetContain("shooter", 0, 0, shooterBaseSize*shooterScale);
+        if(this.bullets.length===0 && this.state==='playing'){
+            const shooterBox=shooterBaseSize*shooterScale;
+            const shooterDims=this.getContainedAssetSize("shooter",shooterBox);
+            const ballY=-Math.max(10,Math.min(shooterDims.h*0.28,22*shooterScale*shooterRatio));
+            this.drawImg("c_" + this.nextCol, 0, ballY, 30*Math.min(1.45,shooterScale));
+        }
+        this.ctx.restore();
 
         this.drawEndFireworks();
     }
