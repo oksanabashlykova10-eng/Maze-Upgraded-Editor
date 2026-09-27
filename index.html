@@ -4040,6 +4040,21 @@ function resolveRuntimeGlobalStart(cfg){
     const defaults=makeDefaultScreens(safeCfg);
     const raw=safeCfg?.globalStart||{};
     const mode=raw.mode==='custom'?'custom':'auto';
+
+    // Stage 44+: the editor exports the already-resolved Start Screen.
+    // This guarantees that Genially/hosted HTML looks exactly like the
+    // "СТАРТ · ОБЩИЙ" preview, even if Level 2/3 was active when exporting.
+    if(raw.resolvedStart && typeof raw.resolvedStart==='object'){
+        return {
+            mode,
+            start:{...defaults.start,...raw.resolvedStart},
+            overlay:{...defaults.overlay,...(raw.resolvedOverlay||{})},
+            bg:raw.resolvedBg || first.bg || '',
+            image:raw.resolvedImage || first.finish || first.shooter || safeCfg.imgMask || safeCfg.imgShooter || ''
+        };
+    }
+
+    // Compatibility with Stage 41–43 and older JSON/configs.
     const baseStart={...defaults.start,...(firstScreens.start||{})};
     const baseOverlay={...defaults.overlay,...(firstScreens.overlay||{})};
     return {
@@ -6693,6 +6708,13 @@ function buildCurrentGameConfig(validate=true) {
         }
     }
     saveGlobalStartFromEditor();
+
+    // Freeze the exact Start Screen currently resolved in the editor.
+    // In Auto mode this is the visual style of Level 1. We serialize the
+    // resolved result itself instead of asking the hosted game to reconstruct
+    // it later from whatever level/theme happens to be active during export.
+    const resolvedGlobalStart = getResolvedGlobalStart();
+
     const cleanLevels = levels.map((l,i) => {
         const level=ensureLevelDesignState(i);
         return { id:level.id, bg:level.bg, presetIndex:getLevelPresetIndex(level), themeId:getLevelThemeId(level), themeFields:Object.assign({},getAutoThemeFields(getLevelThemeId(level)),level.themeFields||{}), screens:mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{}), shooter:getLevelPresetAsset(level,'shooter'), finish:getLevelPresetAsset(level,'finish'), path:normalizePathData(level.path), qCount:level.qCount, ballSetup:normalizeBallSetup(level.ballSetup), objectLayout:normalizeObjectLayout(level.objectLayout) };
@@ -6713,7 +6735,15 @@ function buildCurrentGameConfig(validate=true) {
         globalStart:{
             mode:globalStartSettings.mode==='custom'?'custom':'auto',
             customStart:clonePlain(globalStartSettings.customStart||getLevelOneStartBundle().start),
-            customOverlay:clonePlain(globalStartSettings.customOverlay||getLevelOneStartBundle().overlay)
+            customOverlay:clonePlain(globalStartSettings.customOverlay||getLevelOneStartBundle().overlay),
+
+            // Runtime snapshot: THIS is what preview shows right now.
+            // It is independent from activeLevelIndex.
+            resolvedStart:clonePlain(resolvedGlobalStart.start),
+            resolvedOverlay:clonePlain(resolvedGlobalStart.overlay),
+            resolvedBg:resolvedGlobalStart.bg||'',
+            resolvedImage:resolvedGlobalStart.image||'',
+            sourceLevelIndex:0
         },
         mathEnabled: document.getElementById('cfg-math-enabled')?.checked || false,
         uiColor: document.getElementById('screen-game-frame')?.value || '#39ff14',
@@ -6875,6 +6905,17 @@ async function makeHostedRuntimeConfig(config,aggressive=false){
         copy.specialBallImages[key]=await optimizeHostedImageValue(copy.specialBallImages[key],profiles.icon,cache,stats);
     }
 
+    // Global Start media snapshot (Stage 44+). If these were uploaded from
+    // the computer, optimize ONLY the Genially copy; the project stays intact.
+    if(copy.globalStart){
+        copy.globalStart.resolvedBg=await optimizeHostedImageValue(
+            copy.globalStart.resolvedBg,profiles.background,cache,stats
+        );
+        copy.globalStart.resolvedImage=await optimizeHostedImageValue(
+            copy.globalStart.resolvedImage,profiles.object,cache,stats
+        );
+    }
+
     // Per-level media
     for(const level of (copy.levels||[])){
         level.bg=await optimizeHostedImageValue(level.bg,profiles.background,cache,stats);
@@ -6948,7 +6989,7 @@ async function generateHostedGameLink() {
         : ' · все изображения подключены по URL';
 
     if(info){
-        info.textContent=`Код для Genially готов · ссылка ${link.length.toLocaleString('ru-RU')} символов${optimizeText}. Оригиналы проекта не изменены.`;
+        info.textContent=`Код для Genially готов · ссылка ${link.length.toLocaleString('ru-RU')} символов${optimizeText}. Общий старт зафиксирован точно как в предпросмотре. Оригиналы проекта не изменены.`;
         info.style.color=link.length>SOFT_WARNING?'#ffb347':'#65ff9a';
     }
 
