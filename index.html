@@ -2223,7 +2223,7 @@
     <div id="level-bg-url-modal" class="modal">
         <div class="modal-content" style="max-width:460px;">
             <h3 style="margin:0 0 10px;color:var(--ui-color);">Фон уровня по ссылке</h3>
-            <p style="margin:0 0 10px;color:#858a97;font-size:11px;">Вставьте прямую HTTPS-ссылку. Фон будет загружаться по URL и почти не увеличит размер HTML.</p>
+            <p style="margin:0 0 10px;color:#858a97;font-size:11px;">Вставьте свою прямую HTTPS-ссылку. Встроенные адреса пресетов скрыты; пользовательские URL остаются доступными для редактирования.</p>
             <input type="text" id="level-bg-url-input" placeholder="https://..." oninput="scheduleImageUrlCheck('level-bg-url-input','level-bg-url-status','level-bg-url-preview')">
             <div class="url-check-box">
                 <img id="level-bg-url-preview" class="url-check-thumb" alt="">
@@ -3256,55 +3256,109 @@ function buildLevelQuestionSequence(pool, targetCount, randomOrder=true, runInde
 
 function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjacent = true) {
     const questions = Math.max(0, parseInt(questionCount) || 0);
-    const eventItems = [];
 
-    // Question balls and every enabled special ball are rebuilt from scratch
-    // every time a level starts. This means a replay receives a fresh order too.
-    for (let i = 0; i < questions; i++) eventItems.push("question");
+    const specialItems = [];
     SPECIAL_COUNT_KEYS.forEach(key => {
         const n = Math.max(0, parseInt(counts?.[key]) || 0);
-        for (let i = 0; i < n; i++) eventItems.push(key);
+        for (let i = 0; i < n; i++) specialItems.push(key);
     });
-    shuffleArray(eventItems);
+    shuffleArray(specialItems);
 
-    const eventCount = eventItems.length;
-    let total = Math.max(parseInt(requestedTotal) || 0, eventCount + 6);
-    if (avoidAdjacent) total = Math.max(total, eventCount * 2 + 5);
+    const eventCount = questions + specialItems.length;
+    if (!eventCount) {
+        return Array(Math.max(8, parseInt(requestedTotal) || 8)).fill("normal");
+    }
 
-    const queue = Array(total).fill("normal");
-    const minIndex = 2;
-    const maxIndex = Math.max(minIndex, total - 3);
+    // Keep a small safe normal-ball buffer at both ends.
+    const startNormals = 2;
+    const endNormals = 2;
+    const mandatoryBetween = avoidAdjacent ? 1 : 0;
 
-    const canUse = idx => {
-        if (idx < minIndex || idx > maxIndex || queue[idx] !== "normal") return false;
-        if (!avoidAdjacent) return true;
-        return (idx - 1 < 0 || queue[idx - 1] === "normal") &&
-               (idx + 1 >= total || queue[idx + 1] === "normal");
-    };
+    const minimumTotal =
+        eventCount +
+        startNormals +
+        endNormals +
+        Math.max(0, eventCount - 1) * mandatoryBetween;
 
-    // All safe slots are shuffled on EACH call, so question/special positions
-    // are not fixed from one playthrough to the next.
-    const candidates = [];
-    for (let i = minIndex; i <= maxIndex; i++) candidates.push(i);
-    shuffleArray(candidates);
+    const total = Math.max(parseInt(requestedTotal) || 0, minimumTotal);
 
-    eventItems.forEach(type => {
-        let slot = candidates.find(idx => canUse(idx));
-        if (slot == null) {
-            // Fallback only when there are too many event balls for the requested
-            // spacing. Counts are preserved, while start/end safety remains.
-            const fallback = candidates.find(idx => queue[idx] === "normal");
-            slot = fallback == null ? -1 : fallback;
+    // --------------------------------------------------------
+    // EVENT ORDER
+    // Questions are not allowed to collect at the start.
+    // We divide the whole event sequence into equal zones and
+    // randomly choose ONE question position inside each zone.
+    // Therefore question balls reach from the beginning to the
+    // end of the chain, but their exact positions change each run.
+    // --------------------------------------------------------
+    const eventTypes = Array(eventCount).fill(null);
+    const questionEventSlots = new Set();
+
+    for (let i = 0; i < questions; i++) {
+        const zoneStart = Math.floor((i * eventCount) / questions);
+        const zoneEnd = Math.max(
+            zoneStart,
+            Math.floor(((i + 1) * eventCount) / questions) - 1
+        );
+
+        const choices = [];
+        for (let p = zoneStart; p <= zoneEnd; p++) {
+            if (!questionEventSlots.has(p)) choices.push(p);
         }
-        if (slot >= 0) {
-            queue[slot] = type;
-            const p = candidates.indexOf(slot);
-            if (p >= 0) candidates.splice(p, 1);
-        }
-    });
 
-    // Normal ball colours are already chosen by rndCol() at spawn time, so
-    // their colour order is also fresh on every level run.
+        const chosen = choices.length
+            ? choices[Math.floor(Math.random() * choices.length)]
+            : zoneStart;
+
+        questionEventSlots.add(chosen);
+        eventTypes[chosen] = "question";
+    }
+
+    let specialIndex = 0;
+    for (let i = 0; i < eventTypes.length; i++) {
+        if (eventTypes[i] == null) {
+            eventTypes[i] = specialItems[specialIndex++] || "question";
+        }
+    }
+
+    // --------------------------------------------------------
+    // NORMAL-BALL GAPS
+    // Instead of leaving a large block of normal/bonus balls at
+    // the end, all remaining normal balls are spread through ALL
+    // gaps. The allocation order is reshuffled every run.
+    // --------------------------------------------------------
+    const gaps = Array(eventCount + 1).fill(0);
+    gaps[0] = startNormals;
+    gaps[gaps.length - 1] = endNormals;
+
+    if (avoidAdjacent) {
+        for (let i = 1; i < gaps.length - 1; i++) gaps[i] = 1;
+    }
+
+    let used = eventCount + gaps.reduce((sum, n) => sum + n, 0);
+    let extraNormals = Math.max(0, total - used);
+
+    const gapIndexes = Array.from({length:gaps.length},(_,i)=>i);
+
+    // Round-robin through shuffled gap orders. This keeps the
+    // distribution even while still producing a fresh chain.
+    while (extraNormals > 0) {
+        shuffleArray(gapIndexes);
+        for (const gapIndex of gapIndexes) {
+            if (extraNormals <= 0) break;
+            gaps[gapIndex]++;
+            extraNormals--;
+        }
+    }
+
+    const queue = [];
+    for (let i = 0; i < eventTypes.length; i++) {
+        for (let n = 0; n < gaps[i]; n++) queue.push("normal");
+        queue.push(eventTypes[i]);
+    }
+    for (let n = 0; n < gaps[gaps.length - 1]; n++) queue.push("normal");
+
+    // Normal-ball colours are selected by rndCol() when spawned,
+    // so colours also receive a new order on every playthrough.
     return queue;
 }
 
@@ -5639,15 +5693,62 @@ document.addEventListener('keydown',e=>{
     });
 });
 
+
+function isBuiltInPresetBackgroundUrl(url){
+    const value=String(url||'').trim();
+    return !!value && PRESETS.includes(value);
+}
+function isBuiltInPresetObjectUrl(url){
+    const value=String(url||'').trim();
+    if(!value) return false;
+    return LEVEL_PRESET_META.some(meta =>
+        meta?.shooter===value || meta?.finish===value
+    );
+}
+function isBuiltInEditorAssetUrl(url){
+    const value=String(url||'').trim();
+    if(!value) return false;
+    if(isBuiltInPresetBackgroundUrl(value) || isBuiltInPresetObjectUrl(value)) return true;
+    return Object.values(DEFAULT_ASSET_URLS||{}).includes(value);
+}
+function showProtectedPresetUrlState(statusId,previewId,current,message){
+    const status=document.getElementById(statusId);
+    const preview=document.getElementById(previewId);
+    if(status){
+        status.textContent=message || '✓ Сейчас используется встроенное изображение пресета. Его служебный адрес скрыт.';
+        status.className='url-check-status ok';
+    }
+    if(preview && current){
+        preview.src=current;
+        preview.style.display='block';
+    }
+}
+
 function openAssetUrlDialog(key) {
     pendingAssetKey = key;
     const meta = ASSET_META[key];
     const current = meta ? document.getElementById(meta.input)?.value || "" : "";
+    const builtIn=isBuiltInEditorAssetUrl(current);
     const urlInput = document.getElementById("asset-url-input");
-    urlInput.value = current.startsWith("http") ? current : "";
+
+    // Built-in/preset sources are implementation details and are not shown
+    // in the normal editor interface. A teacher only sees URLs they entered.
+    urlInput.value = (!builtIn && current.startsWith("http")) ? current : "";
+
     document.getElementById("asset-url-modal").style.display = "flex";
-    if(urlInput.value) scheduleImageUrlCheck('asset-url-input','asset-url-status','asset-url-preview');
-    else resetImageUrlCheck('asset-url-status','asset-url-preview');
+
+    if(builtIn){
+        showProtectedPresetUrlState(
+            'asset-url-status',
+            'asset-url-preview',
+            current,
+            '✓ Используется встроенное изображение редактора. Служебный адрес скрыт. Вставьте свою HTTPS-ссылку, если хотите заменить его.'
+        );
+    } else if(urlInput.value) {
+        scheduleImageUrlCheck('asset-url-input','asset-url-status','asset-url-preview');
+    } else {
+        resetImageUrlCheck('asset-url-status','asset-url-preview');
+    }
     setTimeout(() => urlInput.focus(), 30);
 }
 
@@ -6003,10 +6104,27 @@ async function handleLevelBgFile(input) {
 function openLevelBgUrlDialog(index) {
     pendingLevelBgIndex = index;
     const input=document.getElementById('level-bg-url-input');
-    input.value = levels[index]?.bg?.startsWith('http') ? levels[index].bg : '';
+    const current=levels[index]?.bg || '';
+    const builtIn=isBuiltInPresetBackgroundUrl(current);
+
+    // Do not reveal where the built-in presets are physically hosted.
+    // User-entered custom URLs remain visible/editable.
+    input.value = (!builtIn && current.startsWith('http')) ? current : '';
+
     document.getElementById('level-bg-url-modal').style.display = 'flex';
-    if(input.value) scheduleImageUrlCheck('level-bg-url-input','level-bg-url-status','level-bg-url-preview');
-    else resetImageUrlCheck('level-bg-url-status','level-bg-url-preview');
+
+    if(builtIn){
+        showProtectedPresetUrlState(
+            'level-bg-url-status',
+            'level-bg-url-preview',
+            current,
+            '✓ Сейчас используется встроенный фон пресета. Его служебный адрес скрыт. Вставьте свою HTTPS-ссылку, чтобы заменить фон.'
+        );
+    } else if(input.value) {
+        scheduleImageUrlCheck('level-bg-url-input','level-bg-url-status','level-bg-url-preview');
+    } else {
+        resetImageUrlCheck('level-bg-url-status','level-bg-url-preview');
+    }
     setTimeout(()=>input.focus(),30);
 }
 function closeLevelBgUrlDialog() {
