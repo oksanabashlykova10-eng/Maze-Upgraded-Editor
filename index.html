@@ -3018,7 +3018,12 @@ function buildLevelThemeVisuals(themeId, baseScreens, cfg={}, savedFields=null) 
     const f = Object.assign({},getAutoThemeFields(themeId),savedFields||{});
     const v = (id, fallback) => f[id] !== undefined ? f[id] : fallback;
     const n = (id, fallback) => { const x=Number(v(id,fallback)); return Number.isFinite(x)?x:fallback; };
-    const s = JSON.parse(JSON.stringify(baseScreens || makeDefaultScreens(cfg)));
+
+    // Always restore a COMPLETE screen structure before applying a level theme.
+    // This is important for hosted/Genially configs and older JSON projects,
+    // where one of the screen sections may be absent.
+    const s = mergeScreensConfig(baseScreens || {}, cfg);
+
     s.overlay.bgColor = v('screen-overlay-bg', s.overlay.bgColor); s.overlay.opacity = n('screen-overlay-opacity', Math.round(s.overlay.opacity*100))/100;
     const st=s.start;
     st.titleFont=v('screen-start-title-font',st.titleFont);st.titleSize=n('screen-start-title-size',st.titleSize);st.titleColor=v('screen-start-title-color',st.titleColor);st.titleNeon=v('screen-start-title-neon',st.titleNeon);
@@ -4029,20 +4034,24 @@ function getCorrectAnswerSummary(q) {
 }
 
 function resolveRuntimeGlobalStart(cfg){
-    const first=cfg?.levels?.[0]||{};
-    const firstScreens=mergeScreensConfig(first.screens || cfg.screens || {}, cfg||{});
-    const raw=cfg?.globalStart||{};
+    const safeCfg=cfg||{};
+    const first=safeCfg?.levels?.[0]||{};
+    const firstScreens=mergeScreensConfig(first.screens || safeCfg.screens || {}, safeCfg);
+    const defaults=makeDefaultScreens(safeCfg);
+    const raw=safeCfg?.globalStart||{};
     const mode=raw.mode==='custom'?'custom':'auto';
+    const baseStart={...defaults.start,...(firstScreens.start||{})};
+    const baseOverlay={...defaults.overlay,...(firstScreens.overlay||{})};
     return {
         mode,
         start:mode==='custom'
-            ? {...firstScreens.start,...(raw.customStart||{})}
-            : {...firstScreens.start},
+            ? {...baseStart,...(raw.customStart||{})}
+            : baseStart,
         overlay:mode==='custom'
-            ? {...firstScreens.overlay,...(raw.customOverlay||{})}
-            : {...firstScreens.overlay},
+            ? {...baseOverlay,...(raw.customOverlay||{})}
+            : baseOverlay,
         bg:first.bg||'',
-        image:first.finish || first.shooter || cfg.imgMask || cfg.imgShooter || ''
+        image:first.finish || first.shooter || safeCfg.imgMask || safeCfg.imgShooter || ''
     };
 }
 
@@ -6872,8 +6881,9 @@ async function makeHostedRuntimeConfig(config,aggressive=false){
         level.shooter=await optimizeHostedImageValue(level.shooter,profiles.object,cache,stats);
         level.finish=await optimizeHostedImageValue(level.finish,profiles.object,cache,stats);
 
-        // Stage 41 no longer needs a separate Start inside each level at runtime.
-        if(level.screens?.start) delete level.screens.start;
+        // Keep the small start-screen object in the hosted config.
+        // It contains only text/style settings, adds almost no weight, and
+        // guarantees compatibility with level-theme rendering and old JSON projects.
     }
 
     // Question illustrations
@@ -6895,7 +6905,7 @@ async function generateHostedGameLink() {
 
     const info=document.getElementById('export-link-info');
     if(info){
-        info.textContent='Подготавливаю лёгкую версию картинок для Genially…';
+        info.textContent='Подготавливаю совместимую лёгкую версию игры для Genially…';
         info.style.color='#ffd34e';
     }
 
