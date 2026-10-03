@@ -445,6 +445,12 @@
             font-weight: 700;
         }
 
+        /* Stage 47: per-level ball collection controls. */
+        .ball-set-control {padding:10px 11px;border:1px solid rgba(99,210,246,.32);border-radius:9px;background:linear-gradient(115deg,rgba(10,32,58,.72),rgba(10,10,23,.95));}
+        .ball-set-control label {display:block;font-size:11px;letter-spacing:.3px;font-weight:850;color:#bdefff;margin-bottom:7px;}
+        .ball-set-control select {display:block;width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;border:1px solid rgba(99,210,246,.48);background:#0b1527;color:#f2f8ff;font-size:11px;font-weight:700;cursor:pointer;}
+        .ball-set-control select:focus {outline:1px solid #60d9ff;box-shadow:0 0 9px rgba(77,201,255,.25);}
+        .ball-set-hint {font-size:9.5px;color:#93aabf;line-height:1.45;margin-top:7px;}
         .ball-preset-row {
             display: flex;
             gap: 6px;
@@ -1249,6 +1255,28 @@
             }
         }
 
+
+/* Stage 49 — concise LaTeX reference and question-AI controls */
+.latex-cheatsheet-modal .modal-content{width:min(940px,96vw);max-width:940px;max-height:91vh;overflow-y:auto;}
+.latex-cheat-group{margin:13px 0;padding:11px 12px;border:1px solid rgba(155,124,255,.28);border-radius:12px;background:rgba(5,10,20,.35);}
+.latex-cheat-group h3{color:#ffdc6b;font-size:14px;letter-spacing:.02em;margin:0 0 10px;}
+.latex-cheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,335px),1fr));gap:7px;}
+.latex-cheat-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) auto;align-items:center;gap:8px;background:rgba(255,255,255,.045);padding:7px;border:1px solid rgba(255,255,255,.07);border-radius:8px;}
+.latex-cheat-row code{color:#c6f9fa;white-space:normal;overflow-wrap:anywhere;font-size:12px;user-select:all;}
+.latex-cheat-row span{font-size:11px;color:#bbc0d1;}
+.latex-cheat-copy{background:#132b31;color:#6ff5ec;border:1px solid #3e939c;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;}
+.latex-cheat-copy:hover{filter:brightness(1.3);}
+.latex-cheat-warning{border-color:rgba(255,197,75,.5);color:#ffdf98;margin-top:8px;}
+.latex-cheat-source{font-size:11px;color:#8b95a3;margin:14px 0 0;}
+@media(max-width:640px){.latex-cheat-row{grid-template-columns:1fr auto;}.latex-cheat-row span{grid-column:1/-1;grid-row:2;}}
+
+/* Stage 52 — inline AI question-guide in Recommendations */
+/* Stage 52 — AI instruction embedded directly in Recommendations, without a separate popup. */
+#recommendations-guide-modal .ai-question-guide-text{display:block;box-sizing:border-box;width:100%;height:265px;min-height:170px;max-height:44vh;overflow:auto;resize:vertical;margin-top:10px;padding:11px 12px;background:#070a11;color:#e3e9f7;border:1px solid rgba(155,124,255,.48);border-radius:10px;font-family:'Consolas','Courier New',monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;}
+#recommendations-guide-modal .ai-question-guide-text:focus{border-color:#ffd34e;box-shadow:0 0 12px rgba(255,211,78,.14);}
+#recommendations-guide-modal .ai-question-guide-actions{display:flex;justify-content:flex-start;gap:10px;margin-top:10px;}
+#recommendations-guide-modal .ai-question-guide-actions button{cursor:pointer;}
+@media(max-width:640px){#recommendations-guide-modal .ai-question-guide-text{font-size:10px;height:220px;}}
 </style>
 </head>
 <body>
@@ -1309,7 +1337,7 @@
                 <p class="section-note" style="margin:6px 0 0;">Если включено, время не уменьшается, пока открыт экран вопроса.</p>
                 <div class="field" style="margin-top:12px;">
                     <label>Тревога перед финишем: <strong id="danger-distance-value" style="color:#39ff14;">6 см</strong></label>
-                    <input type="range" id="cfg-danger-distance-cm" min="3" max="10" step="1" value="6" oninput="updateDangerDistanceLabel()">
+                    <input type="range" id="cfg-danger-distance-cm" min="3" max="9" step="1" value="6" oninput="updateDangerDistanceLabel()">
                     <p class="section-note" style="margin:6px 0 0;">За выбранное расстояние до финиша начинает пульсировать финиш и включается сердцебиение. Это условные игровые сантиметры: фактический размер на экране зависит от масштаба iframe.</p>
                 </div>
             </section>
@@ -1394,9 +1422,27 @@
 
             <section class="panel-section">
                 <h3 class="section-title">🔵 Оформление шаров</h3>
-                <p class="section-note">Все встроенные изображения шаров собраны здесь: обычные цветные и специальные игровые шары. Любой из них можно заменить файлом или ссылкой.</p>
-                <div class="ball-preset-row">
-                    <button class="preset-chip active" type="button" onclick="applyBallPreset('classic', this)">↺ Встроенный набор</button>
+                <p class="section-note">Выберите набор шаров для каждого уровня или настройте отдельные изображения. Готовые наборы загружаются по HTTPS и не утяжеляют HTML. Размеры и игровая механика не меняются.</p>
+                <div class="ball-set-control">
+                    <label for="ball-set-select">Обычные шары · набор текущего уровня</label>
+                    <select id="ball-set-select" onchange="applyBallSet(this.value)">
+                        <option value="classic">◆ Classic — каменные</option>
+                        <option value="magic">✦ Magic Glass — магические</option>
+                        <option value="candy">🍬 Candy Pop — леденцы</option>
+                        <option value="yarn">🧶 Yarn — клубочки</option>
+                        <option value="space">✧ Cosmic Orbs — галактики</option>
+                        <option value="custom">✎ Свои изображения</option>
+                    </select>
+                    <div class="ball-set-hint">Набор применяется только к редактируемому уровню. В Candy и Yarn розовый клубочек / леденец занимает шестую позицию вместо оранжевого. Редактировать отдельные шары можно ниже.</div>
+                </div>
+                <div class="ball-set-control" style="margin-top:9px;">
+                    <label for="special-set-select">Особенные и штрафной шары · набор текущего уровня</label>
+                    <select id="special-set-select" onchange="applySpecialBallSet(this.value)">
+                        <option value="classic">◆ Classic — исходные</option>
+                        <option value="midnight">✦ Midnight Magic — тёмно-синие</option>
+                        <option value="custom">✎ Свои изображения</option>
+                    </select>
+                    <div class="ball-set-hint">Вопрос, бонусы, молния, время и серый штрафной шар. Меняется только оформление — их действие остаётся прежним.</div>
                 </div>
 
                 <div class="section-note" style="margin-top:10px;color:#bfc3cd;font-weight:800;">ОБЫЧНЫЕ ЦВЕТНЫЕ ШАРЫ</div>
@@ -1419,6 +1465,7 @@
                     <div class="ball-card"><img id="asset-preview-special-compress" alt=""><strong>Стрелки внутрь</strong><div class="ball-function">Сжимает цепочку: следующие шары появляются ближе друг к другу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-compress')">Файл</button><button onclick="openAssetUrlDialog('special-compress')">URL</button></div><div class="asset-warning" id="asset-warning-special-compress"></div><input type="hidden" id="cfg-special-compress" value="https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-stretch" alt=""><strong>Стрелки наружу</strong><div class="ball-function">Растягивает цепочку: расстояние между следующими шарами увеличивается.</div><div class="ball-actions"><button onclick="pickAssetFile('special-stretch')">Файл</button><button onclick="openAssetUrlDialog('special-stretch')">URL</button></div><div class="asset-warning" id="asset-warning-special-stretch"></div><input type="hidden" id="cfg-special-stretch" value="https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png"></div>
                     <div class="ball-card"><img id="asset-preview-special-add-ball" alt=""><strong>+2 шара</strong><div class="ball-function">Штраф: мгновенно добавляет два серых штрафных шара перед головой цепочки и приближает её к финишу.</div><div class="ball-actions"><button onclick="pickAssetFile('special-add-ball')">Файл</button><button onclick="openAssetUrlDialog('special-add-ball')">URL</button></div><div class="asset-warning" id="asset-warning-special-add-ball"></div><input type="hidden" id="cfg-special-add-ball" value="https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"></div>
+                    <div class="ball-card"><img id="asset-preview-special-neutral" alt=""><strong>Серый штрафной</strong><div class="ball-function">Появляется после ошибки и некоторых штрафов. Не выбирается вручную при составлении цепочки.</div><div class="ball-actions"><button onclick="pickAssetFile('special-neutral')">Файл</button><button onclick="openAssetUrlDialog('special-neutral')">URL</button></div><div class="asset-warning" id="asset-warning-special-neutral"></div><input type="hidden" id="cfg-special-neutral" value="https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png"></div>
 </div>
             </section>
         </div>
@@ -1772,14 +1819,14 @@
                     <button class="latex-chip" type="button" onclick="copyLatexSnippet('$\\Sigma$')">Σ</button>
                 </div>
                 <div class="question-copy-row" style="margin-top:10px; justify-content:flex-start;">
-                    <button class="btn-main" type="button" onclick="copyLatexGuide()">📋 Скопировать подсказку по LaTeX</button>
+                    <button class="btn-main" type="button" onclick="openGuideModal('latex-cheatsheet-modal')">📖 Открыть полную шпаргалку LaTeX</button>
                 </div>
                 <div id="latex-copy-status" class="question-status"></div>
             </section>
 
             <section class="panel-section question-guide-panel">
-                <h3 class="section-title">⚡ Быстрое добавление вопросов</h3>
-                <div class="question-copy-row"><button class="btn-main" type="button" onclick="copyQuestionAiPrompt()">📋 Скопировать подсказку для ИИ</button></div>
+                <h3 class="section-title">📝 Форматы вопросов</h3>
+                
                 <div class="question-guide-list">
                     <div class="question-guide-item">
                         <h4>1. Один правильный ответ:</h4>
@@ -1803,7 +1850,7 @@
                         <h4>5. Соединить пары:</h4>
                         <p>Можно создать от <b>2 до 10 пар</b>. После задания добавляйте каждую новую пару через знак <b>|</b>, а слова внутри пары соединяйте знаком <b>=</b>.</p>
                         <code class="guide-example">[PAIRS] Match the words | cat = кошка | dog = собака | bird = птица</code>
-                        <p>Правая колонка автоматически перемешивается так, чтобы готовые пары не стояли напротив друг друга.</p>
+                        <p>Правая колонка перемешивается; после импорта проверьте корректность всех пар.</p>
                     </div>
                     <div class="question-guide-item">
                         <h4>6. Распределить по категориям:</h4>
@@ -2022,7 +2069,7 @@
                         <li>Двигайте пушку мышкой.</li>
                         <li>Кликните, чтобы выстрелить.</li>
                         <li>Попадание уничтожает обычный шар.</li>
-                        <li>Совпадение цвета даёт бонусные очки.</li>
+                        <li>Обычный или серый шар исчезает от любого попадания. Совпадение цвета обычного шара с выстрелом даёт дополнительно 50 очков.</li>
                     </ul>
                 </article>
                 <article class="guide-card">
@@ -2030,7 +2077,7 @@
                     <ul>
                         <li>Попадите по шару «?» — откроется задание.</li>
                         <li>Правильный ответ даёт очки и отодвигает цепочку назад.</li>
-                        <li>Серия правильных ответов увеличивает COMBO.</li>
+                        <li>Серия правильных ответов увеличивает COMBO и количество очков.</li><li>В открытом вопросе [OPEN] нет автоматической проверки: ученик отвечает устно и нажимает «Далее».</li>
                     </ul>
                 </article>
                 <article class="guide-card">
@@ -2044,20 +2091,20 @@
                 <article class="guide-card wide">
                     <h3>✨ Специальные шары</h3>
                     <ul>
-                        <li><strong>⚡ Молния</strong> — уничтожает несколько соседних шаров.</li>
-                        <li><strong>💗 +Жизнь</strong> — добавляет жизнь.</li>
-                        <li><strong>⏳ +20 сек.</strong> — добавляет время.</li>
-                        <li><strong>⏱ −10 сек.</strong> — отнимает время.</li>
+                        <li><strong>⚡ Молния</strong> — уничтожает сам шар-молнию и до 2 соседних шаров с каждой стороны (вопросы не задевает).</li>
+                        <li><strong>💗 +Жизнь</strong> — добавляет 1 жизнь (не более 5).</li>
+                        <li><strong>⏳ +20 сек.</strong> — добавляет 20 секунд и 20 бонусных очков.</li>
+                        <li><strong>⏱ −10 сек.</strong> — отнимает 10 секунд и начисляет штраф 50 очков.</li>
                         <li><strong>⇥⇤ Сжатие</strong> — уменьшает расстояние между шарами.</li>
                         <li><strong>⇤⇥ Растяжение</strong> — увеличивает расстояние между шарами.</li>
-                        <li><strong>✚ +2 шара</strong> — добавляет 2 серых штрафных шара.</li>
+                        <li><strong>✚ +2 шара</strong> — штраф: добавляет 2 серых шара перед головой цепочки, ближе к финишу.</li>
                     </ul>
                 </article>
                 <article class="guide-card">
                     <h3>🏆 Победа</h3>
                     <ul>
-                        <li>Без ошибок: после последнего вопроса уровень завершается сразу.</li>
-                        <li>Была ошибка: после вопросов уничтожьте оставшиеся шары.</li>
+                        <li>Если все вопросы пройдены без ошибок, уровень завершается сразу после последнего вопроса.</li>
+                        <li>Если была ошибка, после вопросов необходимо уничтожить оставшуюся цепочку.</li>
                         <li>В игре с несколькими уровнями откроется следующий уровень.</li>
                     </ul>
                 </article>
@@ -2070,7 +2117,7 @@
                     </ul>
                 </article>
             </div>
-            <div class="guide-tip">💡 Сначала ищите шары с вопросами, но всё время следите, насколько близко цепочка подошла к финишу.</div>
+            <div class="guide-tip">💡 Обычные цветные шары теперь распределяются примерно поровну, но их порядок случайный. Сначала ищите вопросы и следите за цепочкой: при приближении к финишу включается предупреждение.</div>
             <div class="guide-bottom"><button type="button" onclick="closeGuideModal('rules-guide-modal')">Понятно</button></div>
         </div>
     </div>
@@ -2119,7 +2166,10 @@
                         <li>Объект — по центру.</li>
                         <li>Прозрачный фон.</li>
                         <li>512×512 более чем достаточно.</li>
-                        <li>Большие файлы редактор автоматически уменьшает.</li>
+                        <li>Готовые наборы: Classic, Magic Glass, Candy Pop, Yarn, Space; их можно выбирать отдельно для каждого уровня.</li>
+                        <li>Для специальных шаров доступен универсальный Midnight Magic.</li>
+                        <li>При использовании своих PNG обязательно проверьте реальную прозрачность: белый фон файла нельзя убрать выбором пресета.</li>
+                        <li>При загрузке файла редактор старается уменьшить его размер; для готовых наборов изображения загружаются по URL.</li>
                     </ul>
                 </article>
 
@@ -2139,6 +2189,7 @@
                         <li><strong>URL</strong> — если игра в Genially или картинок много.</li>
                         <li><strong>Файл</strong> — если нужна автономная HTML-игра без интернета.</li>
                         <li>Файл встраивается внутрь HTML и будет виден на другом компьютере.</li>
+                        <li>Внешние URL и MathJax через CDN требуют доступа к интернету.</li>
                         <li>Путь C:\Users\... использовать нельзя.</li>
                     </ul>
                 </article>
@@ -2180,6 +2231,7 @@
                         <li>Не делайте задания слишком длинными.</li>
                         <li>Проверяйте правильные ответы.</li>
                         <li>Не тот уровень? Используйте «Перенести в уровень…».</li>
+                        <li>Девять типов: CHOICE, INPUT, ORDER, MULTI, PAIRS, CATEGORIES, ERROR, GAPS, OPEN.</li>
                     </ul>
                 </article>
 
@@ -2189,14 +2241,80 @@
                         <li>Протестируйте каждый уровень.</li>
                         <li>Проверьте правильный и неправильный ответ.</li>
                         <li>Проверьте пушку, финиш и переход между уровнями.</li>
-                        <li>Проверьте все URL-картинки.</li>
+                        <li>Проверьте все URL-картинки и прозрачность пользовательских шаров.</li>
+                        <li>Если используете LaTeX, включите «Математические формулы», проверьте формулы в запущенной игре и наличие интернета.</li>
+                        <li>Проверьте финал с ошибкой, финал без ошибок и кнопки перехода по уровням.</li>
                     </ul>
+                </article>
+                <article class="guide-card wide">
+                    <h3>∑ 12. Формулы и форматы вопросов</h3>
+                    <p>На вкладке «Вопросы» включите «Математические формулы», затем откройте <strong>«Полную шпаргалку LaTeX»</strong>. Все коды копируются со знаками <code>$...$</code>. Девять форматов вопросов с примерами перечислены в той же вкладке.</p>
+                    <div class="guide-service-row"><button type="button" class="guide-service" onclick="closeGuideModal('recommendations-guide-modal');openGuideModal('latex-cheatsheet-modal')">∑ Шпаргалка LaTeX ↗</button></div>
+                </article>
+                <article class="guide-card wide">
+                    <h3>🤖 13. Инструкция для создания вопросов с ИИ</h3>
+                    <p>Заполните тему, класс и количество заданий прямо в тексте ниже. Скопируйте инструкцию и отправьте её ChatGPT или другому ИИ. Включены примеры всех девяти типов вопросов MAZE TRAP.</p>
+                    <textarea id="ai-question-guide-text" class="ai-question-guide-text" spellcheck="false" aria-label="Короткая инструкция для создания вопросов с помощью ИИ">MAZE TRAP — ЗАПРОС ДЛЯ СОЗДАНИЯ ВОПРОСОВ С ПОМОЩЬЮ ИИ
+
+Составь готовые вопросы для игрового редактора MAZE TRAP.
+Предмет и тема: [укажите]
+Класс, возраст, уровень: [укажите]
+Тематика, лексика: [укажите]
+Количество: [например, 3 вопроса каждого формата]
+
+Сделай интересные, разные по содержанию задания подходящей сложности. Используй утверждения, вопросы и отрицания, если это уместно. В заданиях на соответствие по возможности обойдись без перевода на русский. Проверь правильность и однозначность ответов.
+
+Используй эти 9 форматов (правила и примеры — как в редакторе):
+
+1. Один правильный ответ [CHOICE]. До // — задание, после // — предложение или вопрос. Первый вариант после | правильный.
+[CHOICE] Choose the correct answer. // I ___ tired. | am | is | are
+
+2. Вписать слово [INPUT]. После // — текст с пропуском; допустимые ответы — в скобках через запятую.
+[INPUT] Complete the sentence. // _______ is the capital of Great Britain. (London, LONDON)
+
+3. Собрать предложение [ORDER]. После | записывается правильное предложение.
+[ORDER] Put the words in the correct order | The cat is sleeping.
+
+4. Выбрать несколько ответов [MULTI]. Первая группа после | — все верные ответы через запятую, затем неверные варианты через |.
+[MULTI] Choose irregular verbs | come, run, sleep | skate | jump | clean
+
+5. Соединить пары [PAIRS]. От 2 до 10 пар, между частями пары =, между парами |.
+[PAIRS] Match the sentence halves | My dad = works in an office. | My sister = walks to school. | Our neighbours = live next door.
+
+6. Распределить по категориям [CATEGORIES]. От 2 до 4 категорий; после названия двоеточие, элементы через запятую.
+[CATEGORIES] Sort the words into the correct boxes. | Countable: apple, egg | Uncountable: milk, bread
+
+7. Найти ошибку [ERROR]. В предложении только одна ошибка; после | укажи неверное слово точно как в предложении.
+[ERROR] Find the mistake. // She go to school every day. | go
+
+8. Заполнить пропуски из банка [GAPS]. После // — предложение с ___; после каждого | — одно слово-ответ в порядке пропусков.
+[GAPS] Fill the gaps using Present Simple. // I ___ to school and ___ football. | go | play
+
+9. Открытый вопрос [OPEN]. Без автоматической проверки: ученик отвечает устно и нажимает «Далее».
+[OPEN] Discuss and explain your opinion. // What is the best superpower to have and why?
+
+Ответь только готовыми строками для импорта: каждое задание — на отдельной строке, без заголовков, нумерации, кавычек, пустых строк и пояснений. Не добавляй ничего кроме вопросов. Для математических тем при необходимости можно использовать LaTeX в $...$, а для обычных текстов он не нужен.</textarea>
+                    <div class="guide-service-row ai-question-guide-actions"><button type="button" class="guide-service" onclick="copyAiQuestionGuide()">📋 Скопировать инструкцию для ИИ</button></div>
                 </article>
             </div>
             <div class="guide-tip">✨ Главное: красиво — хорошо. Понятно, быстро и надёжно — ещё лучше.</div>
             <div class="guide-bottom"><button type="button" onclick="closeGuideModal('recommendations-guide-modal')">Готово</button></div>
         </div>
     </div>
+
+
+    <div id="latex-cheatsheet-modal" class="modal guide-modal recommendations latex-cheatsheet-modal" onclick="if(event.target===this)closeGuideModal('latex-cheatsheet-modal')">
+        <div class="modal-content">
+            <button type="button" class="guide-close" onclick="closeGuideModal('latex-cheatsheet-modal')" aria-label="Закрыть">×</button>
+            <div class="guide-modal-head"><h2>∑ MAZE TRAP · ШПАРГАЛКА LaTeX</h2><p>Коды для карточек вопросов и ответов. Каждый пример можно скопировать одной кнопкой.</p></div>
+            <div class="guide-tip latex-cheat-hint"><strong>Как пользоваться:</strong> включите «Математические формулы» во вкладке «Вопросы», скопируйте шаблон вместе со знаками <code>$...$</code> и замените буквы или числа. Формулы отображаются в запущенной игре через MathJax и требуют интернета. В самом поле редактора вы видите исходный код.</div>
+            <div class="guide-tip latex-cheat-warning">⚠ Символ <code>|</code> разделяет поля игровых вопросов, поэтому модуль записывайте как <code>$\lvert x\rvert$</code>. Один импортируемый вопрос — одна строка. Не вставляйте PDF или изображения с формулами вместо исходного кода.</div>
+            <section class="latex-cheat-group"><h3>Начало работы</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$a^2+b^2=c^2$</code><span>Уравнение</span><button type="button" class="latex-cheat-copy" data-copy-latex="$a^2+b^2=c^2$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$$\frac{a}{b}$$</code><span>Формула отдельной строкой</span><button type="button" class="latex-cheat-copy" data-copy-latex="$$\frac{a}{b}$$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Дроби</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\frac{a}{b}$</code><span>Дробь</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\frac{a}{b}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\frac{x+1}{y-2}$</code><span>Сложная дробь</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\frac{x+1}{y-2}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\frac{3}{4}$</code><span>Три четверти</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\frac{3}{4}$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Степени и индексы</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$x^2$</code><span>Квадрат</span><button type="button" class="latex-cheat-copy" data-copy-latex="$x^2$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$x^{10}$</code><span>Степень 10</span><button type="button" class="latex-cheat-copy" data-copy-latex="$x^{10}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$a_n$</code><span>Нижний индекс</span><button type="button" class="latex-cheat-copy" data-copy-latex="$a_n$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$a_{n+1}$</code><span>Индекс n+1</span><button type="button" class="latex-cheat-copy" data-copy-latex="$a_{n+1}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$x_1+x_2$</code><span>Сумма с индексами</span><button type="button" class="latex-cheat-copy" data-copy-latex="$x_1+x_2$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Корни</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\sqrt{x}$</code><span>Квадратный корень</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\sqrt{x}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\sqrt{a+b}$</code><span>Корень суммы</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\sqrt{a+b}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\sqrt[n]{a}$</code><span>Корень n-й степени</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\sqrt[n]{a}$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Скобки и модуль</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\left(\frac{a}{b}\right)$</code><span>Большие круглые скобки</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\left(\frac{a}{b}\right)$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\left[x+1\right]$</code><span>Большие квадратные скобки</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\left[x+1\right]$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\lvert x\rvert$</code><span>Модуль: без символа |, чтобы не мешать формату вопросов</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\lvert x\rvert$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Знаки и символы</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\times$</code><span>Умножить</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\times$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\cdot$</code><span>Точка</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\cdot$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\div$</code><span>Разделить</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\div$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\pm$</code><span>Плюс-минус</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\pm$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\neq$</code><span>Не равно</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\neq$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\leq$</code><span>Меньше либо равно</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\leq$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\geq$</code><span>Больше либо равно</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\geq$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\infty$</code><span>Бесконечность</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\infty$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\pi$</code><span>Пи</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\pi$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\approx$</code><span>Приблизительно</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\approx$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Суммы, проценты, пределы</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\sum_{i=1}^{n} i$</code><span>Сумма</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\sum_{i=1}^{n} i$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\lim_{x\to 0}f(x)$</code><span>Предел</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\lim_{x\to 0}f(x)$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$25\%$</code><span>Проценты</span><button type="button" class="latex-cheat-copy" data-copy-latex="$25\%$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$x\to 5$</code><span>Стрелка</span><button type="button" class="latex-cheat-copy" data-copy-latex="$x\to 5$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Геометрия</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\angle ABC$</code><span>Угол</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\angle ABC$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$90^\circ$</code><span>Градусы</span><button type="button" class="latex-cheat-copy" data-copy-latex="$90^\circ$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\triangle ABC$</code><span>Треугольник</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\triangle ABC$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$a\parallel b$</code><span>Параллельность</span><button type="button" class="latex-cheat-copy" data-copy-latex="$a\parallel b$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$a\perp b$</code><span>Перпендикулярность</span><button type="button" class="latex-cheat-copy" data-copy-latex="$a\perp b$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$\overline{AB}$</code><span>Отрезок</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\overline{AB}$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Единицы измерения</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$S=24\,\text{см}^2$</code><span>Площадь</span><button type="button" class="latex-cheat-copy" data-copy-latex="$S=24\,\text{см}^2$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$v=60\,\text{км/ч}$</code><span>Скорость</span><button type="button" class="latex-cheat-copy" data-copy-latex="$v=60\,\text{км/ч}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$t=3\,\text{ч}$</code><span>Время</span><button type="button" class="latex-cheat-copy" data-copy-latex="$t=3\,\text{ч}$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section><section class="latex-cheat-group"><h3>Готовые формулы</h3><div class="latex-cheat-grid"><div class="latex-cheat-row"><code>$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$</code><span>Корни квадратного уравнения</span><button type="button" class="latex-cheat-copy" data-copy-latex="$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$ax^2+bx+c=0$</code><span>Квадратное уравнение</span><button type="button" class="latex-cheat-copy" data-copy-latex="$ax^2+bx+c=0$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$S=ab$</code><span>Площадь</span><button type="button" class="latex-cheat-copy" data-copy-latex="$S=ab$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$P=2(a+b)$</code><span>Периметр</span><button type="button" class="latex-cheat-copy" data-copy-latex="$P=2(a+b)$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$V=abc$</code><span>Объём</span><button type="button" class="latex-cheat-copy" data-copy-latex="$V=abc$" onclick="copyLatexFromButton(this)">Копировать</button></div><div class="latex-cheat-row"><code>$$\begin{cases}x+y=5\\x-y=1\end{cases}$$</code><span>Система уравнений</span><button type="button" class="latex-cheat-copy" data-copy-latex="$$\begin{cases}x+y=5\\x-y=1\end{cases}$$" onclick="copyLatexFromButton(this)">Копировать</button></div></div></section>
+            <p class="latex-cheat-source">Подборка адаптирована по загруженной пользователем памятке Светланы Быковой («Шкатулка математических интерактивов») и проверена на формат delimiters Maze Trap.</p>
+            <div class="guide-bottom"><button type="button" onclick="closeGuideModal('latex-cheatsheet-modal')">Готово</button></div>
+        </div>
+    </div>
+
 
     <input type="file" id="asset-file-input" accept="image/*" hidden onchange="handleAssetFile(this)">
     <input type="file" id="level-bg-file-input" accept="image/*" hidden onchange="handleLevelBgFile(this)">
@@ -3357,9 +3475,24 @@ function buildDistributedQueue(questionCount, counts, requestedTotal, avoidAdjac
     }
     for (let n = 0; n < gaps[gaps.length - 1]; n++) queue.push("normal");
 
-    // Normal-ball colours are selected by rndCol() when spawned,
-    // so colours also receive a new order on every playthrough.
+    // Question and special positions are independent from visual colour selection.
+    // Normal colours will be assigned from shuffled balanced six-colour bags at game start.
     return queue;
+}
+
+
+// Stage 48: Every complete bag contains one of EACH standard colour.
+// This prevents situations like four orange balls with no green balls.
+function buildBalancedNormalColors(palette, requestedCount) {
+    const unique=[...new Set((Array.isArray(palette)?palette:[]).filter(Boolean))];
+    const count=Math.max(0, Math.floor(Number(requestedCount)||0));
+    if(!unique.length || !count) return [];
+    const result=[];
+    while(result.length<count){
+        const bag=shuffleArray([...unique]);
+        result.push(...bag.slice(0, count-result.length));
+    }
+    return result;
 }
 
 const DEFAULT_OBJECT_LAYOUT = Object.freeze({
@@ -3549,6 +3682,10 @@ function ensureLevelDesignState(index, baseScreens=null, cfg={}) {
     const themeId=getLevelThemeId(level);
     level.themeId=themeId;
     level.themeFields=Object.assign({},getAutoThemeFields(themeId),level.themeFields||{});
+    level.ballSetId=level.ballSetId||'classic';
+    level.specialSetId=level.specialSetId||'classic';
+    if(!level.ballImages)level.ballImages=getNormalBallCollection(level.ballSetId);
+    if(!level.specialBallImages)level.specialBallImages=getSpecialBallCollection(level.specialSetId);
     if(!level.screens) level.screens=makeThemedLevelScreens(themeId,level.themeFields,baseScreens,cfg);
     else level.screens=mergeScreensConfig(level.screens,cfg);
     return level;
@@ -3569,6 +3706,8 @@ function saveActiveLevelDesignFromEditor() {
     const finish=document.getElementById('cfg-img-mask')?.value;
     if(shooter) level.shooter=shooter;
     if(finish) level.finish=finish;
+    level.ballImages=captureBallImagesFromEditor();
+    level.specialBallImages=captureSpecialBallImagesFromEditor();
 }
 function updateActiveLevelBanner() {
     const level=levels[activeLevelIndex];
@@ -3598,6 +3737,7 @@ function loadActiveLevelDesignToEditor() {
         const finish=getLevelPresetAsset(level,'finish');
         if(shooter) setAssetValue('shooter',shooter);
         if(finish) setAssetValue('mask',finish);
+        showLevelBallImagesInEditor(level);
         const sel=document.getElementById('preview-bg-sel');
         if(sel) sel.value=String(activeLevelIndex);
         const box=document.getElementById('p-box');
@@ -4204,7 +4344,7 @@ class GameCore {
             // Серый штрафной шар используется только динамически:
             // после неправильного ответа и бонуса +2 шара.
             // В настройке состава цепочки он намеренно не показывается.
-            t_neutral: 'https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png',
+            t_neutral: this.cfg.specialBallImages?.neutral || 'https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png',
             t_question: this.cfg.specialBallImages?.question || 'https://img.genially.com/67961b32a116fb001568a75e/87a94615-9492-4862-8d39-d5a93e8fb3e2.png',
             t_life_add: this.cfg.specialBallImages?.life_add || 'https://img.genially.com/67961b32a116fb001568a75e/213dec47-3717-4811-a68b-20fe7262ec2d.png',
             t_time_add: this.cfg.specialBallImages?.time_add || 'https://img.genially.com/67961b32a116fb001568a75e/20e3d09b-849b-4617-a0c5-6b5cc893b4a1.png',
@@ -4355,8 +4495,25 @@ class GameCore {
         const endImage=document.getElementById('g-end-image');if(endImage)endImage.src=shooterUrl;
         this.applyScreenConfig();
     }
+    applyLevelBallImages(level) {
+        const normal=level.ballImages||this.cfg.ballImages||{};
+        const special=level.specialBallImages||this.cfg.specialBallImages||{};
+        const urls={};
+        for(const c of ['red','blue','green','yellow','purple','orange'])if(normal[c])urls['c_'+c]=normal[c];
+        for(const [kind,assetKey] of Object.entries({question:'t_question',electric:'t_electric',life_add:'t_life_add',time_add:'t_time_add',time_sub:'t_time_sub',compress:'t_compress',stretch:'t_stretch',add_ball:'t_add_ball',neutral:'t_neutral'}))if(special[kind])urls[assetKey]=special[kind];
+        for(const [key,url] of Object.entries(urls)){
+            if(this.IMG_URLS[key]===url)continue;
+            this.IMG_URLS[key]=url;
+            const img=new Image();img.src=url;
+            this.ASSETS[key]=img;
+        }
+        for(const kind of ['question','electric','life_add','compress','time_sub','add_ball','stretch','time_add']){
+            document.querySelectorAll('.dyn-special-'+kind).forEach(el=>{if(special[kind])el.src=special[kind];});
+        }
+    }
     applyLevel(idx) {
         const level=this.cfg.levels[idx]||{};
+        this.applyLevelBallImages(level);
         this.applyLevelVisualTheme(level);
         document.getElementById('g-game-container').style.backgroundImage = `url('${level.bg||''}')`;
         this.objectLayout=normalizeObjectLayout(level.objectLayout);
@@ -4425,7 +4582,7 @@ class GameCore {
         this.blockShootUntil=0;
         this.defeatReasonText=''; this.defeatCause=''; this.defeatIntroUntil=0; this.escapeStartedAt=0; this.escapeEmptyAt=0;
         this.balls=[]; this.bullets=[]; this.parts=[]; this.fworks=[]; this.lightnings=[];
-        this.queue=[]; this.curSpacing=this.spacing; this.nextCol=this.rndCol();
+        this.queue=[]; this.normalColorQueue=[]; this.curSpacing=this.spacing; this.nextCol=this.rndCol();
         
         this.createQueue(); this.ui();
         this.lastFrameTime = performance.now();
@@ -4462,10 +4619,25 @@ class GameCore {
             plan.total,
             plan.setup.avoidAdjacent
         );
+        // Balance the ordinary colours over the whole planned chain.
+        // Special and question balls are not counted as coloured ordinary balls.
+        this.normalColorQueue = buildBalancedNormalColors(
+            this.colors, this.queue.filter(type => type === 'normal').length
+        );
     }
 
     rndCol(){ return this.colors[Math.floor(Math.random()*this.colors.length)]; }
-    spawn() { if(this.queue.length===0) return; let typeKey = this.queue.shift(); if (!this.bTypes[typeKey]) typeKey = 'normal'; this.balls.push({ d:0, type: typeKey, c: this.rndCol() }); }
+    spawn() {
+        if(this.queue.length===0) return;
+        let typeKey=this.queue.shift();
+        if(!this.bTypes[typeKey]) typeKey='normal';
+        // Each complete set of six NORMAL balls contains all six colours.
+        // Their order is shuffled anew for each batch and for each run.
+        const colour=typeKey==='normal'
+            ? (this.normalColorQueue.shift() || this.rndCol())
+            : this.rndCol();
+        this.balls.push({d:0,type:typeKey,c:colour});
+    }
     sortBallsFrontToBack(){ this.balls.sort((a,b)=>b.d-a.d); }
     getReconnectSpacing(){ return this.curSpacing; }
     getConnectedSegments(threshold = this.curSpacing){
@@ -5208,7 +5380,7 @@ class GameCore {
             if (this.ASSETS['center_mask'] && this.ASSETS['center_mask'].complete) {
                 // User setting: 3–10 conditional centimetres before the finish.
                 // 1 conditional cm = 40 virtual path units, so behaviour stays stable in editor/HTML/Genially.
-                const dangerCm = Math.max(3, Math.min(10, Number(this.cfg.dangerDistanceCm) || 6));
+                const dangerCm = Math.max(3, Math.min(9, Number(this.cfg.dangerDistanceCm) || 6));
                 const dangerDistance = dangerCm * 40;
                 let danger = false;
                 if(this.balls.length > 0) {
@@ -5320,7 +5492,7 @@ function updateDangerDistanceLabel() {
     const input=document.getElementById('cfg-danger-distance-cm');
     const out=document.getElementById('danger-distance-value');
     if(!input || !out) return;
-    const v=Math.max(3,Math.min(7,parseFloat(input.value)||5));
+    const v=Math.max(3,Math.min(9,parseFloat(input.value)||6));
     input.value=String(v); out.textContent=`${v} см`;
 }
 
@@ -5433,8 +5605,55 @@ const DEFAULT_ASSET_URLS = {
     "special-time-sub": "https://img.genially.com/67961b32a116fb001568a75e/0f361898-6196-4f36-a249-7a4d108c65e1.png",
     "special-compress": "https://img.genially.com/67961b32a116fb001568a75e/4a5de6a9-51e5-46fe-96ba-27f2a4b4bc42.png",
     "special-stretch": "https://img.genially.com/67961b32a116fb001568a75e/8b5b37fe-0c4d-452e-8ed2-b9a2a71056de.png",
-    "special-add-ball": "https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png"
+    "special-add-ball": "https://img.genially.com/67961b32a116fb001568a75e/68260abf-26d0-4ddb-86e7-fc92f557c929.png",
+    "special-neutral": "https://img.genially.com/67961b32a116fb001568a75e/cffd5188-57f3-4ba3-857f-2767b8fb2383.png"
 };
+
+// Stage 47. All built-in ball collections are hosted: only short HTTPS URLs go into a project.
+const BALL_COLLECTION_BASE = 'https://oksanabashlykova10-eng.github.io/Maze-Upgraded-Editor/assets/balls/';
+const NORMAL_BALL_COLORS = ['red','blue','green','yellow','purple','orange'];
+const SPECIAL_BALL_BINDINGS = {question:'special-question',electric:'special-electric',life_add:'special-life',time_add:'special-time-add',time_sub:'special-time-sub',compress:'special-compress',stretch:'special-stretch',add_ball:'special-add-ball',neutral:'special-neutral'};
+const BALL_COLLECTION_FOLDERS = {magic:'magic_set_01',candy:'candy_set_01',yarn:'yarn_set_01',space:'space_set_01'};
+function getNormalBallCollection(id) {
+    if(!BALL_COLLECTION_FOLDERS[id]) return Object.fromEntries(NORMAL_BALL_COLORS.map(c=>[c,DEFAULT_ASSET_URLS['ball-'+c]]));
+    const folder=BALL_COLLECTION_FOLDERS[id];
+    const prefix=id==='yarn'?'ball_yarn':'ball_'+id;
+    return Object.fromEntries(NORMAL_BALL_COLORS.map(color=>{
+        // Six colors in the engine. Candy/Yarn use a pink image for the orange slot.
+        const filenameColor=(color==='orange' && (id==='candy'||id==='yarn'))?'pink':color;
+        // GitHub: yarn_purple.png is deliberately named without the 'ball_' prefix.
+        const filename=(id==='yarn' && color==='purple')?'yarn_purple.png':`${prefix}_${filenameColor}.png`;
+        return [color,BALL_COLLECTION_BASE+folder+'/'+filename];
+    }));
+}
+function getSpecialBallCollection(id) {
+    if(id!=='midnight') return Object.fromEntries(Object.entries(SPECIAL_BALL_BINDINGS).map(([key,asset])=>[key,DEFAULT_ASSET_URLS[asset]]));
+    const files={question:'question',electric:'lightning',life_add:'life',time_add:'time_plus',time_sub:'time_minus',compress:'compress',stretch:'stretch',add_ball:'plus2',neutral:'neutral'};
+    // Actual repository layout: the 9 PNGs currently sit in assets/balls/ itself.
+    return Object.fromEntries(Object.entries(files).map(([key,name])=>[key,BALL_COLLECTION_BASE+'ball_special_'+name+'.png']));
+}
+function captureBallImagesFromEditor() {return Object.fromEntries(NORMAL_BALL_COLORS.map(c=>[c,document.getElementById('cfg-ball-'+c)?.value || DEFAULT_ASSET_URLS['ball-'+c]]));}
+function captureSpecialBallImagesFromEditor() {return Object.fromEntries(Object.entries(SPECIAL_BALL_BINDINGS).map(([key,asset])=>[key,document.getElementById('cfg-'+asset)?.value || DEFAULT_ASSET_URLS[asset]]));}
+function showLevelBallImagesInEditor(level) {
+    for(const [color,url] of Object.entries(level.ballImages||{})) {const key='ball-'+color;const meta=ASSET_META[key];if(!meta)continue;const input=document.getElementById(meta.input),preview=document.getElementById(meta.preview);if(input)input.value=url;if(preview)preview.src=url;}
+    for(const [kind,url] of Object.entries(level.specialBallImages||{})) {const key=SPECIAL_BALL_BINDINGS[kind],meta=ASSET_META[key];if(!meta)continue;const input=document.getElementById(meta.input),preview=document.getElementById(meta.preview);if(input)input.value=url;if(preview)preview.src=url;}
+    const n=document.getElementById('ball-set-select'),sp=document.getElementById('special-set-select');
+    if(n)n.value=level.ballSetId||'classic';if(sp)sp.value=level.specialSetId||'classic';
+}
+function applyBallSet(id) {
+    const level=ensureLevelDesignState(activeLevelIndex);if(!level)return;
+    level.ballSetId=BALL_COLLECTION_FOLDERS[id]?id:(id==='custom'?'custom':'classic');
+    if(level.ballSetId!=='custom')level.ballImages=getNormalBallCollection(level.ballSetId);
+    showLevelBallImagesInEditor(level);updateProjectMediaStatus();scheduleAutosave();
+    showEditorToast('Набор обычных шаров выбран для уровня '+(activeLevelIndex+1)+'.');
+}
+function applySpecialBallSet(id) {
+    const level=ensureLevelDesignState(activeLevelIndex);if(!level)return;
+    level.specialSetId=id==='midnight'?'midnight':(id==='custom'?'custom':'classic');
+    if(level.specialSetId!=='custom')level.specialBallImages=getSpecialBallCollection(level.specialSetId);
+    showLevelBallImagesInEditor(level);updateProjectMediaStatus();scheduleAutosave();
+    showEditorToast('Набор особенных шаров выбран для уровня '+(activeLevelIndex+1)+'.');
+}
 
 const ASSET_META = {
     shooter: { input: "cfg-img-shooter", preview: "asset-preview-shooter", warning: "asset-warning-shooter" },
@@ -5455,7 +5674,8 @@ const ASSET_META = {
     "special-time-sub": { input: "cfg-special-time-sub", preview: "asset-preview-special-time-sub", warning: "asset-warning-special-time-sub" },
     "special-compress": { input: "cfg-special-compress", preview: "asset-preview-special-compress", warning: "asset-warning-special-compress" },
     "special-stretch": { input: "cfg-special-stretch", preview: "asset-preview-special-stretch", warning: "asset-warning-special-stretch" },
-    "special-add-ball": { input: "cfg-special-add-ball", preview: "asset-preview-special-add-ball", warning: "asset-warning-special-add-ball" }
+    "special-add-ball": { input: "cfg-special-add-ball", preview: "asset-preview-special-add-ball", warning: "asset-warning-special-add-ball" },
+    "special-neutral": { input: "cfg-special-neutral", preview: "asset-preview-special-neutral", warning: "asset-warning-special-neutral" }
 };
 
 let pendingAssetKey = null;
@@ -5483,9 +5703,19 @@ function setAssetValue(key, value) {
     const preview = document.getElementById(meta.preview);
     if (input) input.value = value;
     if (preview) preview.src = value;
-    if(!levelDesignLoading && levels?.[activeLevelIndex]) {
-        if(key==='shooter') levels[activeLevelIndex].shooter=value;
-        if(key==='mask') levels[activeLevelIndex].finish=value;
+    if(!levelDesignLoading && !isApplyingProject && levels?.[activeLevelIndex]) {
+        const level=levels[activeLevelIndex];
+        if(key==='shooter') level.shooter=value;
+        if(key==='mask') level.finish=value;
+        if(key.startsWith('ball-')) {
+            level.ballImages=level.ballImages||getNormalBallCollection('classic');
+            level.ballImages[key.substring(5)]=value;level.ballSetId='custom';
+            const selector=document.getElementById('ball-set-select');if(selector)selector.value='custom';
+        }
+        if(key.startsWith('special-')) {
+            const kind=Object.keys(SPECIAL_BALL_BINDINGS).find(k=>SPECIAL_BALL_BINDINGS[k]===key);
+            if(kind){level.specialBallImages=level.specialBallImages||getSpecialBallCollection('classic');level.specialBallImages[kind]=value;level.specialSetId='custom';const selector=document.getElementById('special-set-select');if(selector)selector.value='custom';}
+        }
     }
     updatePreview();
     updateScreensPreview();
@@ -5608,6 +5838,11 @@ function closeGuideModal(id){
     const modal=document.getElementById(id);
     if(modal) modal.style.display='none';
 }
+function copyAiQuestionGuide(){
+    const field=document.getElementById('ai-question-guide-text');
+    if(!field) return;
+    copyTextToClipboard(field.value, 'Инструкция для ИИ скопирована.');
+}
 
 const imageUrlCheckTimers={};
 function resetImageUrlCheck(statusId,previewId,message='Вставьте HTTPS-ссылку.'){
@@ -5687,7 +5922,7 @@ async function requireValidImageUrl(inputId,statusId,previewId){
 // Close help windows with Escape without affecting the game itself.
 document.addEventListener('keydown',e=>{
     if(e.key!=='Escape') return;
-    ['rules-guide-modal','recommendations-guide-modal'].forEach(id=>{
+    ['rules-guide-modal','recommendations-guide-modal','latex-cheatsheet-modal'].forEach(id=>{
         const modal=document.getElementById(id);
         if(modal?.style.display==='flex') modal.style.display='none';
     });
@@ -5709,13 +5944,13 @@ function isBuiltInEditorAssetUrl(url){
     const value=String(url||'').trim();
     if(!value) return false;
     if(isBuiltInPresetBackgroundUrl(value) || isBuiltInPresetObjectUrl(value)) return true;
-    return Object.values(DEFAULT_ASSET_URLS||{}).includes(value);
+    return Object.values(DEFAULT_ASSET_URLS||{}).includes(value) || value.startsWith(BALL_COLLECTION_BASE);
 }
 function showProtectedPresetUrlState(statusId,previewId,current,message){
     const status=document.getElementById(statusId);
     const preview=document.getElementById(previewId);
     if(status){
-        status.textContent=message || ' ';
+        status.textContent=message || '✓ Сейчас используется встроенное изображение пресета. Его служебный адрес скрыт.';
         status.className='url-check-status ok';
     }
     if(preview && current){
@@ -5742,7 +5977,7 @@ function openAssetUrlDialog(key) {
             'asset-url-status',
             'asset-url-preview',
             current,
-            ' '
+            '✓ Используется встроенное изображение редактора. Служебный адрес скрыт. Вставьте свою HTTPS-ссылку, если хотите заменить его.'
         );
     } else if(urlInput.value) {
         scheduleImageUrlCheck('asset-url-input','asset-url-status','asset-url-preview');
@@ -5770,17 +6005,10 @@ async function saveAssetUrl() {
 }
 
 function applyBallPreset(name, button) {
-    if (name !== "classic") return;
-    [
-        "ball-red", "ball-blue", "ball-green", "ball-yellow", "ball-purple", "ball-orange",
-        "special-question", "special-electric", "special-life", "special-time-add", "special-time-sub",
-        "special-compress", "special-stretch", "special-add-ball"
-    ].forEach(key => {
-        setAssetValue(key, DEFAULT_ASSET_URLS[key]);
-        showAssetWarning(key, "");
-    });
-    document.querySelectorAll(".preset-chip").forEach(el => el.classList.remove("active"));
-    if (button) button.classList.add("active");
+    // Compatibility with old links/buttons: resets both groups on the active level.
+    if(name!=='classic')return;
+    applyBallSet('classic');
+    applySpecialBallSet('classic');
 }
 
 
@@ -5836,7 +6064,7 @@ function normalizePathData(path) {
 function addLevel() {
     levelIdCounter += 1;
     const themeFields=getAutoThemeFields('classic');
-    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, themeId:'classic', themeFields, screens:makeThemedLevelScreens('classic',themeFields,makeDefaultScreens({}),{}), shooter:LEVEL_PRESET_META[0].shooter, finish:LEVEL_PRESET_META[0].finish, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout() });
+    levels.push({ id: `level-${levelIdCounter}`, bg: PRESETS[0], presetIndex:0, themeId:'classic', themeFields, screens:makeThemedLevelScreens('classic',themeFields,makeDefaultScreens({}),{}), shooter:LEVEL_PRESET_META[0].shooter, finish:LEVEL_PRESET_META[0].finish, path: BUILTIN_PATH_PRESETS[0].map(p => ({...p})), qCount: 5, ballSetup: makeDefaultBallSetup(), objectLayout: makeDefaultObjectLayout(), ballSetId:'classic',specialSetId:'classic',ballImages:getNormalBallCollection('classic'),specialBallImages:getSpecialBallCollection('classic') });
     renderLevels(); updateQLevelSelect(); updatePreviewBgSelect(); updatePathLevelSelect(); renderQuestions();
 }
 
@@ -6118,7 +6346,7 @@ function openLevelBgUrlDialog(index) {
             'level-bg-url-status',
             'level-bg-url-preview',
             current,
-            ' '
+            '✓ Сейчас используется встроенный фон пресета. Его служебный адрес скрыт. Вставьте свою HTTPS-ссылку, чтобы заменить фон.'
         );
     } else if(input.value) {
         scheduleImageUrlCheck('level-bg-url-input','level-bg-url-status','level-bg-url-preview');
@@ -6662,7 +6890,7 @@ function updateQuestionImageAdvice(){
 }
 function collectProjectMediaSources(){
     const set=new Set();Object.values(ASSET_META).forEach(meta=>{const v=document.getElementById(meta.input)?.value;if(v)set.add(v);});
-    levels.forEach(l=>[l.bg,l.shooter,l.finish].forEach(v=>{if(v)set.add(v);}));questionsDB.forEach(q=>{if(q.img)set.add(q.img);});return [...set];
+    levels.forEach(l=>{[l.bg,l.shooter,l.finish,...Object.values(l.ballImages||{}),...Object.values(l.specialBallImages||{})].forEach(v=>{if(v)set.add(v);});});questionsDB.forEach(q=>{if(q.img)set.add(q.img);});return [...set];
 }
 function updateProjectMediaStatus(){
     const out=document.getElementById('project-media-status');if(!out)return;
@@ -6696,67 +6924,10 @@ async function copyTextToClipboard(textValue, successMessage='Скопирова
     }
 }
 function copyLatexSnippet(snippet){ copyTextToClipboard(snippet, `Скопировано: ${snippet}`); }
-function copyLatexGuide(){ copyTextToClipboard(LATEX_AI_GUIDE, 'Подсказка по LaTeX скопирована.'); }
-function copyQuestionAiPrompt(){ copyTextToClipboard(QUESTION_AI_GUIDE, 'Подсказка для ИИ скопирована.'); }
-const LATEX_AI_GUIDE = `Блок 1: Интеграция математических формул (LaTeX)
-
-- UI Редактора: Добавь на панель настроек визуальный блок с чекбоксом «Включить математические формулы».
-- Шпаргалка для пользователя: Сразу под чекбоксом создай мини-панель с кнопками популярных символов (квадратный корень, дроби, степени и т.д.). Настрой их так, чтобы при клике на кнопку код формулы мгновенно копировался в буфер обмена пользователя. Добавь текстовую подсказку, что формулы нужно оборачивать в знаки доллара.
-- Логика генератора: Если чекбокс «Включить формулы» активен, генератор должен динамически встраивать актуальный CDN-скрипт библиотеки MathJax в <head> итоговой игры. Если выключен — скрипт добавляться не должен.
-- Рендеринг в игре: Добавь в игровую логику вызов функции MathJax.typesetPromise() сразу после того, как текст нового вопроса вставляется в DOM.`;
-const QUESTION_AI_GUIDE = `1. Один правильный ответ:
-
-До знаков // напишите задание, после // — предложение или вопрос. Первый вариант после знака | является правильным.
-
-[CHOICE] Choose the correct answer. // I ___ tired. | am | is | are
-
-2. Вписать слово:
-
-До знаков // напишите задание, после // — предложение с пропуском. В круглых скобках укажите все допустимые варианты ответа через запятую.
-
-[INPUT] Complete the sentence. // _______ is the capital of Great Britain. (London, LONDON)
-
-3. Собрать предложение:
-
-[ORDER] Put the words in the correct order | The cat is sleeping.
-
-4. Выбрать несколько ответов:
-
-[MULTI] Choose irregular verbs | come, run, sleep | skate | jump | clean
-
-5. Соединить пары:
-
-Можно создать от 2 до 10 пар. После задания добавляйте каждую новую пару через знак |, а слова внутри пары соединяйте знаком =.
-
-[PAIRS] Match the words | cat = кошка | dog = собака | bird = птица
-
-Правая колонка автоматически перемешивается так, чтобы готовые пары не стояли напротив друг друга.
-
-6. Распределить по категориям:
-
-Можно создать от 2 до 4 категорий. Каждую новую категорию добавляйте через знак |. После названия категории поставьте двоеточие, а слова внутри категории разделяйте запятыми.
-
-[CATEGORIES] Sort the words into the correct boxes. | Countable: apple, egg | Uncountable: milk, bread
-[CATEGORIES] Sort the verbs by -ed pronunciation. | /t/: helped, washed | /d/: played, cleaned | /ɪd/: wanted, started
-
-Все слова в верхнем банке автоматически перемешиваются при каждом открытии задания.
-
-7. Найти ошибку:
-
-[ERROR] Find the mistake. // She go to school every day. | go
-
-8. Заполнить пропуски словами из рамки:
-
-[GAPS] Fill the gaps using Present Simple. // I ___ to school and ___ football. | go | play
-
-До знаков // обязательно напишите задание. После // — предложение с пропусками. Затем укажите по одному точному слову для каждого пропуска.
-
-9. Открытый вопрос (Open-ended question):
-
-[OPEN] What is the best superpower to have and why?
-
-Автоматической проверки нет. После устного ответа ученик нажимает кнопку «Далее», и игра продолжается. При необходимости можно отдельно написать задание до знаков //: [OPEN] Discuss and explain your opinion. // What is the best superpower to have and why?`;
-
+function copyLatexFromButton(button) {
+    if (!button) return;
+    copyTextToClipboard(button.dataset.copyLatex || '', 'Формула LaTeX скопирована.');
+}
 function updatePreviewBgSelect(preferredIndex = null) {
     const sel = document.getElementById('preview-bg-sel');
     const previous = preferredIndex !== null ? String(preferredIndex) : String(activeLevelIndex);
@@ -6871,7 +7042,7 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
         setFieldValue('project-name',snapshot.projectName || 'Maze Trap Project');
         setFieldValue('cfg-lang',cfg.lang || 'ru'); setFieldValue('cfg-lives',cfg.lives ?? 3); setFieldValue('cfg-time',cfg.timerStart ?? 120); setFieldValue('cfg-pause-timer-questions',cfg.pauseTimerOnQuestions !== false); setFieldValue('cfg-danger-distance-cm',cfg.dangerDistanceCm ?? 6); setFieldValue('cfg-speed',cfg.speed ?? 1.2); setFieldValue('cfg-neon',cfg.neonEnabled !== false); setFieldValue('cfg-random-questions',cfg.randomQuestions !== false); setFieldValue('cfg-math-enabled',!!cfg.mathEnabled); setFieldValue('cfg-prog-color',cfg.progColor || '#00ff66');
         setFieldValue('cfg-prompt-font',cfg.promptFont); const migratedPromptColor=(!cfg.promptColor || String(cfg.promptColor).toLowerCase()==='#b8bbc5') ? '#39ff14' : cfg.promptColor; setFieldValue('cfg-prompt-color',migratedPromptColor); setFieldValue('cfg-prompt-size',parseFloat(cfg.promptSize)||24); setFieldValue('cfg-q-font',cfg.qFont || cfg.fontFamily); setFieldValue('cfg-q-color',cfg.qColor); setFieldValue('cfg-q-size',parseFloat(cfg.qSize)||32); setFieldValue('cfg-a-font',cfg.aFont); setFieldValue('cfg-a-color',cfg.aColor); setFieldValue('cfg-a-size',parseFloat(cfg.aSize)||26); setFieldValue('cfg-a-bg',cfg.aBg);
-        const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball};
+        const assetValues={shooter:cfg.imgShooter,mask:cfg.imgMask,heart:cfg.imgHeart,clock:cfg.imgClock,score:cfg.imgScore,'ball-red':cfg.ballImages?.red,'ball-blue':cfg.ballImages?.blue,'ball-green':cfg.ballImages?.green,'ball-yellow':cfg.ballImages?.yellow,'ball-purple':cfg.ballImages?.purple,'ball-orange':cfg.ballImages?.orange,'special-question':cfg.specialBallImages?.question,'special-electric':cfg.specialBallImages?.electric,'special-life':cfg.specialBallImages?.life_add,'special-time-add':cfg.specialBallImages?.time_add,'special-time-sub':cfg.specialBallImages?.time_sub,'special-compress':cfg.specialBallImages?.compress,'special-stretch':cfg.specialBallImages?.stretch,'special-add-ball':cfg.specialBallImages?.add_ball,'special-neutral':cfg.specialBallImages?.neutral};
         Object.entries(assetValues).forEach(([key,value])=>{ if(value) setAssetValue(key,value); });
         levels=(cfg.levels||[]).map((l,i)=>{
             const presetIndex=Number.isInteger(l.presetIndex)?l.presetIndex:PRESETS.indexOf(l.bg);
@@ -6881,9 +7052,9 @@ function applyProjectSnapshot(snapshot,{fromAutosave=false}={}) {
             const screens=l.screens
                 ? mergeScreensConfig(l.screens,cfg)
                 : makeThemedLevelScreens(themeId,themeFields,cfg.screens||makeDefaultScreens(cfg),cfg);
-            return {id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex,themeId,themeFields,screens,shooter:l.shooter||meta.shooter||cfg.imgShooter||'',finish:l.finish||meta.finish||cfg.imgMask||'',path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup),objectLayout:normalizeObjectLayout(l.objectLayout)};
+            return {id:l.id||`level-${i+1}`,bg:l.bg||PRESETS[0],presetIndex,themeId,themeFields,screens,shooter:l.shooter||meta.shooter||cfg.imgShooter||'',finish:l.finish||meta.finish||cfg.imgMask||'',path:normalizePathData(l.path),qCount:Math.max(4,Math.min(20,parseInt(l.qCount)||4)),ballSetup:normalizeBallSetup(l.ballSetup),objectLayout:normalizeObjectLayout(l.objectLayout),ballSetId:l.ballSetId||'classic',specialSetId:l.specialSetId||'classic',ballImages:{...getNormalBallCollection(l.ballSetId||'classic'),...(l.ballImages||cfg.ballImages||{})},specialBallImages:{...getSpecialBallCollection(l.specialSetId||'classic'),...(l.specialBallImages||cfg.specialBallImages||{})}};
         });
-        if(!levels.length){const tf=getAutoThemeFields('classic');levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,themeId:'classic',themeFields:tf,screens:makeThemedLevelScreens('classic',tf,cfg.screens||makeDefaultScreens(cfg),cfg),shooter:LEVEL_PRESET_META[0].shooter,finish:LEVEL_PRESET_META[0].finish,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout()}];}
+        if(!levels.length){const tf=getAutoThemeFields('classic');levels=[{id:'level-1',bg:PRESETS[0],presetIndex:0,themeId:'classic',themeFields:tf,screens:makeThemedLevelScreens('classic',tf,cfg.screens||makeDefaultScreens(cfg),cfg),shooter:LEVEL_PRESET_META[0].shooter,finish:LEVEL_PRESET_META[0].finish,path:BUILTIN_PATH_PRESETS[0].map(p=>({...p})),qCount:5,ballSetup:makeDefaultBallSetup(),objectLayout:makeDefaultObjectLayout(),ballSetId:'classic',specialSetId:'classic',ballImages:{...getNormalBallCollection('classic'),...(cfg.ballImages||{})},specialBallImages:{...getSpecialBallCollection('classic'),...(cfg.specialBallImages||{})}}];}
         levelIdCounter=Math.max(levels.length,...levels.map(l=>parseInt(String(l.id||'').replace(/\D/g,''))||0));
         globalStartSettings=normalizeGlobalStartSettings(cfg.globalStart||null,cfg.screens||null);
         questionsDB=safeClone(cfg.questions||[]); normalizeQuestionDB();
@@ -6944,7 +7115,7 @@ function buildCurrentGameConfig(validate=true) {
 
     const cleanLevels = levels.map((l,i) => {
         const level=ensureLevelDesignState(i);
-        return { id:level.id, bg:level.bg, presetIndex:getLevelPresetIndex(level), themeId:getLevelThemeId(level), themeFields:Object.assign({},getAutoThemeFields(getLevelThemeId(level)),level.themeFields||{}), screens:mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{}), shooter:getLevelPresetAsset(level,'shooter'), finish:getLevelPresetAsset(level,'finish'), path:normalizePathData(level.path), qCount:level.qCount, ballSetup:normalizeBallSetup(level.ballSetup), objectLayout:normalizeObjectLayout(level.objectLayout) };
+        return { id:level.id, bg:level.bg, presetIndex:getLevelPresetIndex(level), themeId:getLevelThemeId(level), themeFields:Object.assign({},getAutoThemeFields(getLevelThemeId(level)),level.themeFields||{}), screens:mergeScreensConfig(level.screens||makeThemedLevelScreens(getLevelThemeId(level),level.themeFields),{}), shooter:getLevelPresetAsset(level,'shooter'), finish:getLevelPresetAsset(level,'finish'), path:normalizePathData(level.path), qCount:level.qCount, ballSetup:normalizeBallSetup(level.ballSetup), objectLayout:normalizeObjectLayout(level.objectLayout), ballSetId:level.ballSetId||'classic',specialSetId:level.specialSetId||'classic',ballImages:{...level.ballImages},specialBallImages:{...level.specialBallImages} };
     });
     const screens = getScreensConfigFromEditor();
     return {
@@ -6952,7 +7123,7 @@ function buildCurrentGameConfig(validate=true) {
         lives: parseInt(document.getElementById('cfg-lives').value) || 3,
         timerStart: parseInt(document.getElementById('cfg-time').value) || 120,
         pauseTimerOnQuestions: document.getElementById('cfg-pause-timer-questions')?.checked !== false,
-        dangerDistanceCm: Math.max(3, Math.min(10, parseFloat(document.getElementById('cfg-danger-distance-cm')?.value) || 6)),
+        dangerDistanceCm: Math.max(3, Math.min(9, parseFloat(document.getElementById('cfg-danger-distance-cm')?.value) || 6)),
         speed: parseFloat(document.getElementById('cfg-speed').value) || 1.2,
         neonEnabled: document.getElementById('cfg-neon').checked,
         fontFamily: document.getElementById('cfg-q-font').value,
@@ -6999,7 +7170,8 @@ function buildCurrentGameConfig(validate=true) {
             question: document.getElementById('cfg-special-question').value, electric: document.getElementById('cfg-special-electric').value,
             life_add: document.getElementById('cfg-special-life').value, time_add: document.getElementById('cfg-special-time-add').value,
             time_sub: document.getElementById('cfg-special-time-sub').value, compress: document.getElementById('cfg-special-compress').value,
-            stretch: document.getElementById('cfg-special-stretch').value, add_ball: document.getElementById('cfg-special-add-ball').value
+            stretch: document.getElementById('cfg-special-stretch').value, add_ball: document.getElementById('cfg-special-add-ball').value,
+            neutral: document.getElementById('cfg-special-neutral').value
         },
         levels: cleanLevels,
         activeLevelIndex,
@@ -7148,6 +7320,8 @@ async function makeHostedRuntimeConfig(config,aggressive=false){
         level.bg=await optimizeHostedImageValue(level.bg,profiles.background,cache,stats);
         level.shooter=await optimizeHostedImageValue(level.shooter,profiles.object,cache,stats);
         level.finish=await optimizeHostedImageValue(level.finish,profiles.object,cache,stats);
+        for(const key of Object.keys(level.ballImages||{}))level.ballImages[key]=await optimizeHostedImageValue(level.ballImages[key],profiles.icon,cache,stats);
+        for(const key of Object.keys(level.specialBallImages||{}))level.specialBallImages[key]=await optimizeHostedImageValue(level.specialBallImages[key],profiles.icon,cache,stats);
 
         // Keep the small start-screen object in the hosted config.
         // It contains only text/style settings, adds almost no weight, and
