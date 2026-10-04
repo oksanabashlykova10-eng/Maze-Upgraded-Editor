@@ -1342,6 +1342,24 @@
                 </div>
             </section>
 
+
+            <section class="panel-section" id="automatic-themes-panel">
+                <h3 class="section-title">✦ Автоматические темы оформления</h3>
+                <p class="section-note">Только шрифты, цвета, неон и оформление экранов текущего уровня. Фон, траектория, пушка, финиш и набор шаров не меняются. Это НЕ пресеты.</p>
+                <div class="field"><label for="auto-theme-select">Тема оформления уровня</label>
+                    <select id="auto-theme-select" onchange="applySelectedAutoTheme(this.value)">
+                        <option value="classic">◇ Classic</option>
+                        <option value="halloween">🎃 Halloween</option>
+                        <option value="newyear">❄ New Year</option>
+                        <option value="valentine">♥ Valentine</option>
+                        <option value="space">✦ Space</option>
+                        <option value="candy">🍬 Candy</option>
+                        <option value="sea">🌊 Sea</option>
+                    </select>
+                </div>
+                <p class="section-note">При смене уровня выбранная тема восстанавливается автоматически. Позже можно вручную изменить любые цвета и шрифты.</p>
+            </section>
+
             <input type="hidden" id="cfg-ui-color" value="#39ff14">
 
             <section class="panel-section">
@@ -3140,6 +3158,21 @@ function applyAutoTheme(themeId, options = {}) {
     applyThemeFieldsToEditor(getAutoThemeFields(themeId),{silentToast:options.silentToast,label:pack.label});
     return true;
 }
+// Stage 53: explicit appearance theme independent of background/path presets.
+function applySelectedAutoTheme(themeId) {
+    if (!AUTO_THEME_PACKS[themeId] || !levels[activeLevelIndex]) return;
+    saveActiveLevelDesignFromEditor();
+    const level = levels[activeLevelIndex];
+    const oldScreens = mergeScreensConfig(level.screens || makeDefaultScreens({}), {});
+    level.themeId = themeId;
+    level.themeFields = getAutoThemeFields(themeId);
+    level.screens = makeThemedLevelScreens(themeId, level.themeFields, oldScreens, {});
+    loadActiveLevelDesignToEditor();
+    renderLevels();
+    scheduleAutosave();
+    showEditorToast(`Тема оформления «${AUTO_THEME_PACKS[themeId].label}» применена к уровню ${activeLevelIndex+1}; фон и траектория сохранены.`);
+}
+
 function captureThemeFieldsFromEditor(baseFields={}) {
     const out=Object.assign({},baseFields||{});
     getThemeStyleFieldIds().forEach(id=>{
@@ -3668,6 +3701,7 @@ function getLevelDisplayTheme(level) {
     const meta=LEVEL_PRESET_META[idx] || {};
     const themeId=getLevelThemeId(level);
     const pack=AUTO_THEME_PACKS[themeId];
+    if (pack?.label && themeId !== getThemeIdForPresetIndex(idx)) return pack.label;
     if (meta.label) return meta.label;
     if (pack?.label) return pack.label;
     return themeId==='classic' ? '◇ Classic' : themeId;
@@ -3733,6 +3767,8 @@ function loadActiveLevelDesignToEditor() {
     try {
         applyScreensToEditor(level.screens,{includeStart:false});
         applyThemeFieldsToEditor(level.themeFields,{silentToast:true});
+        const themeSelect=document.getElementById('auto-theme-select');
+        if(themeSelect) themeSelect.value=getLevelThemeId(level);
         const shooter=getLevelPresetAsset(level,'shooter');
         const finish=getLevelPresetAsset(level,'finish');
         if(shooter) setAssetValue('shooter',shooter);
