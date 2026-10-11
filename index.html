@@ -268,30 +268,6 @@
 
         /* SCREENS TAB */
         .screen-section-card { border-color: rgba(255,158,0,.28); }
-        .screen-scope-card {
-            border:1px solid #2b3340;
-            background:linear-gradient(135deg,rgba(83,231,255,.08),rgba(155,124,255,.035) 58%,#0b0c11);
-        }
-        .screen-scope-title {
-            display:flex; align-items:center; justify-content:space-between; gap:8px;
-            color:#fff; font-size:10px; font-weight:900; letter-spacing:.35px; text-transform:uppercase;
-        }
-        .screen-scope-badge {
-            flex:0 0 auto; padding:4px 7px; border-radius:999px; border:1px solid #53e7ff;
-            color:#bff7ff; font-size:7.8px; font-weight:900; box-shadow:0 0 10px rgba(83,231,255,.16);
-        }
-        .start-mode-card {
-            margin-top:9px; padding:9px; border-radius:8px; border:1px solid #303643; background:#0b0d13;
-        }
-        .start-mode-note { margin-top:7px; color:#949baa; font-size:8.8px; line-height:1.45; }
-        .global-start-auto-note {
-            margin:8px 0 10px; padding:8px 9px; border:1px solid rgba(83,231,255,.25);
-            border-radius:7px; background:rgba(83,231,255,.055); color:#b9eefa; font-size:8.8px; line-height:1.45;
-        }
-        .global-start-custom-controls.auto-locked { opacity:.55; }
-        .global-start-custom-controls.auto-locked input,
-        .global-start-custom-controls.auto-locked select,
-        .global-start-custom-controls.auto-locked textarea { cursor:not-allowed; }
         .level-screen-scope {
             margin:2px 0 7px; padding:8px 10px; border:1px solid rgba(255,211,78,.22);
             border-radius:8px; background:rgba(255,211,78,.045); color:#ffe89b;
@@ -1513,27 +1489,8 @@
                 <p class="section-note">Системные надписи игры переводятся автоматически. Пользовательские заголовки и вопросы не переводятся.</p>
             </section>
 
-            <section class="panel-section screen-scope-card">
-                <div class="screen-scope-title">
-                    <span>🌐 ОБЩИЙ ЭКРАН ИГРЫ</span>
-                    <span class="screen-scope-badge">1 НА ВСЮ ИГРУ</span>
-                </div>
-                <div class="start-mode-card">
-                    <div class="field" style="margin:0;">
-                        <label>Стиль стартового экрана</label>
-                        <select id="global-start-mode" onchange="handleGlobalStartModeChange()">
-                            <option value="auto">Авто · стиль Уровня 1</option>
-                            <option value="custom">Настроить отдельно</option>
-                        </select>
-                    </div>
-                    <div class="start-mode-note" id="global-start-mode-note">По умолчанию старт автоматически повторяет визуальный стиль Уровня 1.</div>
-                </div>
-            </section>
-
             <section class="panel-section screen-section-card" id="global-start-editor-section" data-preview-target="start">
                 <h3 class="section-title">▶ Экран старта · общий для всей игры</h3>
-                <div class="global-start-auto-note" id="global-start-auto-note">Авто: старт наследует стиль Уровня 1.</div>
-                <div class="global-start-custom-controls" id="global-start-custom-controls">
                     <div class="screen-subtitle">Затемнение стартового экрана</div>
                     <div class="color-picker-group"><span>Цвет затемнения</span><input type="color" id="global-start-overlay-bg" class="global-start-control" value="#000000"></div>
                     <div class="screen-range-row"><label>Прозрачность</label><input type="range" id="global-start-overlay-opacity" class="global-start-control" min="0" max="100" value="82"><span id="global-start-overlay-opacity-value">82%</span></div>
@@ -1571,7 +1528,6 @@
                     <div class="color-picker-group"><span>Фон кнопки</span><input type="color" id="screen-start-button-bg" class="global-start-control" value="#050509"></div>
                     <div class="color-picker-group"><span>Текст кнопки</span><input type="color" id="screen-start-button-color" class="global-start-control" value="#39ff14"></div>
                     <div class="color-picker-group"><span>Неон кнопки</span><input type="color" id="screen-start-button-neon" class="global-start-control" value="#39ff14"></div>
-                </div>
                 </div>
             </section>
 
@@ -3723,11 +3679,12 @@ let levels = [
 let activeLevelIndex = 0;
 let levelDesignLoading = false;
 
-// Start Screen is global: one screen for the whole game.
+// One global Start screen. The first level supplies the theme; only user-edited
+// fields are stored as overrides, so a new Level 1 theme updates untouched fields.
 let globalStartSettings = {
-    mode: 'auto',
-    customStart: null,
-    customOverlay: null
+    mode: 'linked',
+    customStart: {},
+    customOverlay: {}
 };
 
 function getLevelDisplayTheme(level) {
@@ -3952,28 +3909,52 @@ function getLevelOneStartBundle(){
     };
 }
 function normalizeGlobalStartSettings(raw=null,fallbackScreens=null){
-    const inherited=getLevelOneStartBundle();
     const source=raw&&typeof raw==='object'?raw:{};
-    const fallback=fallbackScreens?mergeScreensConfig(fallbackScreens,{}):null;
+    // Stage 53 Auto exported a full customStart snapshot even when unused.
+    // Discard that stale snapshot: Auto must keep inheriting Level 1.
+    if(source.mode==='auto'){
+        return {mode:'linked',customStart:{},customOverlay:{}};
+    }
+    // Legacy Custom settings must remain visible after loading older projects.
+    // New Stage 54 projects store only field-by-field overrides.
     return {
-        mode:source.mode==='custom'?'custom':'auto',
-        customStart:source.customStart
-            ? {...inherited.start,...source.customStart}
-            : {...inherited.start,...(fallback?fallback.start:{})},
-        customOverlay:source.customOverlay
-            ? {...inherited.overlay,...source.customOverlay}
-            : {...inherited.overlay,...(fallback?fallback.overlay:{})}
+        mode:'linked',
+        customStart:source.customStart && typeof source.customStart==='object' ? clonePlain(source.customStart) : {},
+        customOverlay:source.customOverlay && typeof source.customOverlay==='object' ? clonePlain(source.customOverlay) : {}
     };
 }
 function getResolvedGlobalStart(){
     const inherited=getLevelOneStartBundle();
-    if(globalStartSettings.mode!=='custom') return inherited;
     return {
         ...inherited,
         start:{...inherited.start,...(globalStartSettings.customStart||{})},
         overlay:{...inherited.overlay,...(globalStartSettings.customOverlay||{})}
     };
 }
+// Map each visible control to one Start property. Editing a title must never
+// accidentally freeze all the colours, fonts and sizes inherited from Level 1.
+const GLOBAL_START_FIELD_MAP = {
+    'screen-start-title':'title',
+    'screen-start-title-font':'titleFont',
+    'screen-start-title-size':'titleSize',
+    'screen-start-title-color':'titleColor',
+    'screen-start-title-neon':'titleNeon',
+    'screen-start-description':'description',
+    'screen-start-desc-font':'descFont',
+    'screen-start-desc-size':'descSize',
+    'screen-start-desc-color':'descColor',
+    'screen-start-companion-text':'companionText',
+    'screen-start-companion-font':'companionFont',
+    'screen-start-companion-size':'companionSize',
+    'screen-start-companion-color':'companionColor',
+    'screen-start-companion-neon':'companionNeon',
+    'screen-start-panel-bg':'panelBg',
+    'screen-start-panel-opacity':'panelOpacity',
+    'screen-start-button-text':'buttonText',
+    'screen-start-button-bg':'buttonBg',
+    'screen-start-button-color':'buttonColor',
+    'screen-start-button-neon':'buttonNeon'
+};
 function applyStartFieldsToEditor(startRaw){
     const start={...makeDefaultScreens({}).start,...(startRaw||{})};
     setFieldValue('screen-start-title',start.title);
@@ -4007,55 +3988,28 @@ function readGlobalStartFromEditor(){
         }
     };
 }
-function saveGlobalStartFromEditor(){
-    if(levelDesignLoading || globalStartSettings.mode!=='custom') return;
+function saveGlobalStartFromEditor(editedControl=null){
+    // Called without a control by export/snapshot for backward compatibility.
+    // Each input/change event already saves its individual edited property.
+    if(levelDesignLoading || !editedControl) return;
+    const id=editedControl.id;
     const data=readGlobalStartFromEditor();
-    globalStartSettings.customStart=data.start;
-    globalStartSettings.customOverlay=data.overlay;
-}
-function updateGlobalStartModeUI(){
-    const mode=globalStartSettings.mode==='custom'?'custom':'auto';
-    const select=document.getElementById('global-start-mode');
-    if(select) select.value=mode;
-    const wrap=document.getElementById('global-start-custom-controls');
-    const controls=wrap?.querySelectorAll('.global-start-control')||[];
-    controls.forEach(el=>{el.disabled=mode==='auto';});
-    wrap?.classList.toggle('auto-locked',mode==='auto');
-
-    const note=document.getElementById('global-start-auto-note');
-    const modeNote=document.getElementById('global-start-mode-note');
-    if(mode==='auto'){
-        if(note) note.innerHTML='<strong>Авто · Уровень 1.</strong> Заголовки, шрифты, цвета, подложка и затемнение автоматически берутся из оформления первого уровня.';
-        if(modeNote) modeNote.textContent='Поменяйте тему или оформление Уровня 1 — стартовый экран обновится вместе с ним.';
+    if(id==='global-start-overlay-bg'){
+        globalStartSettings.customOverlay.bgColor=data.overlay.bgColor;
+    } else if(id==='global-start-overlay-opacity'){
+        globalStartSettings.customOverlay.opacity=data.overlay.opacity;
     } else {
-        if(note) note.innerHTML='<strong>Отдельная настройка.</strong> Тексты, шрифты, цвета, подложка и затемнение старта не зависят от текущего уровня. Фон игры и декоративное изображение остаются от Уровня 1.';
-        if(modeNote) modeNote.textContent='Этот старт остаётся одним на всю игру, даже если уровни оформлены по-разному.';
+        const field=GLOBAL_START_FIELD_MAP[id];
+        if(!field) return;
+        globalStartSettings.customStart[field]=data.start[field];
     }
 }
 function loadGlobalStartToEditor(){
-    if(!globalStartSettings.customStart || !globalStartSettings.customOverlay){
-        globalStartSettings=normalizeGlobalStartSettings(globalStartSettings);
-    }
     const resolved=getResolvedGlobalStart();
     applyStartFieldsToEditor(resolved.start);
     setFieldValue('global-start-overlay-bg',resolved.overlay.bgColor);
     setOpacityField('global-start-overlay-opacity',resolved.overlay.opacity);
-    updateGlobalStartModeUI();
     updateScreenRangeLabels();
-}
-function handleGlobalStartModeChange(){
-    if(globalStartSettings.mode==='custom') saveGlobalStartFromEditor();
-    const next=document.getElementById('global-start-mode')?.value==='custom'?'custom':'auto';
-    if(next==='custom' && (!globalStartSettings.customStart || !globalStartSettings.customOverlay)){
-        const inherited=getLevelOneStartBundle();
-        globalStartSettings.customStart=clonePlain(inherited.start);
-        globalStartSettings.customOverlay=clonePlain(inherited.overlay);
-    }
-    globalStartSettings.mode=next;
-    loadGlobalStartToEditor();
-    updatePreview();
-    updateScreensPreview();
-    scheduleAutosave();
 }
 
 function initScreenFontSelects() {
@@ -4209,7 +4163,7 @@ function initScreenEditor() {
     document.querySelectorAll('.screen-control').forEach(el=>{
         const refresh=()=>{
             saveCurrentLevelThemeFieldsFromEditor();
-            if(globalStartSettings.mode==='auto') loadGlobalStartToEditor();
+            if(activeLevelIndex===0) loadGlobalStartToEditor();
             updatePreview();
             updateScreensPreview();
         };
@@ -4219,7 +4173,7 @@ function initScreenEditor() {
 
     document.querySelectorAll('.global-start-control').forEach(el=>{
         const refresh=()=>{
-            saveGlobalStartFromEditor();
+            saveGlobalStartFromEditor(el);
             updatePreview();
             updateScreensPreview();
             scheduleAutosave();
@@ -4340,7 +4294,7 @@ function resolveRuntimeGlobalStart(cfg){
     const firstScreens=mergeScreensConfig(first.screens || safeCfg.screens || {}, safeCfg);
     const defaults=makeDefaultScreens(safeCfg);
     const raw=safeCfg?.globalStart||{};
-    const mode=raw.mode==='custom'?'custom':'auto';
+    const mode=raw.mode==='custom' || raw.mode==='linked' ? 'custom' : 'auto';
 
     // Stage 44+: the editor exports the already-resolved Start Screen.
     // This guarantees that Genially/hosted HTML looks exactly like the
@@ -7220,9 +7174,8 @@ function buildCurrentGameConfig(validate=true) {
     saveGlobalStartFromEditor();
 
     // Freeze the exact Start Screen currently resolved in the editor.
-    // In Auto mode this is the visual style of Level 1. We serialize the
-    // resolved result itself instead of asking the hosted game to reconstruct
-    // it later from whatever level/theme happens to be active during export.
+    // Level 1 supplies the visual theme, and user-edited fields override only
+    // their own properties. Freeze this exact result for Genially export.
     const resolvedGlobalStart = getResolvedGlobalStart();
 
     const cleanLevels = levels.map((l,i) => {
@@ -7243,9 +7196,9 @@ function buildCurrentGameConfig(validate=true) {
         errorReview: screens.errorReview.enabled,
         screens,
         globalStart:{
-            mode:globalStartSettings.mode==='custom'?'custom':'auto',
-            customStart:clonePlain(globalStartSettings.customStart||getLevelOneStartBundle().start),
-            customOverlay:clonePlain(globalStartSettings.customOverlay||getLevelOneStartBundle().overlay),
+            mode:'linked',
+            customStart:clonePlain(globalStartSettings.customStart||{}),
+            customOverlay:clonePlain(globalStartSettings.customOverlay||{}),
 
             // Runtime snapshot: THIS is what preview shows right now.
             // It is independent from activeLevelIndex.
