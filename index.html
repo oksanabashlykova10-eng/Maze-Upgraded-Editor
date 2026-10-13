@@ -3814,6 +3814,20 @@ const I18N_SCREEN_EXTRAS = {
 };
 Object.entries(I18N_SCREEN_EXTRAS).forEach(([lang,extra]) => Object.assign(I18N[lang] || I18N.ru, extra));
 
+// Stage 55: gameplay alerts and built-in question fallbacks in every supported language.
+// These are interface strings, not teacher-authored text or editable screen captions.
+const I18N_GAMEPLAY_EXTRAS = {
+    ru: { flashMatch:'СОВПАДЕНИЕ!', flashCombo:'СЕРИЯ x{count}', flashZap:'РАЗРЯД!', noQuestionsConfigured:'Вопросы не добавлены.', openAnswer:'Открытый ответ' },
+    en: { flashMatch:'MATCH!', flashCombo:'COMBO x{count}', flashZap:'ZAP!', noQuestionsConfigured:'No questions configured.', openAnswer:'Open answer' },
+    de: { flashMatch:'PASSEND!', flashCombo:'KOMBO x{count}', flashZap:'BLITZ!', noQuestionsConfigured:'Keine Fragen vorhanden.', openAnswer:'Offene Antwort' },
+    fr: { flashMatch:'PAREIL !', flashCombo:'SÉRIE x{count}', flashZap:'ÉCLAIR !', noQuestionsConfigured:'Aucune question configurée.', openAnswer:'Réponse libre' },
+    kk: { flashMatch:'СӘЙКЕС!', flashCombo:'ҚАТАР x{count}', flashZap:'НАЙЗАҒАЙ!', noQuestionsConfigured:'Сұрақтар қосылмаған.', openAnswer:'Ашық жауап' },
+    es: { flashMatch:'¡COINCIDE!', flashCombo:'RACHA x{count}', flashZap:'¡RAYO!', noQuestionsConfigured:'No hay preguntas configuradas.', openAnswer:'Respuesta abierta' },
+    zh: { flashMatch:'匹配成功！', flashCombo:'连击 x{count}', flashZap:'闪电！', noQuestionsConfigured:'尚未设置题目。', openAnswer:'开放式回答' },
+    ko: { flashMatch:'색상 일치!', flashCombo:'콤보 x{count}', flashZap:'번개!', noQuestionsConfigured:'설정된 문제가 없습니다.', openAnswer:'서술형 답변' }
+};
+Object.entries(I18N_GAMEPLAY_EXTRAS).forEach(([lang,extra]) => Object.assign(I18N[lang] || I18N.ru, extra));
+
 function withLevel(textValue, levelNumber) {
     return String(textValue || '').replaceAll('{level}', String(levelNumber));
 }
@@ -4271,7 +4285,7 @@ function questionAppliesToLevel(q, level, levelIndex) {
     if (q.lvl !== undefined) return q.lvl === 'all' || parseInt(q.lvl) === levelIndex;
     return true;
 }
-function getCorrectAnswerSummary(q) {
+function getCorrectAnswerSummary(q, lang='ru') {
     if (!q) return '';
     const d = q.data || {};
     switch(q.type) {
@@ -4283,7 +4297,7 @@ function getCorrectAnswerSummary(q) {
         case 'categories': return (d.categories || []).map(c=>`${c.name}: ${c.items.join(', ')}`).join(' · ');
         case 'error': return d.errorWord || '';
         case 'gaps': return (d.answers || []).join(' | ');
-        case 'open': return 'Открытый ответ';
+        case 'open': return (I18N[lang] || I18N.ru).openAnswer;
         default: return '';
     }
 }
@@ -4601,7 +4615,7 @@ class GameCore {
         const availableQ = (this.cfg.questions || []).filter(q => questionAppliesToLevel(q, this.cfg.levels[lvlIdx], lvlIdx));
         this.levelQuestions = buildLevelQuestionSequence(availableQ, targetCount, this.cfg.randomQuestions !== false, runIndex);
         if(this.levelQuestions.length === 0) {
-            this.levelQuestions = Array.from({length:targetCount}, (_,idx) => ({ id:`fallback-${idx}`, type:'open', prompt:'', question:'No questions configured.', img:'', data:{}, levelIds:['all'] }));
+            this.levelQuestions = Array.from({length:targetCount}, (_,idx) => ({ id:`fallback-${idx}`, type:'open', prompt:'', question:this.t.noQuestionsConfigured, img:'', data:{}, levelIds:['all'] }));
         }
         
         this.time = this.cfg.timerStart; this.qDone=0; this.combo=0; this.maxCombo=0; this.isWin=false; this.nextQIndex=0; this.levelWrong=0; this.questionInProgress=false; this.activeQuestion=null; this.activeQuestionBall=null;
@@ -4898,9 +4912,9 @@ class GameCore {
     
     hit(idx, bullet) {
         let b = this.balls[idx]; let hexColor = HEX_MAP[b.c] || "#fff"; for(let k=0;k<8;k++) this.parts.push(new Part(b.x, b.y, hexColor));
-        if(b.type === 'normal' && b.c === bullet.c) { this.score += 50; this.scoreBalls += 50; this.showFlash("MATCH!"); AudioSys.correct(); }
+        if(b.type === 'normal' && b.c === bullet.c) { this.score += 50; this.scoreBalls += 50; this.showFlash(this.t.flashMatch); AudioSys.correct(); }
         if(b.type === 'electric') {
-            AudioSys.zap(); this.showFlash("ZAP!"); const range = [idx-2, idx-1, idx+1, idx+2]; const targets = range.filter(i => i >= 0 && i < this.balls.length && this.balls[i].type !== 'question');
+            AudioSys.zap(); this.showFlash(this.t.flashZap); const range = [idx-2, idx-1, idx+1, idx+2]; const targets = range.filter(i => i >= 0 && i < this.balls.length && this.balls[i].type !== 'question');
             targets.forEach(ti => { this.lightnings.push(new Lightning(b.x, b.y, this.balls[ti].x, this.balls[ti].y)); });
             const toRemove = [idx, ...targets].sort((a,b)=>b-a);
             toRemove.forEach(i => { if(i < this.balls.length) { let tb = this.balls[i]; let thex = HEX_MAP[tb.c] || "#fff"; for(let k=0;k<5;k++) this.parts.push(new Part(tb.x, tb.y, thex)); this.balls.splice(i,1); } });
@@ -5048,7 +5062,7 @@ class GameCore {
             case 'error': this.renderError(q, content); break;
             case 'gaps': this.renderGaps(q, content); break;
             case 'open': this.renderOpen(q, content); break;
-            default: this.renderOpen({question:q.question || q.sourceLine || 'Question'}, content); break;
+            default: this.renderOpen({question:q.question || q.sourceLine || this.t.question}, content); break;
         }
 
         // Keep illustrations compact enough to avoid an unnecessary inner scrollbar.
@@ -5214,7 +5228,7 @@ class GameCore {
             prompt:q.prompt || '',
             question:q.question || '',
             userAnswer:String(userAnswer ?? ''),
-            correctAnswer:getCorrectAnswerSummary(q),
+            correctAnswer:getCorrectAnswerSummary(q,this.cfg.lang),
             img:q.img || '',
             data
         });
@@ -5273,7 +5287,7 @@ class GameCore {
         } else if(isOk) {
             this.statChecked++; this.statCorrect++;
             this.combo++; if(this.combo>this.maxCombo)this.maxCombo=this.combo; const pts=100*this.combo; this.score+=pts; this.scoreQ+=pts;
-            this.showFlash('COMBO x'+this.combo); AudioSys.correct(); this.shiftChainBack(100);
+            this.showFlash(this.t.flashCombo.replace('{count}', String(this.combo))); AudioSys.correct(); this.shiftChainBack(100);
         } else {
             this.statChecked++; this.combo=0; this.statWrong++; this.levelWrong++; this.lives--; AudioSys.wrong(); this.shakeScreen();
             this.recordMistake(q,userAnswer);
